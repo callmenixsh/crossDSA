@@ -1,0 +1,450 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>crossDSA</title>
+    <style>
+      body {
+        width: 330px;
+        padding: 12px;
+        font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial;
+        background: linear-gradient(160deg, #131313 0%, #0a0a0a 100%);
+        color: #ffffff;
+        margin: 0;
+        animation: fadeIn 0.3s ease-out;
+      }
+
+      @keyframes fadeIn {
+        from { opacity: 0; }
+        to { opacity: 1; }
+      }
+
+      @keyframes slideUp {
+        from { opacity: 0; transform: translateY(5px); }
+        to { opacity: 1; transform: translateY(0); }
+      }
+
+      .header {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        position: relative;
+        margin-bottom: 12px;
+      }
+
+      .github-btn {
+        position: absolute;
+        left: 0;
+        background: rgba(255, 255, 255, 0.06);
+        color: #2dd4bf;
+        border: 1px solid rgba(255, 255, 255, 0.12);
+        padding: 5px 9px;
+        border-radius: 9px;
+        cursor: pointer;
+        font-size: 11px;
+        font-weight: 600;
+        text-decoration: none;
+        transition: background 0.15s ease;
+      }
+
+      .github-btn:hover {
+        background: rgba(45, 212, 191, 0.14);
+      }
+
+      .header h1 {
+        margin: 0;
+        font-size: 15px;
+        font-weight: 800;
+        letter-spacing: 0.4px;
+        color: #ffffff;
+      }
+
+      .header-controls {
+        position: absolute;
+        right: 0;
+        display: flex;
+        align-items: center;
+        gap: 7px;
+      }
+
+      .toggle-btn {
+        background: rgba(255, 255, 255, 0.06);
+        color: white;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        padding: 4px 7px;
+        border-radius: 9px;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        transition: background 0.15s ease;
+      }
+
+      .toggle-btn:hover {
+        background: rgba(255, 255, 255, 0.13);
+      }
+
+      .section {
+        background: rgba(255, 255, 255, 0.05);
+        border: 1px solid rgba(255, 255, 255, 0.09);
+        border-radius: 12px;
+        padding: 11px 12px;
+        margin-bottom: 10px;
+        opacity: 0;
+        animation: slideUp 0.25s ease-out forwards;
+      }
+
+      .section:nth-child(3) { animation-delay: 0.03s; }
+      .section:nth-child(4) { animation-delay: 0.06s; }
+
+      .section-title {
+        display: flex;
+        align-items: center;
+        gap: 7px;
+        font-size: 10px;
+        font-weight: 800;
+        text-transform: uppercase;
+        letter-spacing: 1.1px;
+        color: #2dd4bf;
+        margin-bottom: 10px;
+      }
+
+      .section-title::after {
+        content: '';
+        flex: 1;
+        height: 1px;
+        background: linear-gradient(90deg, rgba(45, 212, 191, 0.4), transparent);
+      }
+
+      .setting-label {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        font-size: 13px;
+        margin-bottom: 8px;
+        font-weight: 600;
+      }
+
+      .similarity-value {
+        background: linear-gradient(135deg, #14b8a6, #2dd4bf);
+        padding: 4px 10px;
+        border-radius: 999px;
+        font-size: 12px;
+        font-weight: 800;
+        color: #ffffff;
+        border: 1px solid rgba(255, 255, 255, 0.25);
+        min-width: 30px;
+        text-align: center;
+      }
+
+      .slider {
+        width: 100%;
+        height: 5px;
+        border-radius: 10px;
+        background: rgba(255, 255, 255, 0.12);
+        outline: none;
+        appearance: none;
+        cursor: pointer;
+      }
+
+      .slider::-webkit-slider-thumb {
+        appearance: none;
+        width: 16px;
+        height: 16px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, #2dd4bf, #0f766e);
+        cursor: pointer;
+        box-shadow: 0 3px 7px rgba(0, 0, 0, 0.45), inset 0 1px 0 rgba(255, 255, 255, 0.45);
+        border: 2px solid rgba(255, 255, 255, 0.35);
+      }
+
+      .preset-buttons {
+        display: flex;
+        gap: 5px;
+        margin-top: 8px;
+      }
+
+      .preset-btn {
+        flex: 1;
+        background: rgba(255, 255, 255, 0.05);
+        color: #d6d6d6;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        padding: 5px 8px;
+        border-radius: 8px;
+        cursor: pointer;
+        font-size: 11px;
+        font-weight: 600;
+        transition: all 0.2s ease;
+      }
+
+      .preset-btn:hover {
+        background: rgba(45, 212, 191, 0.14);
+        border-color: rgba(45, 212, 191, 0.5);
+      }
+
+      .preset-btn.active {
+        background: linear-gradient(135deg, #14b8a6, #0d9488);
+        color: #ffffff;
+        border-color: rgba(45, 212, 191, 0.8);
+        font-weight: 700;
+      }
+
+      .platform-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 6px;
+      }
+
+      .platform-chip {
+        position: relative;
+        display: flex;
+        align-items: center;
+        gap: 7px;
+        padding: 8px 10px;
+        border-radius: 10px;
+        background: rgba(255, 255, 255, 0.04);
+        border: 1px solid rgba(255, 255, 255, 0.09);
+        cursor: pointer;
+        transition: all 0.15s ease;
+        user-select: none;
+      }
+
+      .platform-chip:hover {
+        background: rgba(255, 255, 255, 0.09);
+        border-color: rgba(255, 255, 255, 0.2);
+      }
+
+      .platform-chip input {
+        position: absolute;
+        opacity: 0;
+        pointer-events: none;
+      }
+
+      .chip-check {
+        width: 18px;
+        height: 18px;
+        border-radius: 50%;
+        border: 1.5px solid rgba(255, 255, 255, 0.3);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+        color: transparent;
+        transition: all 0.15s ease;
+      }
+
+      .chip-check svg {
+        width: 10px;
+        height: 10px;
+      }
+
+      .chip-name {
+        font-size: 12px;
+        font-weight: 700;
+        color: #e2e2e2;
+      }
+
+      .chip-count {
+        margin-left: auto;
+        font-size: 10px;
+        color: rgba(255, 255, 255, 0.4);
+        font-weight: 600;
+      }
+
+      .platform-chip.checked {
+        background: rgba(20, 184, 166, 0.14);
+        border-color: rgba(45, 212, 191, 0.55);
+      }
+
+      .platform-chip.checked .chip-check {
+        background: linear-gradient(135deg, #2dd4bf, #0f766e);
+        border-color: transparent;
+        color: #ffffff;
+      }
+
+      .platform-chip.checked .chip-name {
+        color: #ffffff;
+      }
+
+      .hint {
+        font-size: 10px;
+        color: rgba(255, 255, 255, 0.42);
+        margin-top: 8px;
+        line-height: 1.5;
+        font-weight: 500;
+      }
+
+      .stats-section {
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+      }
+
+      .stat-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        font-size: 12px;
+      }
+
+      .stat-label {
+        color: rgba(255, 255, 255, 0.55);
+        font-weight: 500;
+      }
+
+      .stat-value {
+        color: #2dd4bf;
+        font-weight: 800;
+        font-size: 13px;
+      }
+
+      .footer-note {
+        text-align: center;
+        font-size: 10px;
+        color: rgba(255, 255, 255, 0.3);
+        margin-top: 9px;
+        opacity: 0;
+        animation: fadeIn 0.4s ease-out 0.2s forwards;
+      }
+
+      .footer-note a {
+        color: rgba(45, 212, 191, 0.8);
+        text-decoration: none;
+      }
+
+      .footer-note a:hover {
+        color: #2dd4bf;
+        text-decoration: underline;
+      }
+
+      .status-blob {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        flex-shrink: 0;
+      }
+
+      .status-blob.active {
+        background: #48bb78;
+      }
+
+      .status-blob.inactive {
+        background: #f56565;
+      }
+
+      ::-webkit-scrollbar {
+        width: 5px;
+      }
+
+      ::-webkit-scrollbar-track {
+        background: rgba(255, 255, 255, 0.05);
+        border-radius: 3px;
+      }
+
+      ::-webkit-scrollbar-thumb {
+        background: rgba(255, 255, 255, 0.35);
+        border-radius: 3px;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="header">
+      <a class="github-btn" href="https://github.com/callmenixsh" target="_blank">GitHub</a>
+      <h1>crossDSA</h1>
+      <div class="header-controls">
+        <span class="status-blob active" id="statusBlob"></span>
+        <button class="toggle-btn" id="toggleBtn" title="Show/hide the search button">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+            <circle cx="12" cy="12" r="3"></circle>
+          </svg>
+        </button>
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="section-title">Similarity Grade</div>
+      <div class="setting-label">
+        <span>Match threshold</span>
+        <span class="similarity-value" id="similarityValue">0.4</span>
+      </div>
+      <input
+        type="range"
+        min="0.1"
+        max="1.0"
+        step="0.1"
+        value="0.4"
+        id="similaritySlider"
+        class="slider"
+      />
+      <div class="preset-buttons">
+        <button class="preset-btn" data-value="0.2">Lenient</button>
+        <button class="preset-btn" data-value="0.4">Moderate</button>
+        <button class="preset-btn" data-value="0.7">Strict</button>
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="section-title">Search Platforms</div>
+      <div class="platform-grid" id="platformGrid">
+        <label class="platform-chip" data-platform="leetcode">
+          <input type="checkbox" class="platform-check" />
+          <span class="chip-check">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
+          </span>
+          <span class="chip-name">LeetCode</span>
+          <span class="chip-count">—</span>
+        </label>
+        <label class="platform-chip" data-platform="geeksforgeeks">
+          <input type="checkbox" class="platform-check" />
+          <span class="chip-check">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
+          </span>
+          <span class="chip-name">GfG</span>
+          <span class="chip-count">—</span>
+        </label>
+        <label class="platform-chip" data-platform="codeforces">
+          <input type="checkbox" class="platform-check" />
+          <span class="chip-check">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
+          </span>
+          <span class="chip-name">Codeforces</span>
+          <span class="chip-count">—</span>
+        </label>
+        <label class="platform-chip" data-platform="codechef">
+          <input type="checkbox" class="platform-check" />
+          <span class="chip-check">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
+          </span>
+          <span class="chip-name">CodeChef</span>
+          <span class="chip-count">—</span>
+        </label>
+      </div>
+      <div class="hint">Similar problems are searched only on enabled platforms.</div>
+    </div>
+
+    <div class="section">
+      <div class="section-title">Overview</div>
+      <div class="stats-section">
+        <div class="stat-row">
+          <span class="stat-label">Problems Indexed</span>
+          <span class="stat-value" id="problemCount">—</span>
+        </div>
+        <div class="stat-row">
+          <span class="stat-label">Platforms Active</span>
+          <span class="stat-value" id="activePlatforms">—</span>
+        </div>
+        <div class="stat-row">
+          <span class="stat-label">Last Results</span>
+          <span class="stat-value" id="lastResults">—</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="footer-note">
+      Find similar DSA problems across platforms &middot; <a href="#" id="resetLink">Reset settings</a>
+    </div>
+
+    <script src="popup.js"></script>
+  </body>
+</html>

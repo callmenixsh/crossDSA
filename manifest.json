@@ -1,0 +1,47 @@
+{
+  "manifest_version": 3,
+  "name": "crossDSA",
+  "version": "2.0",
+  "description": "Find similar DSA problems across LeetCode, GeeksforGeeks, Codeforces, and CodeChef",
+  "permissions": [
+    "storage"
+  ],
+  "icons": {
+    "16": "icons/cDSA-16.png",
+    "32": "icons/cDSA-32.png", 
+    "48": "icons/cDSA-48.png",
+    "128": "icons/cDSA-128.png"
+  },
+  "content_scripts": [
+    {
+      "matches": [
+        "https://takeuforward.org/*",
+        "https://leetcode.com/problems/*",
+        "https://www.geeksforgeeks.org/problems/*",
+        "https://codeforces.com/problemset/problem/*",
+        "https://www.codechef.com/problems/*"
+      ],
+      "js": ["content.js"],
+      "css": ["styles.css"]
+    }
+  ],
+  "background": {
+    "service_worker": "background.js"
+  },
+  "action": {
+    "default_popup": "popup.html",
+    "default_title": "crossDSA"
+  },
+  "web_accessible_resources": [
+    {
+      "resources": ["data/leetcode-data.json", "data/geeksforgeeks-data.json", "data/codeforces-data.json", "data/codechef-data.json"],
+      "matches": [
+        "https://takeuforward.org/*",
+        "https://leetcode.com/*",
+        "https://www.geeksforgeeks.org/*",
+        "https://codeforces.com/*",
+        "https://www.codechef.com/*"
+      ]
+    }
+  ]
+}
