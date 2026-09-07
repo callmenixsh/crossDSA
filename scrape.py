@@ -6,6 +6,7 @@ SCRAPERS = {
     'geeksforgeeks': 'scrapers/geeksforgeeks_scraper.py',
     'codeforces': 'scrapers/codeforces_scraper.py',
     'codechef': 'scrapers/codechef_scraper.py',
+    'code360': 'scrapers/code360_scraper.py',
 }
 
 NAMES = list(SCRAPERS)
@@ -53,8 +54,8 @@ def main():
 
     failures = 0
     for t in targets:
-        # --limit / --pages only mean anything to the CodeChef scraper
-        extra = passthrough if t == 'codechef' else []
+        # --limit / --pages only mean anything to the CodeChef / Code 360 scrapers
+        extra = passthrough if t in ('codechef', 'code360') else []
         if run(t, extra) != 0:
             failures += 1
             print(f'==> {t} FAILED')

@@ -2,12 +2,12 @@
 
 Chrome extension that finds the same or similar DSA problems across different platforms. If you're grinding a problem on Codeforces and want the LeetCode equivalent (or the GfG one, or the CodeChef one), this saves you the manual hunt.
 
-Backs onto a local index of ~15,000 problems pulled from all four platforms, so matching works offline-ish and fast.
+Backs onto a local index of ~18,000 problems pulled from all five platforms, so matching works offline-ish and fast.
 
 ## What it does
 
 - Adds a search button next to the problem title on any supported page. One click, done.
-- Matches against LeetCode, GeeksforGeeks, Codeforces, and CodeChef.
+- Matches against LeetCode, GeeksforGeeks, Codeforces, CodeChef, and Code 360.
 - Compares titles *and* descriptions, not just keywords — tokenizes, strips stopwords, stems, and weighs rare words higher, so "find the shortest path in a grid" actually finds shortest-path-grid problems instead of everything containing the word "grid".
 - Ranks results and flags them exact vs similar, with a confidence percentage.
 - Groups results by platform with tabs, and shows difficulty and topic tags on each one.
@@ -27,12 +27,13 @@ There's a difference worth spelling out: platforms the extension **has data for*
 | GeeksforGeeks | geeksforgeeks.org/problems/* | `__NEXT_DATA__` JSON |
 | Codeforces | codeforces.com/problemset/problem/* | Problem statement DOM |
 | CodeChef | codechef.com/problems/* | Public API, DOM fallback |
+| Code 360 | naukri.com/code360/problems/* | Public API, DOM fallback |
 
 ### Runs on, but not indexed yet
 
 | Platform | Site | Note |
 | --- | --- | --- |
-| TakeUForward | takeuforward.org/* | The button works and you can search for a TUF problem's equivalent among the four indexed platforms — but TUF problems aren't scraped yet, so no platform will ever suggest a *TUF* problem as a match. |
+| TakeUForward | takeuforward.org/* | The button works and you can search for a TUF problem's equivalent among the five indexed platforms — but TUF problems aren't scraped yet, so no platform will ever suggest a *TUF* problem as a match. |
 
 To bring TakeUForward into the full set, a `tuf_scraper.py` plus a `tuf-data.json` (and registering it in `manifest.json` + `content.js`) is what's missing.
 
@@ -66,11 +67,13 @@ data/                      # scraped problem data, injected into pages
   geeksforgeeks-data.json
   codeforces-data.json
   codechef-data.json
+  code360-data.json
 scrapers/
   leetcode_scraper.py      # pulls LeetCode data -> data/leetcode-data.json
   geeksforgeeks_scraper.py # pulls GfG data -> data/geeksforgeeks-data.json
   codeforces_scraper.py    # pulls Codeforces data -> data/codeforces-data.json
   codechef_scraper.py      # pulls CodeChef data -> data/codechef-data.json
+  code360_scraper.py       # pulls Code 360 data -> data/code360-data.json
 requirements.txt           # python deps for the scrapers
 run_scrapers.py            # runs one or all scrapers back to back
 ```
@@ -83,6 +86,7 @@ python scrapers/leetcode_scraper.py        # -> data/leetcode-data.json
 python scrapers/geeksforgeeks_scraper.py   # -> data/geeksforgeeks-data.json
 python scrapers/codeforces_scraper.py      # -> data/codeforces-data.json
 python scrapers/codechef_scraper.py        # -> data/codechef-data.json
+python scrapers/code360_scraper.py         # -> data/code360-data.json
 ```
 
 Or just run them all at once:
@@ -90,7 +94,7 @@ Or just run them all at once:
 ```bash
 python run_scrapers.py                     # prompts to pick, defaults to all
 python run_scrapers.py codechef leetcode   # run by name
-python run_scrapers.py codechef --limit 20 # scraper args pass through (codechef only)
+python run_scrapers.py codechef --limit 20 # scraper args pass through (codechef/code360)
 ```
 
 Each scraper skips problem IDs already present in its output file, so re-running just tops up what's missing. Partial runs don't lose work — it checkpoints every 50 problems.
@@ -100,6 +104,12 @@ The CodeChef scraper takes a couple of args useful for a quick test:
 ```bash
 python scrapers/codechef_scraper.py --limit 20     # first 20 rated problems only
 python scrapers/codechef_scraper.py --pages 5      # first 5 list pages only
+```
+
+The Code 360 scraper supports the same `--limit` flag:
+
+```bash
+python scrapers/code360_scraper.py --limit 50      # first 50 problems only
 ```
 
 ## Contributing

@@ -19,7 +19,8 @@
         "https://leetcode.com/problems/*",
         "https://www.geeksforgeeks.org/problems/*",
         "https://codeforces.com/problemset/problem/*",
-        "https://www.codechef.com/problems/*"
+        "https://www.codechef.com/problems/*",
+        "https://www.naukri.com/code360/problems/*"
       ],
       "js": ["content.js"],
       "css": ["styles.css"]
@@ -34,13 +35,14 @@
   },
   "web_accessible_resources": [
     {
-      "resources": ["data/leetcode-data.json", "data/geeksforgeeks-data.json", "data/codeforces-data.json", "data/codechef-data.json"],
+      "resources": ["data/leetcode-data.json", "data/geeksforgeeks-data.json", "data/codeforces-data.json", "data/codechef-data.json", "data/code360-data.json"],
       "matches": [
         "https://takeuforward.org/*",
         "https://leetcode.com/*",
         "https://www.geeksforgeeks.org/*",
         "https://codeforces.com/*",
-        "https://www.codechef.com/*"
+        "https://www.codechef.com/*",
+        "https://www.naukri.com/*"
       ]
     }
   ]

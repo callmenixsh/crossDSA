@@ -1,9 +1,10 @@
-const DEFAULT_PLATFORMS = ["leetcode", "geeksforgeeks", "codeforces", "codechef"];
+const DEFAULT_PLATFORMS = ["leetcode", "geeksforgeeks", "codeforces", "codechef", "code360"];
 const PLATFORM_DISPLAY = {
   leetcode: "LeetCode",
   geeksforgeeks: "GfG",
   codeforces: "Codeforces",
   codechef: "CodeChef",
+  code360: "Code 360",
 };
 
 async function sendMessageToActiveTab(message) {
@@ -59,6 +60,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     geeksforgeeks: "data/geeksforgeeks-data.json",
     codeforces: "data/codeforces-data.json",
     codechef: "data/codechef-data.json",
+    code360: "data/code360-data.json",
   };
 
   // ---- Load per-platform counts --------------------------------------------
@@ -67,6 +69,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     try {
       const results = await Promise.all(
         Object.entries(PROBLEM_DATA_FILES).map(async ([key, file]) => {
+          if (!selectedPlatforms.includes(key)) return { key, count: 0 };
           try {
             const response = await fetch(chrome.runtime.getURL(file));
             if (!response.ok) return { key, count: 0 };
@@ -111,6 +114,11 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   async function persistPlatforms() {
     renderChips();
+    await loadProblemCount();
+    try {
+      await chrome.storage.local.set({ "dsa-preferred-platforms": selectedPlatforms });
+    } catch (e) {
+    }
     try {
       await chrome.runtime.sendMessage({ action: "setPreferredPlatforms", platforms: selectedPlatforms });
       try {

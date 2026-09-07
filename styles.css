@@ -329,14 +329,63 @@
   color: #ffffff;
 }
 
-.platform-tabs {
+.platform-tabs-wrap {
   display: flex;
-  gap: 6px;
-  padding: 10px 10px 0;
+  align-items: center;
   border-bottom: 1px solid rgba(255, 255, 255, 0.08);
 }
 
+.platform-tabs {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-wrap: nowrap;
+  gap: 6px;
+  padding: 10px 4px 0;
+  overflow-x: auto;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.platform-tab-scroll-btn {
+  flex-shrink: 0;
+  width: 24px;
+  height: 24px;
+  margin: 0 6px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: #cccccc;
+  cursor: pointer;
+  font-size: 16px;
+  line-height: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.18s, color 0.18s, border-color 0.18s, opacity 0.18s;
+}
+
+.platform-tab-scroll-btn:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.14);
+  color: #ffffff;
+}
+
+.platform-tab-scroll-btn.next {
+  margin-left: 2px;
+}
+
+.platform-tab-scroll-btn.prev {
+  margin-right: 2px;
+}
+
+.platform-tab-scroll-btn:disabled {
+  opacity: 0.3;
+  cursor: default;
+}
+
 .platform-tab {
+  flex-shrink: 0;
+  white-space: nowrap;
   background: rgba(255, 255, 255, 0.06);
   border: 1px solid rgba(255, 255, 255, 0.1);
   color: #bbbbbb;
@@ -346,6 +395,10 @@
   padding: 6px 12px;
   border-radius: 10px 10px 0 0;
   transition: background 0.18s, color 0.18s, border-color 0.18s;
+}
+
+.platform-tabs::-webkit-scrollbar {
+  display: none;
 }
 
 .platform-tab:hover {

@@ -2,17 +2,19 @@ const PROBLEM_DATA_FILES = [
     'data/leetcode-data.json',
     'data/geeksforgeeks-data.json',
     'data/codeforces-data.json',
-    'data/codechef-data.json'
+    'data/codechef-data.json',
+    'data/code360-data.json'
 ];
 
 const FILE_SOURCES = {
     'data/leetcode-data.json': 'leetcode',
     'data/geeksforgeeks-data.json': 'geeksforgeeks',
     'data/codeforces-data.json': 'codeforces',
-    'data/codechef-data.json': 'codechef'
+    'data/codechef-data.json': 'codechef',
+    'data/code360-data.json': 'code360'
 };
 
-const DEFAULT_PLATFORMS = ['leetcode', 'geeksforgeeks', 'codeforces', 'codechef'];
+const DEFAULT_PLATFORMS = ['leetcode', 'geeksforgeeks', 'codeforces', 'codechef', 'code360'];
 
 let preferredPlatforms = DEFAULT_PLATFORMS.slice();
 let problemsData = [];
@@ -517,6 +519,7 @@ function getCurrentPlatform() {
     if (host.endsWith('geeksforgeeks.org')) return 'geeksforgeeks';
     if (host.endsWith('codeforces.com')) return 'codeforces';
     if (host.endsWith('codechef.com')) return 'codechef';
+    if (host.endsWith('naukri.com') && window.location.pathname.includes('/code360/')) return 'code360';
     return null;
 }
 
@@ -525,7 +528,8 @@ const PLATFORM_DISPLAY_NAMES = {
     'leetcode': 'LeetCode',
     'geeksforgeeks': 'GeeksforGeeks',
     'codeforces': 'Codeforces',
-    'codechef': 'CodeChef'
+    'codechef': 'CodeChef',
+    'code360': 'Code 360'
 };
 
 function platformDisplayName(source) {
@@ -656,6 +660,49 @@ function getCodeforcesContent() {
     return content.trim();
 }
 
+function getCode360Slug() {
+    const match = window.location.pathname.match(/\/code360\/problems\/([^/]+)/);
+    return match ? match[1] : null;
+}
+
+async function getCode360Content() {
+    const slug = getCode360Slug();
+    let content = '';
+
+    if (slug) {
+        try {
+            const response = await fetch(`https://www.naukri.com/code360/api/v3/public_section/problem_detail?slug=${encodeURIComponent(slug)}`, { credentials: 'same-origin' });
+            if (response.ok) {
+                const data = await response.json();
+                const problem = data?.data?.offerable?.problem;
+                if (problem) {
+                    const parts = [problem.name, htmlToText(problem.description || '')].filter(Boolean);
+                    content = parts.join(' ').replace(/\s+/g, ' ').trim();
+                }
+                if (content !== '') return content;
+            }
+        } catch (e) {
+            console.log('Code 360 API fetch failed:', e);
+        }
+    }
+
+    const title = getPageTitle();
+    if (title) content += title + ' ';
+
+    const problemContainer = document.querySelector('[class*="problem-"]') ||
+        document.querySelector('codestudio-single-problem') ||
+        document.querySelector('pre')?.parentElement?.parentElement;
+    if (problemContainer) {
+        content += problemContainer.textContent.replace(/\s+/g, ' ').trim();
+    }
+
+    if (!content.trim()) {
+        const meta = document.querySelector('meta[name="description"]');
+        if (meta) content = meta.content;
+    }
+    return content.trim();
+}
+
 async function getProblemContent() {
     const platform = getCurrentPlatform();
     switch (platform) {
@@ -669,6 +716,8 @@ async function getProblemContent() {
             return getCodeforcesContent();
         case 'codechef':
             return await getCodeChefContent();
+        case 'code360':
+            return await getCode360Content();
         default:
             return getTUFProblemContent();
     }
@@ -719,6 +768,7 @@ function positionContainer(titleButton) {
 
 function showLoadingScreen(titleButton) {
     const container = createButtonContainer();
+    const enabledCount = problemsData.filter(p => preferredPlatforms.includes(p.source)).length;
     container.innerHTML = `
         <div class="dsa-helper-header">
             <span>Searching for matches...</span>
@@ -726,7 +776,7 @@ function showLoadingScreen(titleButton) {
         <div class="loading-container">
             <div class="loading-text">
                 <p>Analyzing problem content...</p>
-                <p class="loading-subtext">Checking ${problemsData.length} problems across platforms</p>
+                <p class="loading-subtext">Checking ${enabledCount} problems across enabled platforms</p>
             </div>
         </div>
     `;
@@ -830,6 +880,11 @@ function buildYoutubeQuery() {
         return baseTitle ? `${baseTitle} leetcode DSA solution` : 'leetcode DSA problem solution';
     }
 
+    if (platform === 'code360') {
+        const slug = baseTitle.replace(/_?\d+$/, '').replace(/[-_]+/g, ' ').trim();
+        return slug ? `${slug} code 360 ninjas DSA solution` : `${baseTitle} code 360 DSA solution`;
+    }
+
     return baseTitle ? `${baseTitle} DSA solution` : 'DSA problem solution';
 }
 
@@ -856,6 +911,9 @@ function switchPlatformTab(source) {
     if (!buttonContainer) return;
     buttonContainer.querySelectorAll('.platform-tab').forEach(t => {
         t.classList.toggle('active', t.dataset.source === source);
+        if (t.dataset.source === source) {
+            t.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
+        }
     });
     buttonContainer.querySelectorAll('.platform-pane').forEach(p => {
         p.style.display = p.dataset.source === source ? 'block' : 'none';
@@ -916,6 +974,9 @@ function updateUI(matches) {
         if (!groups.has(source)) groups.set(source, []);
         groups.get(source).push(problem);
     });
+
+    // Only platforms that actually have matches get a tab
+    const sourceKeys = [...groups.keys()];
     
     container.style.display = 'block';
     const header = document.createElement('div');
@@ -933,9 +994,16 @@ function updateUI(matches) {
     header.appendChild(headerText);
     header.appendChild(headerActions);
     
-    const sourceKeys = [...groups.keys()];
-    
-    // Platform tabs
+    // Platform tabs (scrollable when they don't all fit)
+    const tabsWrap = document.createElement('div');
+    tabsWrap.className = 'platform-tabs-wrap';
+
+    const prevBtn = document.createElement('button');
+    prevBtn.className = 'platform-tab-scroll-btn prev';
+    prevBtn.innerHTML = '‹';
+    prevBtn.title = 'Scroll tabs left';
+    prevBtn.disabled = true;
+
     const tabs = document.createElement('div');
     tabs.className = 'platform-tabs';
     sourceKeys.forEach((source, idx) => {
@@ -946,12 +1014,43 @@ function updateUI(matches) {
         tab.addEventListener('click', () => switchPlatformTab(source));
         tabs.appendChild(tab);
     });
-    
+
+    const nextBtn = document.createElement('button');
+    nextBtn.className = 'platform-tab-scroll-btn next';
+    nextBtn.innerHTML = '›';
+    nextBtn.title = 'Scroll tabs right';
+
+    function updateTabScrollButtons() {
+        const maxScroll = tabs.scrollWidth - tabs.clientWidth;
+        prevBtn.disabled = tabs.scrollLeft <= 0;
+        nextBtn.disabled = tabs.scrollLeft >= maxScroll - 1;
+    }
+    tabs.addEventListener('scroll', updateTabScrollButtons);
+    prevBtn.addEventListener('click', () => tabs.scrollBy({ left: -160, behavior: 'smooth' }));
+    nextBtn.addEventListener('click', () => tabs.scrollBy({ left: 160, behavior: 'smooth' }));
+
+    // Mouse wheel scrolls the strip horizontally (only consumed when it can scroll)
+    tabs.addEventListener('wheel', (e) => {
+        const delta = e.deltaY || e.deltaX;
+        const atLeft = tabs.scrollLeft <= 0;
+        const atRight = tabs.scrollLeft >= tabs.scrollWidth - tabs.clientWidth - 1;
+        if ((delta < 0 && !atLeft) || (delta > 0 && !atRight)) {
+            e.preventDefault();
+            tabs.scrollLeft += delta;
+            updateTabScrollButtons();
+        }
+    }, { passive: false });
+
+    tabsWrap.appendChild(prevBtn);
+    tabsWrap.appendChild(tabs);
+    tabsWrap.appendChild(nextBtn);
+    container.appendChild(tabsWrap);
+
     const content = document.createElement('div');
     content.className = 'results-content';
     
     container.appendChild(header);
-    container.appendChild(tabs);
+    container.appendChild(tabsWrap);
     container.appendChild(content);
     
     sourceKeys.forEach((source, idx) => {
@@ -964,6 +1063,13 @@ function updateUI(matches) {
         });
         content.appendChild(pane);
     });
+
+    // Bring the active tab fully into view once the panel is laid out
+    const activeTab = tabs.querySelector('.platform-tab.active');
+    if (activeTab) {
+        activeTab.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
+        requestAnimationFrame(updateTabScrollButtons);
+    }
 }
 
 let currentUrl = window.location.href;
@@ -1073,6 +1179,9 @@ function getTitleElementForPlatform() {
     if (platform === 'codeforces') {
         return document.querySelector('.problem-statement .header .title');
     }
+    if (platform === 'code360') {
+        return document.querySelector('h1, h1[class*="title"], [class*="problem-name"], [class*="problem-title"]');
+    }
     return document.querySelector(
         '.text-2xl.font-bold.text-new_primary.dark\\:text-new_dark_primary, h1.text-xl.font-bold, h1.text-2xl.font-bold, h1.font-bold, [data-problem-title]'
     );
@@ -1101,7 +1210,7 @@ function injectTitleButton() {
         return;
     }
     const platform = getCurrentPlatform();
-    if (platform === 'geeksforgeeks' || platform === 'codechef') {
+    if (platform === 'geeksforgeeks' || platform === 'codechef' || platform === 'code360') {
         injectFloatingButton();
         return;
     }
@@ -1160,6 +1269,35 @@ async function init() {
     await loadProblemsData();
     computeTitleIdf();
     createButtonContainer();
+
+    // React to setting changes (platform toggles, threshold, visibility) from the
+    // popup/background immediately, instead of waiting for the next page load.
+    chrome.storage.onChanged.addListener((changes, area) => {
+        if (area !== 'local') return;
+
+        if (changes['dsa-preferred-platforms']) {
+            const stored = changes['dsa-preferred-platforms'].newValue;
+            if (Array.isArray(stored)) {
+                const valid = stored.filter(p => DEFAULT_PLATFORMS.includes(p));
+                if (valid.length) preferredPlatforms = valid;
+            }
+        }
+
+        if (changes['dsa-helper-similarity-threshold']) {
+            const value = parseFloat(changes['dsa-helper-similarity-threshold'].newValue);
+            if (!Number.isNaN(value)) SIMILARITY_THRESHOLD = value;
+        }
+
+        if (changes['dsa-helper-visibility-enabled']) {
+            visibilityEnabled = changes['dsa-helper-visibility-enabled'].newValue === true;
+            if (!visibilityEnabled) {
+                removeTitleButton();
+                hidePopup();
+            } else {
+                injectTitleButton();
+            }
+        }
+    });
 
     document.addEventListener('click', (e) => {
         if (buttonContainer && !buttonContainer.contains(e.target) &&
