@@ -46,11 +46,13 @@ To bring TakeUForward into the full set, a `tuf_scraper.py` plus a `tuf-data.jso
 
 ## Usage
 
-- The floating **Find matches** button searches for the problem on other platforms. Drag it anywhere on-screen; its position is remembered for that site.
+- Use **Match** to look for equivalent or closely matching problems on the enabled platforms. Drag the button anywhere on-screen; its position is remembered for that site.
+- Drag the results panel by its header to move it out of the way while you work.
 - Tabs at the top of the panel switch between platforms.
 - Each result shows difficulty, match %, and tags — click to open in a new tab.
 - The panel header has a YouTube button that pre-builds the search query for the current problem.
-- The popup lets you hide/show the button, choose which platforms to search, and adjust match strictness with Broad, Balanced, and Exact presets.
+- The compact popup controls button visibility, match strictness, and enabled platforms.
+- Use **Random practice** to pick a problem from the currently enabled platforms and open it directly from the popup.
 
 ## Development
 

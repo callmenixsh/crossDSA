@@ -36,6 +36,18 @@
   border-radius: 18px 18px 0 0;
   font-size: 14px;
   border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  cursor: grab;
+  touch-action: none;
+  user-select: none;
+}
+
+#dsa-helper-container.is-dragging .dsa-helper-header {
+  cursor: grabbing;
+}
+
+.dsa-helper-header button,
+.dsa-helper-header a {
+  cursor: pointer;
 }
 
 .close-btn {
@@ -1112,5 +1124,34 @@ button.dsa-helper-float-btn.is-dragging {
 
   .dsa-helper-float-label {
     color: #09201d;
+  }
+}
+
+.relation-badge {
+  padding: 4px 7px;
+  color: #115e59;
+  background: #ccfbf1;
+  border: 1px solid #5eead4;
+  border-radius: 4px;
+  font-size: 9px;
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+.result-category-tabs .platform-tabs {
+  justify-content: stretch;
+  padding: 8px 8px 0;
+}
+
+.result-category-tabs .platform-tab {
+  flex: 1;
+  text-align: center;
+}
+
+@media (prefers-color-scheme: dark) {
+  .relation-badge {
+    color: #99f6e4;
+    background: #123c38;
+    border-color: #277c72;
   }
 }

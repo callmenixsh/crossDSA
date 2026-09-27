@@ -1,4 +1,11 @@
 const DEFAULT_PLATFORMS = ["leetcode", "geeksforgeeks", "codeforces", "codechef", "code360"];
+const PLATFORM_NAMES = {
+  leetcode: "LeetCode",
+  geeksforgeeks: "GeeksforGeeks",
+  codeforces: "Codeforces",
+  codechef: "CodeChef",
+  code360: "Code 360",
+};
 
 async function sendMessageToActiveTab(message) {
   const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
@@ -15,35 +22,51 @@ function showStatus(message, type, duration = 2000) {
   if (!statusMessage) return;
   statusMessage.textContent = message;
   setTimeout(() => {
-    if (statusMessage.textContent === message) statusMessage.textContent = "";
+    if (statusMessage.isConnected && statusMessage.textContent === message) {
+      statusMessage.textContent = "";
+    }
   }, duration);
 }
 
 function updateToggleUI(isEnabled) {
   const toggleBtn = document.getElementById("toggleBtn");
+  const thresholdLabel = document.getElementById("thresholdLabel");
+  const thresholdMinLabel = document.getElementById("thresholdMinLabel");
+  const thresholdMaxLabel = document.getElementById("thresholdMaxLabel");
+  if (!toggleBtn) return;
   toggleBtn.classList.toggle("enabled", isEnabled);
   toggleBtn.setAttribute("aria-pressed", isEnabled.toString());
-  toggleBtn.querySelector(".toggle-state").textContent = isEnabled ? "On" : "Off";
-}
-
-function updatePresetButtons(value) {
-  document.querySelectorAll(".preset-btn").forEach((btn) => {
-    const btnValue = parseFloat(btn.dataset.value);
-    btn.classList.toggle("active", Math.abs(btnValue - value) < 0.01);
-  });
+  const stateLabel = toggleBtn.querySelector(".toggle-state");
+  if (stateLabel) stateLabel.textContent = isEnabled ? "On" : "Off";
 }
 
 document.addEventListener("DOMContentLoaded", async () => {
   const similaritySlider = document.getElementById("similaritySlider");
   const similarityValue = document.getElementById("similarityValue");
+  const thresholdLabel = document.getElementById("thresholdLabel");
+  const thresholdMinLabel = document.getElementById("thresholdMinLabel");
+  const thresholdMaxLabel = document.getElementById("thresholdMaxLabel");
   const toggleBtn = document.getElementById("toggleBtn");
-  const presetBtns = document.querySelectorAll(".preset-btn");
   const problemCount = document.getElementById("problemCount");
   const platformGrid = document.getElementById("platformGrid");
-  const chips = [...platformGrid.querySelectorAll(".platform-chip")];
+  const chips = platformGrid ? [...platformGrid.querySelectorAll(".platform-chip")] : [];
   const resetLink = document.getElementById("resetLink");
+  const randomPickBtn = document.getElementById("randomPickBtn");
+  const randomResult = document.getElementById("randomResult");
+  const randomTitle = document.getElementById("randomTitle");
+  const randomMeta = document.getElementById("randomMeta");
+
+  const requiredElements = [
+    similaritySlider, similarityValue, toggleBtn, thresholdLabel,
+    thresholdMinLabel, thresholdMaxLabel, problemCount, platformGrid,
+    resetLink, randomPickBtn, randomResult, randomTitle, randomMeta
+  ];
+  if (requiredElements.some((element) => !element)) return;
 
   let selectedPlatforms = [...DEFAULT_PLATFORMS];
+  let matchThreshold = 0.4;
+  let indexedProblems = [];
+  let currentRandomProblem = null;
 
   const PROBLEM_DATA_FILES = {
     leetcode: "data/leetcode-data.json",
@@ -54,23 +77,29 @@ document.addEventListener("DOMContentLoaded", async () => {
   };
 
   // ---- Load total index size ------------------------------------------------
-  async function loadProblemCount() {
+  async function loadProblemIndex() {
     problemCount.textContent = "…";
     try {
-      const counts = await Promise.all(
-        Object.values(PROBLEM_DATA_FILES).map(async (file) => {
+      const datasets = await Promise.all(
+        Object.entries(PROBLEM_DATA_FILES).map(async ([source, file]) => {
           try {
             const response = await fetch(chrome.runtime.getURL(file));
-            if (!response.ok) return 0;
+            if (!response.ok) return [];
             const data = await response.json();
-            return Array.isArray(data) ? data.length : 0;
+            if (!Array.isArray(data)) return [];
+            return data
+              .filter((problem) => problem?.title && problem?.url)
+              .map((problem) => ({ ...problem, source: problem.source || source }));
           } catch {
-            return 0;
+            return [];
           }
         })
       );
-      const total = counts.reduce((sum, count) => sum + count, 0);
-      problemCount.textContent = total > 0 ? total.toLocaleString() : "—";
+      indexedProblems = datasets.flat();
+      problemCount.textContent = indexedProblems.length > 0
+        ? indexedProblems.length.toLocaleString()
+        : "—";
+      randomPickBtn.disabled = indexedProblems.length === 0;
     } catch {
       problemCount.textContent = "—";
     }
@@ -88,6 +117,11 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   async function persistPlatforms() {
     renderChips();
+    if (currentRandomProblem && !selectedPlatforms.includes(currentRandomProblem.source)) {
+      currentRandomProblem = null;
+      randomResult.hidden = true;
+      randomPickBtn.textContent = "Pick one";
+    }
     try {
       await chrome.storage.local.set({ "dsa-preferred-platforms": selectedPlatforms });
     } catch (e) {
@@ -121,8 +155,9 @@ document.addEventListener("DOMContentLoaded", async () => {
     });
   });
 
-  // ---- Similarity threshold -------------------------------------------------
+  // ---- Match threshold ------------------------------------------------------
   async function setThreshold(value) {
+    matchThreshold = value;
     try {
       await chrome.runtime.sendMessage({ action: "setSimilarityThreshold", value });
       try {
@@ -133,27 +168,47 @@ document.addEventListener("DOMContentLoaded", async () => {
     }
   }
 
-  presetBtns.forEach((btn) => {
-    btn.addEventListener("click", async () => {
-      const value = parseFloat(btn.dataset.value);
-      similaritySlider.value = value.toString();
-      similarityValue.textContent = value.toString();
-      updatePresetButtons(value);
-      await setThreshold(value);
-      showStatus("Threshold updated!", "success");
-    });
-  });
-
   similaritySlider.addEventListener("input", (e) => {
     const value = parseFloat(e.target.value);
     similarityValue.textContent = value.toString();
-    updatePresetButtons(value);
   });
 
   similaritySlider.addEventListener("change", async (e) => {
     const value = parseFloat(e.target.value);
     await setThreshold(value);
     showStatus("Threshold updated!", "success");
+  });
+
+  randomPickBtn.addEventListener("click", () => {
+    const eligibleProblems = indexedProblems.filter((problem) =>
+      selectedPlatforms.includes(problem.source)
+    );
+    if (!eligibleProblems.length) return;
+    let nextProblem;
+    do {
+      nextProblem = eligibleProblems[Math.floor(Math.random() * eligibleProblems.length)];
+    } while (eligibleProblems.length > 1 && nextProblem === currentRandomProblem);
+
+    currentRandomProblem = nextProblem;
+    randomTitle.textContent = nextProblem.title;
+    randomMeta.textContent = [
+      PLATFORM_NAMES[nextProblem.source] || nextProblem.source,
+      nextProblem.difficulty || "Unknown",
+      nextProblem.isPremium ? "Premium" : null,
+    ].filter(Boolean).join(" · ");
+    randomResult.hidden = false;
+    randomResult.title = `Open ${nextProblem.title}`;
+    randomPickBtn.textContent = "Pick another";
+  });
+
+  randomResult.addEventListener("click", () => {
+    if (currentRandomProblem?.url) {
+      try {
+        const openTab = chrome.tabs.create({ url: currentRandomProblem.url });
+        if (openTab?.catch) openTab.catch(() => {});
+      } catch (e) {
+      }
+    }
   });
 
   // ---- Show/hide toggle -----------------------------------------------------
@@ -179,27 +234,30 @@ document.addEventListener("DOMContentLoaded", async () => {
       }
     } catch (err) {
     }
-    await setThreshold(0.4);
-    similaritySlider.value = "0.4";
-    similarityValue.textContent = "0.4";
-    updatePresetButtons(0.4);
+    matchThreshold = 0.4;
+    try {
+      await chrome.runtime.sendMessage({ action: "setSimilarityThreshold", value: matchThreshold });
+      try {
+        await sendMessageToActiveTab({ action: "setSimilarityThreshold", value: matchThreshold });
+      } catch (err) {
+      }
+    } catch (err) {
+    }
+    similaritySlider.value = String(matchThreshold);
+    similarityValue.textContent = String(matchThreshold);
     showStatus("Settings reset", "success");
   });
 
   // ---- Load persisted state ------------------------------------------------
-  loadProblemCount();
+  loadProblemIndex();
 
   try {
-    const response = await chrome.runtime.sendMessage({ action: "getSimilarityThreshold" });
-    if (response && typeof response.value === "number") {
-      similaritySlider.value = response.value.toString();
-      similarityValue.textContent = response.value.toString();
-      updatePresetButtons(response.value);
-    }
+    const matchResponse = await chrome.runtime.sendMessage({ action: "getSimilarityThreshold" });
+    if (typeof matchResponse?.value === "number") matchThreshold = matchResponse.value;
   } catch (e) {
-    similaritySlider.value = "0.4";
-    similarityValue.textContent = "0.4";
   }
+  similaritySlider.value = String(matchThreshold);
+  similarityValue.textContent = String(matchThreshold);
 
   try {
     const response = await chrome.runtime.sendMessage({ action: "getPreferredPlatforms" });

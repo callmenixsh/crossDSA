@@ -269,7 +269,12 @@ function getProblemTokens(problem) {
             titleUniq: new Set(titleToks),
             descUniq: new Set(descToks),
             titleBgrams: toBigrams(titleToks),
-            descBgrams: toBigrams(descToks)
+            descBgrams: toBigrams(descToks),
+            topics: normalizeTopics(problem.topics || []),
+            concepts: extractConcepts(
+                `${problem.title || ''} ${problem.description || ''} ${problem.constraints || ''}`,
+                problem.topics || []
+            )
         };
         PROBLEM_TOKEN_CACHE.set(problem, cached);
     }
@@ -321,6 +326,124 @@ function titleIsDuplicate(titleToks, seenToks) {
     return (2 * common) / (sa.size + sb.size) >= 0.9;
 }
 
+const TOPIC_ALIASES = new Map(Object.entries({
+    'dp': 'Dynamic Programming',
+    'dynamic programming': 'Dynamic Programming',
+    'dfs': 'Depth-First Search',
+    'dfs and similar': 'Depth-First Search',
+    'depth first search': 'Depth-First Search',
+    'bfs': 'Breadth-First Search',
+    'breadth first search': 'Breadth-First Search',
+    'binary search': 'Binary Search',
+    'two pointers': 'Two Pointers',
+    'sliding window': 'Sliding Window',
+    'prefix sum': 'Prefix Sum',
+    'prefix sums': 'Prefix Sum',
+    'hash table': 'Hashing',
+    'hashing': 'Hashing',
+    'graphs': 'Graph',
+    'graph': 'Graph',
+    'trees': 'Tree',
+    'tree': 'Tree',
+    'binary trees': 'Binary Tree',
+    'binary tree': 'Binary Tree',
+    'linked list': 'Linked List',
+    'recursion': 'Recursion',
+    'backtracking': 'Backtracking',
+    'greedy': 'Greedy',
+    'sorting': 'Sorting',
+    'heap': 'Heap',
+    'heaps': 'Heap',
+    'stack': 'Stack',
+    'queues': 'Queue',
+    'queue': 'Queue',
+    'strings': 'String',
+    'string': 'String',
+    'arrays': 'Array',
+    'array': 'Array',
+    'bit manipulation': 'Bit Manipulation',
+    'union find': 'Union Find',
+    'disjoint set': 'Union Find',
+    'shortest paths': 'Shortest Path',
+    'shortest path': 'Shortest Path',
+    'trie': 'Trie',
+    'tries': 'Trie',
+    'math': 'Math',
+    'combinatorics': 'Combinatorics',
+    'geometry': 'Geometry',
+    'matrix': 'Matrix',
+    'divide and conquer': 'Divide and Conquer'
+}));
+
+const CONCEPT_PATTERNS = [
+    ['Dynamic Programming', /\b(dynamic programming|memoization|tabulation|dp)\b/i],
+    ['Sliding Window', /\bsliding window\b/i],
+    ['Two Pointers', /\btwo pointers?\b/i],
+    ['Prefix Sum', /\bprefix sums?\b/i],
+    ['Binary Search', /\bbinary search\b/i],
+    ['Depth-First Search', /\b(depth[- ]first search|dfs)\b/i],
+    ['Breadth-First Search', /\b(breadth[- ]first search|bfs)\b/i],
+    ['Backtracking', /\bbacktrack(?:ing)?\b/i],
+    ['Greedy', /\bgreedy\b/i],
+    ['Union Find', /\b(union[ -]find|disjoint sets?)\b/i],
+    ['Shortest Path', /\b(shortest path|dijkstra|bellman[ -]ford|floyd[ -]warshall)\b/i],
+    ['Topological Sort', /\btopological sort\b/i],
+    ['Heap', /\b(heap|priority queue)\b/i],
+    ['Stack', /\bstacks?\b/i],
+    ['Trie', /\btries?\b/i],
+    ['Graph', /\b(graph|vertices|vertex|edges)\b/i],
+    ['Binary Tree', /\b(binary tree|binary search tree|bst)\b/i],
+    ['Linked List', /\blinked lists?\b/i],
+    ['Matrix', /\b(matrix|grid)\b/i],
+    ['String', /\b(strings?|substring|subsequence)\b/i],
+    ['Array', /\barrays?|subarray\b/i]
+];
+
+function normalizeTopics(topics = []) {
+    const normalized = new Set();
+    for (const topic of topics) {
+        const key = String(topic || '').trim().toLowerCase();
+        if (TOPIC_ALIASES.has(key)) normalized.add(TOPIC_ALIASES.get(key));
+    }
+    return normalized;
+}
+
+function extractConcepts(text, topics = []) {
+    const concepts = normalizeTopics(topics);
+    for (const [name, pattern] of CONCEPT_PATTERNS) {
+        if (pattern.test(text || '')) concepts.add(name);
+    }
+    return concepts;
+}
+
+function setSimilarity(a, b) {
+    if (!a?.size || !b?.size) return 0;
+    let intersection = 0;
+    for (const item of a) if (b.has(item)) intersection++;
+    return (2 * intersection) / (a.size + b.size);
+}
+
+function weightedTokenDice(a, b) {
+    if (!a?.size || !b?.size) return 0;
+    let intersection = 0;
+    let totalA = 0;
+    let totalB = 0;
+    for (const token of a) totalA += TITLE_IDF.get(token) || 1;
+    for (const token of b) totalB += TITLE_IDF.get(token) || 1;
+    for (const token of a) {
+        if (b.has(token)) intersection += TITLE_IDF.get(token) || 1;
+    }
+    return (2 * intersection) / (totalA + totalB);
+}
+
+function difficultySimilarity(a, b) {
+    const ranks = { basic: 0, easy: 1, medium: 2, hard: 3 };
+    const left = ranks[String(a || '').toLowerCase()];
+    const right = ranks[String(b || '').toLowerCase()];
+    if (left === undefined || right === undefined) return 0.5;
+    return Math.max(0, 1 - Math.abs(left - right) / 2);
+}
+
 let SIMILARITY_THRESHOLD = 0.4;
 if (typeof localStorage !== 'undefined') {
     const stored = localStorage.getItem('dsa-helper-similarity-threshold');
@@ -352,7 +475,6 @@ async function findMatchingProblems(pageText, pageTitle) {
     const pageTitleTokens = tokenize(pageTitle);
     const pageTitleUniq = pageTitleTokens.length ? new Set(pageTitleTokens) : pageUniq;
     const pageTitleBgrams = pageTitleTokens.length ? toBigrams(pageTitleTokens) : pageBgrams;
-
     const minThreshold = Math.max(0.2, SIMILARITY_THRESHOLD);
 
     const currentPlatform = getCurrentPlatform();
@@ -441,6 +563,140 @@ async function findMatchingProblems(pageText, pageTitle) {
 
     console.log('Found', uniqueMatches.length, 'unique matches');
     return uniqueMatches.slice(0, 20);
+}
+
+function findCurrentProblemRecord(pageTitle) {
+    const source = getCurrentPlatform();
+    if (!source || source === 'tuf') return null;
+    const titleTokens = tokenize(pageTitle);
+    let best = null;
+    let bestScore = 0;
+
+    for (const problem of problemsData) {
+        if (problem.source !== source) continue;
+        const score = weightedTokenDice(new Set(titleTokens), new Set(tokenize(problem.title)));
+        if (score > bestScore) {
+            best = problem;
+            bestScore = score;
+        }
+    }
+    return bestScore >= 0.8 ? best : null;
+}
+
+function sharedLabels(a, b) {
+    const labels = [];
+    for (const item of a) if (b.has(item)) labels.push(item);
+    return labels;
+}
+
+const GENERIC_CONCEPTS = new Set(['Array', 'String', 'Matrix', 'Graph', 'Tree', 'Binary Tree', 'Linked List']);
+
+function filteredSet(values, predicate) {
+    return new Set([...values].filter(predicate));
+}
+
+function canonicalTitleTokens(title) {
+    const aliases = new Map([
+        ['pair', 'two'],
+        ['pairs', 'two'],
+        ['maximum', 'largest'],
+        ['minimum', 'smallest']
+    ]);
+    return tokenize(title).map(token => aliases.get(token) || token);
+}
+
+async function findRelatedProblems(pageText, pageTitle, excludedUrls = new Set()) {
+    const pageTitleTokens = canonicalTitleTokens(pageTitle);
+    const pageTitleSet = new Set(pageTitleTokens);
+    const pageDescSet = new Set(tokenize(pageText));
+    const currentRecord = findCurrentProblemRecord(pageTitle);
+    const currentTopics = normalizeTopics(currentRecord?.topics || []);
+    const currentConcepts = extractConcepts(
+        `${pageTitle || ''} ${pageText || ''}`,
+        currentRecord?.topics || []
+    );
+    const candidates = [];
+    let lastYield = performance.now();
+
+    for (const problem of problemsData) {
+        if (performance.now() - lastYield >= 12) {
+            await waitForNextFrame();
+            lastYield = performance.now();
+        }
+        if (!preferredPlatforms.includes(problem.source)) continue;
+        if (excludedUrls.has(problem.url)) continue;
+        if (problem === currentRecord) continue;
+        const features = getProblemTokens(problem);
+        const candidateTitleTokens = canonicalTitleTokens(problem.title);
+        const candidateTitleSet = new Set(candidateTitleTokens);
+        const titleScore = weightedTokenDice(pageTitleSet, candidateTitleSet);
+        const descriptionScore = weightedTokenDice(pageDescSet, features.descUniq);
+
+        // Related mode intentionally removes copies of the same problem; those
+        // belong in Match mode and otherwise crowd out useful practice options.
+        if (titleIsDuplicate(pageTitleTokens, candidateTitleTokens) ||
+            descriptionScore >= 0.82 ||
+            (titleScore >= 0.35 && descriptionScore >= 0.68)) {
+            continue;
+        }
+
+        const topicScore = setSimilarity(currentTopics, features.topics);
+        const currentTechniques = filteredSet(currentConcepts, concept => !GENERIC_CONCEPTS.has(concept));
+        const candidateTechniques = filteredSet(features.concepts, concept => !GENERIC_CONCEPTS.has(concept));
+        const currentStructures = filteredSet(currentConcepts, concept => GENERIC_CONCEPTS.has(concept));
+        const candidateStructures = filteredSet(features.concepts, concept => GENERIC_CONCEPTS.has(concept));
+        const conceptScore = setSimilarity(currentTechniques, candidateTechniques);
+        const structureScore = setSimilarity(currentStructures, candidateStructures);
+        const difficultyScore = difficultySimilarity(currentRecord?.difficulty, problem.difficulty);
+        const evidenceCount = [
+            conceptScore >= 0.2,
+            topicScore >= 0.25,
+            descriptionScore >= 0.08,
+            titleScore >= 0.18
+        ].filter(Boolean).length;
+        if (evidenceCount < 2 || descriptionScore < 0.045) continue;
+
+        const rawScore = conceptScore * 0.3 +
+            topicScore * 0.2 +
+            descriptionScore * 0.25 +
+            titleScore * 0.15 +
+            structureScore * 0.05 +
+            difficultyScore * 0.05;
+        if (rawScore < RELATED_THRESHOLD) continue;
+
+        const sharedConcepts = sharedLabels(currentTechniques, candidateTechniques);
+        const sharedTopics = sharedLabels(currentTopics, features.topics)
+            .filter(topic => !sharedConcepts.includes(topic));
+        const reasons = [...sharedConcepts, ...sharedTopics].slice(0, 3);
+
+        candidates.push({
+            ...problem,
+            titleMatch: titleScore,
+            descMatch: descriptionScore,
+            combinedScore: rawScore,
+            relationReasons: reasons.length ? reasons : ['Similar problem structure'],
+            matchType: 'related',
+            confidence: rawScore
+        });
+    }
+
+    await waitForNextFrame();
+    candidates.sort((a, b) => b.confidence - a.confidence);
+
+    const results = [];
+    const seenTitles = [];
+    const perPlatform = new Map();
+    for (const candidate of candidates) {
+        const titleTokens = tokenize(candidate.title);
+        if (seenTitles.some(seen => titleIsDuplicate(titleTokens, seen))) continue;
+        const platformCount = perPlatform.get(candidate.source) || 0;
+        if (platformCount >= 6) continue;
+        results.push(candidate);
+        seenTitles.push(titleTokens);
+        perPlatform.set(candidate.source, platformCount + 1);
+        if (results.length >= 20) break;
+    }
+    return results;
 }
 
 function getProblemTitle() {
@@ -756,7 +1012,58 @@ function createButtonContainer() {
     buttonContainer.className = 'dsa-helper-floating';
     buttonContainer.style.display = 'none';
     document.body.appendChild(buttonContainer);
+    makeResultsPanelDraggable(buttonContainer);
     return buttonContainer;
+}
+
+function makeResultsPanelDraggable(container) {
+    let dragState = null;
+
+    container.addEventListener('pointerdown', (event) => {
+        const header = event.target.closest('.dsa-helper-header');
+        if (!header || event.target.closest('button, a, input, select, textarea')) return;
+        if (event.button !== 0 && event.pointerType === 'mouse') return;
+
+        const rect = container.getBoundingClientRect();
+        dragState = {
+            pointerId: event.pointerId,
+            startX: event.clientX,
+            startY: event.clientY,
+            left: rect.left,
+            top: rect.top
+        };
+        container.style.animation = 'none';
+        container.style.left = `${Math.round(rect.left)}px`;
+        container.style.top = `${Math.round(rect.top)}px`;
+        container.style.right = 'auto';
+        container.style.bottom = 'auto';
+        container.classList.add('is-dragging');
+        header.setPointerCapture(event.pointerId);
+        event.preventDefault();
+    });
+
+    container.addEventListener('pointermove', (event) => {
+        if (!dragState || event.pointerId !== dragState.pointerId) return;
+        const margin = 8;
+        const maxLeft = Math.max(margin, window.innerWidth - container.offsetWidth - margin);
+        const maxTop = Math.max(margin, window.innerHeight - container.offsetHeight - margin);
+        const left = Math.min(Math.max(margin, dragState.left + event.clientX - dragState.startX), maxLeft);
+        const top = Math.min(Math.max(margin, dragState.top + event.clientY - dragState.startY), maxTop);
+        container.style.left = `${Math.round(left)}px`;
+        container.style.top = `${Math.round(top)}px`;
+        event.preventDefault();
+    });
+
+    const finishDrag = (event) => {
+        if (!dragState || event.pointerId !== dragState.pointerId) return;
+        const header = container.querySelector('.dsa-helper-header');
+        if (header?.hasPointerCapture(event.pointerId)) header.releasePointerCapture(event.pointerId);
+        dragState = null;
+        container.classList.remove('is-dragging');
+    };
+
+    container.addEventListener('pointerup', finishDrag);
+    container.addEventListener('pointercancel', finishDrag);
 }
 
 function closeSearchResults() {
@@ -832,11 +1139,17 @@ function createLeetCodeButton(problem) {
     const sqlBadge = problem.is_sql ? '<span class="sql-badge">SQL</span>' : '';
     const premiumBadge = problem.isPremium ? '<span class="premium-badge">PREMIUM</span>' : '';
     
-    const titlePercent = Math.round(problem.titleMatch * 100);
-    const descPercent = Math.round(problem.descMatch * 100);
     const totalPercent = Math.round(problem.combinedScore * 100);
+    const isRelated = problem.matchType === 'related';
+    const scoreBadges = isRelated
+        ? `<span class="match-percent total-match">${totalPercent}% Related</span>`
+        : '<span class="match-percent total-match">Cross-platform match</span>';
+    const sourceBadge = `<span class="source-badge">${platformDisplayName(problem.source)}</span>`;
+    const relationBadges = isRelated
+        ? (problem.relationReasons || []).map(reason => `<span class="relation-badge">${reason}</span>`).join('')
+        : '';
     
-    const topicTags = problem.topics.slice(0, 4).map(topic => 
+    const topicTags = (problem.topics || []).slice(0, isRelated ? 2 : 3).map(topic =>
         `<span class="topic-tag">${topic}</span>`
     ).join('');
     
@@ -844,13 +1157,13 @@ function createLeetCodeButton(problem) {
     <div class="btn-content">
       <div class="btn-title">${problem.title} ${sqlBadge}</div>
       <div class="btn-meta">
-        <span class="difficulty ${problem.difficulty.toLowerCase()}">${problem.difficulty}</span>
-        <span class="match-percent total-match">${totalPercent}% Matched</span>
-        <span class="match-percent desc-match">${descPercent}% Desc Match</span>
-        <span class="match-percent title-match">${titlePercent}% Title Match</span>
+        <span class="difficulty ${(problem.difficulty || 'unknown').toLowerCase()}">${problem.difficulty || 'Unknown'}</span>
+        ${sourceBadge}
+        ${scoreBadges}
         ${premiumBadge}
       </div>
       <div class="btn-topics-line">
+        ${relationBadges}
         ${topicTags}
       </div>
     </div>
@@ -1106,13 +1419,100 @@ function updateUI(matches) {
     }
 }
 
+function updateUnifiedUI(resultGroups) {
+    const container = createButtonContainer();
+    const matches = resultGroups.matches || [];
+    const related = resultGroups.related || [];
+    const total = matches.length + related.length;
+
+    try {
+        chrome.storage.local.set({ lastSearchResults: total });
+    } catch (e) {
+    }
+
+    container.innerHTML = '';
+    const header = document.createElement('div');
+    header.className = 'dsa-helper-header';
+    const headerText = document.createElement('span');
+    headerText.textContent = total
+        ? `${matches.length} match${matches.length === 1 ? '' : 'es'} · ${related.length} related`
+        : 'No problems found';
+    const headerActions = document.createElement('div');
+    headerActions.className = 'header-actions';
+    headerActions.appendChild(createYoutubeButton());
+    const closeBtn = document.createElement('button');
+    closeBtn.className = 'close-btn';
+    closeBtn.type = 'button';
+    closeBtn.textContent = '×';
+    closeBtn.addEventListener('click', () => { container.style.display = 'none'; });
+    headerActions.appendChild(closeBtn);
+    header.appendChild(headerText);
+    header.appendChild(headerActions);
+    container.appendChild(header);
+
+    if (!total) {
+        const emptyContent = document.createElement('div');
+        emptyContent.className = 'results-content';
+        emptyContent.innerHTML = `
+            <div class="no-matches">
+                <p>No matches or related problems were found.</p>
+                <p class="no-matches-subtext">Try enabling more platforms or using a broader relatedness setting.</p>
+            </div>`;
+        container.appendChild(emptyContent);
+        container.style.display = 'block';
+        return;
+    }
+
+    const categories = [];
+    if (matches.length) categories.push({ key: 'matches', label: 'Matches', problems: matches });
+    if (related.length) categories.push({ key: 'related', label: 'Related', problems: related });
+
+    const tabsWrap = document.createElement('div');
+    tabsWrap.className = 'platform-tabs-wrap result-category-tabs';
+    const tabs = document.createElement('div');
+    tabs.className = 'platform-tabs';
+    const content = document.createElement('div');
+    content.className = 'results-content';
+
+    const activateCategory = (key) => {
+        tabs.querySelectorAll('.platform-tab').forEach(tab => {
+            tab.classList.toggle('active', tab.dataset.category === key);
+        });
+        content.querySelectorAll('.platform-pane').forEach(pane => {
+            pane.style.display = pane.dataset.category === key ? 'block' : 'none';
+        });
+    };
+
+    categories.forEach((category, index) => {
+        const tab = document.createElement('button');
+        tab.type = 'button';
+        tab.className = `platform-tab${index === 0 ? ' active' : ''}`;
+        tab.dataset.category = category.key;
+        tab.textContent = `${category.label} (${category.problems.length})`;
+        tab.addEventListener('click', () => activateCategory(category.key));
+        tabs.appendChild(tab);
+
+        const pane = document.createElement('div');
+        pane.className = 'platform-pane';
+        pane.dataset.category = category.key;
+        if (index > 0) pane.style.display = 'none';
+        category.problems.forEach(problem => pane.appendChild(createLeetCodeButton(problem)));
+        content.appendChild(pane);
+    });
+
+    tabsWrap.appendChild(tabs);
+    container.appendChild(tabsWrap);
+    container.appendChild(content);
+    container.style.display = 'block';
+}
+
 let currentUrl = window.location.href;
 
 function createTitleButton() {
     const titleButton = document.createElement('button');
     titleButton.className = 'dsa-helper-title-btn';
     titleButton.type = 'button';
-    titleButton.setAttribute('aria-label', 'Find this problem on other platforms');
+    titleButton.setAttribute('aria-label', 'Find equivalent problems on other platforms');
     
     // Create SVG search icon
     const svgNS = 'http://www.w3.org/2000/svg';
@@ -1140,7 +1540,7 @@ function createTitleButton() {
     svg.appendChild(line);
     
     titleButton.appendChild(svg);
-    titleButton.title = 'Find this problem on other platforms';
+    titleButton.title = 'Find equivalent problems on other platforms';
 
     titleButton.addEventListener('click', async (e) => {
         e.stopPropagation();
@@ -1162,8 +1562,8 @@ function createTitleButton() {
             const content = await getProblemContent();
             if (content) {
                 const pageTitle = getPageTitle();
-                const matches = await findMatchingProblems(content, pageTitle);
-                updateUI(matches);
+                const results = await findMatchingProblems(content, pageTitle);
+                updateUI(results);
                 
                 // Position is already set by showLoadingScreen
                 if (buttonContainer) {
@@ -1291,20 +1691,28 @@ function makeFloatingButtonDraggable(button) {
     button.addEventListener('pointercancel', finishDrag);
 }
 
+function updateFloatingButtonMode(button = document.querySelector('.dsa-helper-float-btn')) {
+    if (!button) return;
+    const label = button.querySelector('.dsa-helper-float-label');
+    if (label) label.textContent = 'Match';
+    const description = 'Find equivalent problems on other platforms';
+    button.title = description;
+    button.setAttribute('aria-label', description);
+}
+
 function injectFloatingButton() {
     if (document.querySelector('.dsa-helper-float-btn')) return;
     const titleButton = createTitleButton();
     titleButton.classList.add('dsa-helper-float-btn');
-    titleButton.title = 'Find this problem on other platforms';
     const label = document.createElement('span');
     label.className = 'dsa-helper-float-label';
-    label.textContent = 'Find matches';
     titleButton.appendChild(label);
     const dragHandle = document.createElement('span');
     dragHandle.className = 'dsa-helper-drag-handle';
     dragHandle.setAttribute('aria-hidden', 'true');
     titleButton.appendChild(dragHandle);
     document.body.appendChild(titleButton);
+    updateFloatingButtonMode(titleButton);
     makeFloatingButtonDraggable(titleButton);
 
     requestAnimationFrame(() => {
@@ -1366,7 +1774,9 @@ function debounce(func, wait) {
 
 async function init() {
     try {
-        const result = await chrome.storage.local.get(['dsa-preferred-platforms']);
+        const result = await chrome.storage.local.get([
+            'dsa-preferred-platforms'
+        ]);
         const stored = Array.isArray(result['dsa-preferred-platforms']) ? result['dsa-preferred-platforms'] : [];
         const valid = stored.filter(p => DEFAULT_PLATFORMS.includes(p));
         if (valid.length) {
@@ -1375,12 +1785,17 @@ async function init() {
     } catch (e) {
     }
     await loadProblemsData();
+    try {
+        if (!chrome.runtime?.id) return;
+    } catch (e) {
+        return;
+    }
     computeTitleIdf();
     createButtonContainer();
 
     // React to setting changes (platform toggles, threshold, visibility) from the
     // popup/background immediately, instead of waiting for the next page load.
-    chrome.storage.onChanged.addListener((changes, area) => {
+    const handleStorageChange = (changes, area) => {
         if (area !== 'local') return;
 
         if (changes['dsa-preferred-platforms']) {
@@ -1396,6 +1811,7 @@ async function init() {
             if (!Number.isNaN(value)) SIMILARITY_THRESHOLD = value;
         }
 
+
         if (changes['dsa-helper-visibility-enabled']) {
             visibilityEnabled = changes['dsa-helper-visibility-enabled'].newValue === true;
             if (!visibilityEnabled) {
@@ -1405,7 +1821,12 @@ async function init() {
                 injectTitleButton();
             }
         }
-    });
+    };
+    try {
+        chrome.storage.onChanged.addListener(handleStorageChange);
+    } catch (e) {
+        return;
+    }
 
     document.addEventListener('click', (e) => {
         if (buttonContainer && !buttonContainer.contains(e.target) &&

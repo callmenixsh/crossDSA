@@ -890,6 +890,175 @@
           color: #b7bdc3;
         }
       }
+
+      /* Compact popup layout. */
+      .section,
+      .visibility-row {
+        margin-top: 8px;
+        padding: 10px 12px;
+      }
+
+      .search-control-row {
+        gap: 10px;
+      }
+
+      .setting-heading {
+        margin-bottom: 9px;
+      }
+
+      .slider-endpoints {
+        display: flex;
+        justify-content: space-between;
+        margin-top: 7px;
+        color: #80868b;
+        font-size: 9px;
+      }
+
+      .platform-grid {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 5px;
+      }
+
+      .platform-chip {
+        justify-content: center;
+        gap: 5px;
+        min-width: 0;
+        padding: 6px 7px;
+      }
+
+      .chip-check {
+        width: 13px;
+        height: 13px;
+      }
+
+      .chip-check svg {
+        width: 8px;
+        height: 8px;
+      }
+
+      .chip-name {
+        font-size: 10px;
+      }
+
+      .random-heading {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+      }
+
+      .random-heading .section-title {
+        margin: 0;
+      }
+
+      .random-pick-btn {
+        padding: 5px 8px;
+        color: #0f766e;
+        background: #ffffff;
+        border: 1px solid #99dacf;
+        border-radius: 5px;
+        cursor: pointer;
+        font: inherit;
+        font-size: 10px;
+        font-weight: 600;
+      }
+
+      .random-pick-btn:hover:not(:disabled) {
+        background: #f0fdfa;
+        border-color: #5eead4;
+      }
+
+      .random-pick-btn:disabled {
+        cursor: default;
+        opacity: 0.5;
+      }
+
+      .random-result {
+        width: 100%;
+        margin-top: 9px;
+        padding: 9px 10px;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        color: #202124;
+        background: #f7f8f9;
+        border: 1px solid #dfe1e5;
+        border-radius: 6px;
+        cursor: pointer;
+        text-align: left;
+      }
+
+      .random-result[hidden] {
+        display: none;
+      }
+
+      .random-result:hover {
+        background: #f0fdfa;
+        border-color: #99dacf;
+      }
+
+      .random-copy {
+        min-width: 0;
+        display: flex;
+        flex: 1;
+        flex-direction: column;
+        gap: 4px;
+      }
+
+      .random-title {
+        overflow: hidden;
+        color: #202124;
+        font-size: 12px;
+        font-weight: 600;
+        line-height: 1.25;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+
+      .random-meta {
+        color: #80868b;
+        font-size: 10px;
+      }
+
+      .random-arrow {
+        color: #0f766e;
+        font-size: 14px;
+      }
+
+      .footer-note {
+        padding-top: 9px;
+        padding-bottom: 11px;
+      }
+
+      @media (prefers-color-scheme: dark) {
+        .slider-endpoints { color: #8c949c; }
+
+        .random-pick-btn {
+          color: #5eead4;
+          background: #191c1f;
+          border-color: #277c72;
+        }
+
+        .random-pick-btn:hover:not(:disabled) {
+          background: #162e2b;
+          border-color: #2dd4bf;
+        }
+
+        .random-result {
+          color: #e5e7eb;
+          background: #22262a;
+          border-color: #3b4045;
+        }
+
+        .random-result:hover {
+          background: #162e2b;
+          border-color: #277c72;
+        }
+
+        .random-title { color: #f3f4f6; }
+        .random-meta { color: #8c949c; }
+        .random-arrow { color: #5eead4; }
+      }
     </style>
   </head>
   <body>
@@ -898,7 +1067,7 @@
       <h1>crossDSA</h1>
     </div>
 
-    <div class="visibility-row">
+    <div class="visibility-row search-control-row">
       <span class="visibility-title">Search button</span>
       <button class="toggle-btn enabled" id="toggleBtn" type="button" aria-pressed="true" title="Show or hide the search button">
         <span class="toggle-state">On</span>
@@ -908,7 +1077,7 @@
 
     <div class="section">
       <div class="setting-label setting-heading">
-        <span>Match strictness</span>
+        <span id="thresholdLabel">Match strictness</span>
         <span class="similarity-value" id="similarityValue">0.4</span>
       </div>
       <input
@@ -919,53 +1088,67 @@
         value="0.4"
         id="similaritySlider"
         class="slider"
+        aria-labelledby="thresholdLabel"
       />
-      <div class="preset-buttons">
-        <button class="preset-btn" data-value="0.2">Broad</button>
-        <button class="preset-btn" data-value="0.4">Balanced</button>
-        <button class="preset-btn" data-value="0.7">Exact</button>
+      <div class="slider-endpoints" aria-hidden="true">
+        <span id="thresholdMinLabel">Broad</span>
+        <span id="thresholdMaxLabel">Exact</span>
       </div>
     </div>
 
     <div class="section">
       <div class="section-title">Search on</div>
       <div class="platform-grid" id="platformGrid">
-        <label class="platform-chip" data-platform="leetcode">
+        <label class="platform-chip" data-platform="leetcode" title="LeetCode" aria-label="Search LeetCode">
           <input type="checkbox" class="platform-check" />
           <span class="chip-check">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
           </span>
-          <span class="chip-name">LeetCode</span>
+          <span class="chip-name">LC</span>
         </label>
-        <label class="platform-chip" data-platform="geeksforgeeks">
+        <label class="platform-chip" data-platform="geeksforgeeks" title="GeeksforGeeks" aria-label="Search GeeksforGeeks">
           <input type="checkbox" class="platform-check" />
           <span class="chip-check">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
           </span>
           <span class="chip-name">GfG</span>
         </label>
-        <label class="platform-chip" data-platform="codeforces">
+        <label class="platform-chip" data-platform="codeforces" title="Codeforces" aria-label="Search Codeforces">
           <input type="checkbox" class="platform-check" />
           <span class="chip-check">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
           </span>
-          <span class="chip-name">Codeforces</span>
+          <span class="chip-name">CF</span>
         </label>
-        <label class="platform-chip" data-platform="codechef">
+        <label class="platform-chip" data-platform="codechef" title="CodeChef" aria-label="Search CodeChef">
           <input type="checkbox" class="platform-check" />
           <span class="chip-check">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
           </span>
-          <span class="chip-name">CodeChef</span>
+          <span class="chip-name">CC</span>
         </label>
-        <label class="platform-chip" data-platform="code360">
+        <label class="platform-chip" data-platform="code360" title="Code 360" aria-label="Search Code 360">
           <input type="checkbox" class="platform-check" />
           <span class="chip-check">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
           </span>
-          <span class="chip-name">Code 360</span>
+          <span class="chip-name">C360</span>
         </label>
       </div>
+    </div>
+
+    <div class="section random-section">
+      <div class="random-heading">
+        <span class="section-title">Random practice</span>
+        <button class="random-pick-btn" id="randomPickBtn" type="button" disabled>Pick one</button>
+      </div>
+      <button class="random-result" id="randomResult" type="button" hidden>
+        <span class="random-copy">
+          <span class="random-title" id="randomTitle"></span>
+          <span class="random-meta" id="randomMeta"></span>
+        </span>
+        <span class="random-arrow" aria-hidden="true">↗</span>
+      </button>
     </div>
 
     <div class="footer-note">
