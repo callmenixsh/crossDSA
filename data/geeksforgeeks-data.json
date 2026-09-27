@@ -44243,5 +44243,20 @@
     "constraints": "",
     "is_sql": true,
     "source": "geeksforgeeks"
+  },
+  {
+    "id": "933426",
+    "title": "Successful Binary Searches Irrespective of Pivot",
+    "url": "https://www.geeksforgeeks.org/problems/count-always-found/1",
+    "difficulty": "Medium",
+    "isPremium": false,
+    "topics": [
+      "constructive algo",
+      "Arrays"
+    ],
+    "description": "Given an array arr[] of n distinct integers (not necessarily sorted), consider the following search for a target: Maintain a range [lo, hi], initially [0, n-1]. At each step, pick any index p in [lo, hi] (not necessarily the middle) as pivot. If arr[p] == target, stop - found. If target < arr[p], set hi = p - 1; if target > arr[p], set lo = p + 1. If lo > hi, stop - not found. Count the number of indices i such that searching for target = arr[i] succeeds no matter which pivot is chosen at every step (i.e., for every possible sequence of pivot choices).",
+    "constraints": "",
+    "is_sql": false,
+    "source": "geeksforgeeks"
   }
 ]
