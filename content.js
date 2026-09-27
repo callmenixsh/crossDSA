@@ -19,7 +19,8 @@ const DEFAULT_PLATFORMS = ['leetcode', 'geeksforgeeks', 'codeforces', 'codechef'
 let preferredPlatforms = DEFAULT_PLATFORMS.slice();
 let problemsData = [];
 let buttonContainer = null;
-let isSearching = false; 
+let isSearching = false;
+let searchRequestId = 0;
 let currentFloatingPosition = null;
 const FLOATING_POSITION_PREFIX = 'dsa-helper-floating-position:';
 const FLOATING_EDGE_MARGIN = 12;
@@ -1067,6 +1068,9 @@ function makeResultsPanelDraggable(container) {
 }
 
 function closeSearchResults() {
+    // Invalidate any in-flight search so its eventual result cannot reopen a
+    // panel that the user has already dismissed.
+    searchRequestId += 1;
     if (buttonContainer) {
         buttonContainer.style.display = 'none';
         buttonContainer.innerHTML = '';
@@ -1143,8 +1147,7 @@ function createLeetCodeButton(problem) {
     const isRelated = problem.matchType === 'related';
     const scoreBadges = isRelated
         ? `<span class="match-percent total-match">${totalPercent}% Related</span>`
-        : '<span class="match-percent total-match">Cross-platform match</span>';
-    const sourceBadge = `<span class="source-badge">${platformDisplayName(problem.source)}</span>`;
+        : '';
     const relationBadges = isRelated
         ? (problem.relationReasons || []).map(reason => `<span class="relation-badge">${reason}</span>`).join('')
         : '';
@@ -1158,7 +1161,6 @@ function createLeetCodeButton(problem) {
       <div class="btn-title">${problem.title} ${sqlBadge}</div>
       <div class="btn-meta">
         <span class="difficulty ${(problem.difficulty || 'unknown').toLowerCase()}">${problem.difficulty || 'Unknown'}</span>
-        ${sourceBadge}
         ${scoreBadges}
         ${premiumBadge}
       </div>
@@ -1267,7 +1269,7 @@ function createCloseButton(container) {
     `;
     btn.addEventListener('click', (event) => {
         event.stopPropagation();
-        container.style.display = 'none';
+        closeSearchResults();
     });
     return btn;
 }
@@ -1551,12 +1553,17 @@ function createTitleButton() {
         e.stopPropagation();
 
         if (titleButton.dataset.dragged === 'true') return;
+
+        if (buttonContainer?.style.display === 'block') {
+            closeSearchResults();
+            return;
+        }
         
         if (isSearching) return;
         
         isSearching = true;
+        const requestId = ++searchRequestId;
         titleButton.style.opacity = '0.6';
-        titleButton.style.pointerEvents = 'none';
         
         try {
             showLoadingScreen(titleButton);
@@ -1568,6 +1575,7 @@ function createTitleButton() {
             if (content) {
                 const pageTitle = getPageTitle();
                 const results = await findMatchingProblems(content, pageTitle);
+                if (requestId !== searchRequestId) return;
                 updateUI(results);
                 
                 // Position is already set by showLoadingScreen
@@ -1577,11 +1585,10 @@ function createTitleButton() {
             }
         } catch (error) {
             console.error('Search error:', error);
-            updateUI([]);
+            if (requestId === searchRequestId) updateUI([]);
         } finally {
             isSearching = false;
             titleButton.style.opacity = '1';
-            titleButton.style.pointerEvents = 'auto';
         }
     });
     return titleButton;
