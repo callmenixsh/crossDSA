@@ -20,6 +20,10 @@ let preferredPlatforms = DEFAULT_PLATFORMS.slice();
 let problemsData = [];
 let buttonContainer = null;
 let isSearching = false; 
+let currentFloatingPosition = null;
+const FLOATING_POSITION_PREFIX = 'dsa-helper-floating-position:';
+const FLOATING_EDGE_MARGIN = 12;
+const DRAG_START_DISTANCE = 5;
 
 async function loadProblemsData() {
     try {
@@ -332,7 +336,11 @@ try {
 } catch (e) {
 }
 
-function findMatchingProblems(pageText, pageTitle) {
+function waitForNextFrame() {
+    return new Promise(resolve => requestAnimationFrame(resolve));
+}
+
+async function findMatchingProblems(pageText, pageTitle) {
     console.log('Finding matches for:', pageText.substring(0, 100) + '...');
 
     const pageTokens = tokenize(pageText);
@@ -351,7 +359,16 @@ function findMatchingProblems(pageText, pageTitle) {
     const currentSource = (currentPlatform === 'tuf' || currentPlatform === null) ? null : currentPlatform;
 
     const matches = [];
+    let lastYield = performance.now();
     for (let i = 0; i < problemsData.length; i++) {
+        // Tokenizing the full local index is CPU-heavy on the first search. Give
+        // the browser a paint opportunity roughly once per frame so the loader,
+        // scrolling, and the rest of the page remain responsive.
+        if (performance.now() - lastYield >= 12) {
+            await waitForNextFrame();
+            lastYield = performance.now();
+        }
+
         const problem = problemsData[i];
 
         // Skip problems from the platform the user is currently on
@@ -400,6 +417,7 @@ function findMatchingProblems(pageText, pageTitle) {
         }
     }
 
+    await waitForNextFrame();
     matches.sort((a, b) => b.combinedScore - a.combinedScore);
 
     // Deduplicate: drop near-identical titles
@@ -521,6 +539,14 @@ function getCurrentPlatform() {
     if (host.endsWith('codechef.com')) return 'codechef';
     if (host.endsWith('naukri.com') && window.location.pathname.includes('/code360/')) return 'code360';
     return null;
+}
+
+function isSupportedProblemPage() {
+    if (getCurrentPlatform() !== 'tuf') return true;
+
+    const path = window.location.pathname.replace(/\/+$/, '');
+    return /^\/practice\/dsa\/[^/]+$/i.test(path) ||
+        /^\/plus\/dsa\/problems\/[^/]+$/i.test(path);
 }
 
 const PLATFORM_DISPLAY_NAMES = {
@@ -744,26 +770,34 @@ function positionContainer(titleButton) {
     const container = createButtonContainer();
     const rect = titleButton.getBoundingClientRect();
     const margin = 8;
-    const panelWidth = 480;
     const vw = window.innerWidth;
     const vh = window.innerHeight;
+    const panelWidth = Math.min(480, vw - (margin * 2));
     const panelMaxHeight = vh * 0.8;
 
-    if (titleButton.classList.contains('dsa-helper-float-btn')) {
-        // Button sits bottom-left: open the panel to its right, growing upwards
-        const left = Math.max(margin, Math.round(rect.right + margin));
-        container.style.left = `${left}px`;
-        container.style.right = 'auto';
-        container.style.top = 'auto';
-        const bottom = Math.max(margin, Math.round(window.innerHeight - rect.top + margin));
-        container.style.bottom = `${bottom}px`;
+    const roomOnRight = vw - rect.right - margin;
+    const roomOnLeft = rect.left - margin;
+    let left;
+
+    if (roomOnRight >= panelWidth) {
+        left = rect.right + margin;
+    } else if (roomOnLeft >= panelWidth) {
+        left = rect.left - panelWidth - margin;
     } else {
-        const left = Math.max(margin, Math.min(Math.round(rect.left), vw - panelWidth - margin));
-        const top = Math.max(margin, Math.min(Math.round(rect.bottom + margin), vh - panelMaxHeight - margin));
-        container.style.left = `${left}px`;
-        container.style.right = 'auto';
-        container.style.top = `${top}px`;
+        left = Math.min(Math.max(margin, rect.left), vw - panelWidth - margin);
     }
+
+    // Align the panel's lower edge with the button where possible. This keeps a
+    // bottom-positioned button from opening most of the panel off-screen.
+    const top = Math.min(
+        Math.max(margin, rect.bottom - panelMaxHeight),
+        Math.max(margin, vh - panelMaxHeight - margin)
+    );
+
+    container.style.left = `${Math.round(left)}px`;
+    container.style.right = 'auto';
+    container.style.top = `${Math.round(top)}px`;
+    container.style.bottom = 'auto';
 }
 
 function showLoadingScreen(titleButton) {
@@ -771,12 +805,12 @@ function showLoadingScreen(titleButton) {
     const enabledCount = problemsData.filter(p => preferredPlatforms.includes(p.source)).length;
     container.innerHTML = `
         <div class="dsa-helper-header">
-            <span>Searching for matches...</span>
+            <span>Finding cross-platform matches…</span>
         </div>
         <div class="loading-container">
             <div class="loading-text">
-                <p>Analyzing problem content...</p>
-                <p class="loading-subtext">Checking ${enabledCount} problems across enabled platforms</p>
+                <p>Comparing problem details…</p>
+                <p class="loading-subtext">Comparing this problem with ${enabledCount.toLocaleString()} indexed problems</p>
             </div>
         </div>
     `;
@@ -941,7 +975,7 @@ function updateUI(matches) {
         const emptyHeader = document.createElement('div');
         emptyHeader.className = 'dsa-helper-header';
         const emptyText = document.createElement('span');
-        emptyText.textContent = 'No matches found';
+        emptyText.textContent = 'No cross-platform matches found';
         const emptyActions = document.createElement('div');
         emptyActions.className = 'header-actions';
         emptyActions.appendChild(createYoutubeButton());
@@ -957,8 +991,8 @@ function updateUI(matches) {
         emptyContent.className = 'results-content';
         emptyContent.innerHTML = `
                 <div class="no-matches">
-                    <p>No similar problems found.</p>
-                    <p class="no-matches-subtext">Try adjusting the similarity threshold in the popup.</p>
+                    <p>This problem was not found on the enabled platforms.</p>
+                    <p class="no-matches-subtext">Try using a broader match strictness setting.</p>
                 </div>
             `;
         container.appendChild(emptyHeader);
@@ -982,7 +1016,7 @@ function updateUI(matches) {
     const header = document.createElement('div');
     header.className = 'dsa-helper-header';
     const headerText = document.createElement('span');
-    headerText.textContent = `Found Match${matches.length > 1 ? 'es' : ''} on ${groups.size} platform${groups.size > 1 ? 's' : ''}!`;
+    headerText.textContent = `Found on ${groups.size} platform${groups.size === 1 ? '' : 's'}`;
     const headerActions = document.createElement('div');
     headerActions.className = 'header-actions';
     headerActions.appendChild(createYoutubeButton());
@@ -1077,8 +1111,8 @@ let currentUrl = window.location.href;
 function createTitleButton() {
     const titleButton = document.createElement('button');
     titleButton.className = 'dsa-helper-title-btn';
-    titleButton.style.marginLeft = '8px';
-    titleButton.style.cursor = 'pointer';
+    titleButton.type = 'button';
+    titleButton.setAttribute('aria-label', 'Find this problem on other platforms');
     
     // Create SVG search icon
     const svgNS = 'http://www.w3.org/2000/svg';
@@ -1106,10 +1140,12 @@ function createTitleButton() {
     svg.appendChild(line);
     
     titleButton.appendChild(svg);
-    titleButton.title = 'Find similar problems (description-prioritized matching)';
+    titleButton.title = 'Find this problem on other platforms';
 
     titleButton.addEventListener('click', async (e) => {
         e.stopPropagation();
+
+        if (titleButton.dataset.dragged === 'true') return;
         
         if (isSearching) return;
         
@@ -1119,11 +1155,12 @@ function createTitleButton() {
         
         try {
             showLoadingScreen(titleButton);
-            
+
+            // Ensure the loading UI gets painted before content extraction and
+            // the local-index scan begin.
+            await waitForNextFrame();
             const content = await getProblemContent();
             if (content) {
-                await new Promise(resolve => setTimeout(resolve, 800));
-                
                 const pageTitle = getPageTitle();
                 const matches = await findMatchingProblems(content, pageTitle);
                 updateUI(matches);
@@ -1153,72 +1190,143 @@ if (typeof localStorage !== 'undefined') {
     }
 }
 
-function getTitleElementForPlatform() {
-    const platform = getCurrentPlatform();
-    if (platform === 'leetcode') {
-        // The navbar also has a "Problems" link (href="/problems/"). Only the
-        // question title link carries a problem slug, so match ONLY that one to
-        // avoid injecting the button into the navbar as well.
-        const links = document.querySelectorAll('a[href^="/problems/"]');
-        let titleLink = null;
-        for (const link of links) {
-            const href = (link.getAttribute('href') || '').replace(/^https?:\/\/[^/]+/i, '');
-            if (/^\/problems\/?$/.test(href)) continue;               // navbar problems list
-            if (!titleLink && /^\/problems\/[^/]+/.test(href)) {
-                titleLink = link;                                      // first slug-bearing link (fallback)
-            }
-            if (href.match(/^\/problems\/[^/]+/) && link.querySelector('h1, h2, [class*="title"]')) {
-                titleLink = link;                                      // prefer a heading-bearing title link
-                break;
-            }
-        }
-        if (!titleLink) return null;
-        const container = titleLink.closest('div');
-        return container || titleLink.parentElement;
-    }
-    if (platform === 'codeforces') {
-        return document.querySelector('.problem-statement .header .title');
-    }
-    if (platform === 'code360') {
-        return document.querySelector('h1, h1[class*="title"], [class*="problem-name"], [class*="problem-title"]');
-    }
-    return document.querySelector(
-        '.text-2xl.font-bold.text-new_primary.dark\\:text-new_dark_primary, h1.text-xl.font-bold, h1.text-2xl.font-bold, h1.font-bold, [data-problem-title]'
-    );
-}
-
 function removeTitleButton() {
     document.querySelectorAll('.dsa-helper-title-btn, .dsa-helper-float-btn').forEach(btn => btn.remove());
+}
+
+function floatingPositionKey() {
+    return `${FLOATING_POSITION_PREFIX}${window.location.hostname}`;
+}
+
+function clampFloatingButton(button, left, top) {
+    const maxLeft = Math.max(FLOATING_EDGE_MARGIN, window.innerWidth - button.offsetWidth - FLOATING_EDGE_MARGIN);
+    const maxTop = Math.max(FLOATING_EDGE_MARGIN, window.innerHeight - button.offsetHeight - FLOATING_EDGE_MARGIN);
+    return {
+        left: Math.min(Math.max(FLOATING_EDGE_MARGIN, left), maxLeft),
+        top: Math.min(Math.max(FLOATING_EDGE_MARGIN, top), maxTop)
+    };
+}
+
+function placeFloatingButton(button, position) {
+    const availableWidth = Math.max(1, window.innerWidth - button.offsetWidth - (FLOATING_EDGE_MARGIN * 2));
+    const availableHeight = Math.max(1, window.innerHeight - button.offsetHeight - (FLOATING_EDGE_MARGIN * 2));
+    const left = position
+        ? FLOATING_EDGE_MARGIN + (Math.min(Math.max(position.x, 0), 1) * availableWidth)
+        : FLOATING_EDGE_MARGIN;
+    const top = position
+        ? FLOATING_EDGE_MARGIN + (Math.min(Math.max(position.y, 0), 1) * availableHeight)
+        : window.innerHeight - button.offsetHeight - 24;
+    const clamped = clampFloatingButton(button, left, top);
+
+    button.style.left = `${Math.round(clamped.left)}px`;
+    button.style.top = `${Math.round(clamped.top)}px`;
+    button.style.right = 'auto';
+    button.style.bottom = 'auto';
+}
+
+function saveFloatingButtonPosition(button) {
+    const availableWidth = Math.max(1, window.innerWidth - button.offsetWidth - (FLOATING_EDGE_MARGIN * 2));
+    const availableHeight = Math.max(1, window.innerHeight - button.offsetHeight - (FLOATING_EDGE_MARGIN * 2));
+    const rect = button.getBoundingClientRect();
+    currentFloatingPosition = {
+        x: Math.min(Math.max((rect.left - FLOATING_EDGE_MARGIN) / availableWidth, 0), 1),
+        y: Math.min(Math.max((rect.top - FLOATING_EDGE_MARGIN) / availableHeight, 0), 1)
+    };
+
+    button.dataset.positionChanged = 'true';
+    chrome.storage.local.set({ [floatingPositionKey()]: currentFloatingPosition });
+}
+
+function makeFloatingButtonDraggable(button) {
+    let dragState = null;
+
+    button.addEventListener('pointerdown', (event) => {
+        if (event.button !== 0 && event.pointerType === 'mouse') return;
+        const rect = button.getBoundingClientRect();
+        dragState = {
+            pointerId: event.pointerId,
+            startX: event.clientX,
+            startY: event.clientY,
+            left: rect.left,
+            top: rect.top,
+            moved: false
+        };
+        button.setPointerCapture(event.pointerId);
+    });
+
+    button.addEventListener('pointermove', (event) => {
+        if (!dragState || event.pointerId !== dragState.pointerId) return;
+        const dx = event.clientX - dragState.startX;
+        const dy = event.clientY - dragState.startY;
+
+        if (!dragState.moved && Math.hypot(dx, dy) < DRAG_START_DISTANCE) return;
+        dragState.moved = true;
+        button.classList.add('is-dragging');
+        const next = clampFloatingButton(button, dragState.left + dx, dragState.top + dy);
+        button.style.left = `${Math.round(next.left)}px`;
+        button.style.top = `${Math.round(next.top)}px`;
+        closeSearchResults();
+        event.preventDefault();
+    });
+
+    const finishDrag = (event) => {
+        if (!dragState || event.pointerId !== dragState.pointerId) return;
+        const moved = dragState.moved;
+        dragState = null;
+        button.classList.remove('is-dragging');
+
+        if (button.hasPointerCapture(event.pointerId)) {
+            button.releasePointerCapture(event.pointerId);
+        }
+        if (moved) {
+            button.dataset.dragged = 'true';
+            saveFloatingButtonPosition(button);
+            setTimeout(() => {
+                button.dataset.dragged = 'false';
+            }, 0);
+        }
+    };
+
+    button.addEventListener('pointerup', finishDrag);
+    button.addEventListener('pointercancel', finishDrag);
 }
 
 function injectFloatingButton() {
     if (document.querySelector('.dsa-helper-float-btn')) return;
     const titleButton = createTitleButton();
     titleButton.classList.add('dsa-helper-float-btn');
-    titleButton.title = 'Find similar DSA problems across platforms';
+    titleButton.title = 'Find this problem on other platforms';
     const label = document.createElement('span');
     label.className = 'dsa-helper-float-label';
-    label.textContent = 'Similar';
+    label.textContent = 'Find matches';
     titleButton.appendChild(label);
+    const dragHandle = document.createElement('span');
+    dragHandle.className = 'dsa-helper-drag-handle';
+    dragHandle.setAttribute('aria-hidden', 'true');
+    titleButton.appendChild(dragHandle);
     document.body.appendChild(titleButton);
+    makeFloatingButtonDraggable(titleButton);
+
+    requestAnimationFrame(() => {
+        placeFloatingButton(titleButton, null);
+        chrome.storage.local.get([floatingPositionKey()], (result) => {
+            if (!titleButton.isConnected || titleButton.dataset.positionChanged === 'true') return;
+            const saved = result[floatingPositionKey()];
+            if (saved && Number.isFinite(saved.x) && Number.isFinite(saved.y)) {
+                currentFloatingPosition = saved;
+                placeFloatingButton(titleButton, saved);
+            }
+        });
+    });
 }
 
 function injectTitleButton() {
-    if (!visibilityEnabled) {
+    if (!visibilityEnabled || !isSupportedProblemPage()) {
         removeTitleButton();
         hidePopup();
         return;
     }
-    const platform = getCurrentPlatform();
-    if (platform === 'geeksforgeeks' || platform === 'codechef' || platform === 'code360') {
-        injectFloatingButton();
-        return;
-    }
-    const titleElement = getTitleElementForPlatform();
-    if (titleElement && !titleElement.querySelector('.dsa-helper-title-btn')) {
-        const titleButton = createTitleButton();
-        titleElement.appendChild(titleButton);
-    }
+    injectFloatingButton();
 }
 
 function hidePopup() {
@@ -1335,6 +1443,15 @@ async function init() {
     };
 
     window.addEventListener('popstate', handleUrlChange);
+
+    window.addEventListener('resize', debounce(() => {
+        const floatingButton = document.querySelector('.dsa-helper-float-btn');
+        if (!floatingButton) return;
+        placeFloatingButton(floatingButton, currentFloatingPosition);
+        if (buttonContainer?.style.display === 'block') {
+            positionContainer(floatingButton);
+        }
+    }, 100));
 
     const debouncedAnalyze = debounce(() => {
         injectTitleButton();

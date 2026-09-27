@@ -15,7 +15,8 @@
   "content_scripts": [
     {
       "matches": [
-        "https://takeuforward.org/*",
+        "https://takeuforward.org/practice/dsa*",
+        "https://takeuforward.org/plus/dsa/problems/*",
         "https://leetcode.com/problems/*",
         "https://www.geeksforgeeks.org/problems/*",
         "https://codeforces.com/problemset/problem/*",

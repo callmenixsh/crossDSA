@@ -345,27 +345,570 @@
         background: rgba(255, 255, 255, 0.35);
         border-radius: 3px;
       }
+
+      /* Deliberately plain, utility-style settings UI. */
+      body {
+        width: 336px;
+        padding: 0;
+        color: #202124;
+        background: #f7f8f9;
+        animation: none;
+      }
+
+      .header {
+        display: grid;
+        grid-template-columns: 1fr auto auto;
+        gap: 10px;
+        justify-content: initial;
+        padding: 14px 16px 12px;
+        margin: 0;
+        background: #ffffff;
+        border-bottom: 1px solid #dfe1e5;
+      }
+
+      .header h1 {
+        grid-column: 1;
+        grid-row: 1;
+        justify-self: start;
+        font-size: 16px;
+        font-weight: 650;
+        letter-spacing: -0.2px;
+        color: #202124;
+      }
+
+      .github-btn {
+        position: static;
+        grid-column: 2;
+        color: #5f6368;
+        background: transparent;
+        border: 0;
+        border-radius: 4px;
+        padding: 5px 3px;
+        font-size: 12px;
+        font-weight: 500;
+      }
+
+      .github-btn:hover {
+        color: #0f766e;
+        background: transparent;
+        text-decoration: underline;
+      }
+
+      .header-controls {
+        position: static;
+        grid-column: 3;
+        gap: 6px;
+      }
+
+      .toggle-btn {
+        width: 30px;
+        height: 28px;
+        justify-content: center;
+        padding: 0;
+        color: #3c4043;
+        background: #ffffff;
+        border: 1px solid #dadce0;
+        border-radius: 6px;
+      }
+
+      .toggle-btn:hover {
+        background: #f1f3f4;
+        border-color: #bdc1c6;
+      }
+
+      .toggle-btn:focus-visible,
+      .preset-btn:focus-visible,
+      .platform-chip:focus-within {
+        outline: 2px solid #0d9488;
+        outline-offset: 2px;
+      }
+
+      .section {
+        margin: 12px 12px 0;
+        padding: 13px 14px;
+        background: #ffffff;
+        border: 1px solid #dfe1e5;
+        border-radius: 8px;
+        box-shadow: none;
+        opacity: 1;
+        animation: none;
+      }
+
+      .section-title {
+        gap: 0;
+        margin-bottom: 12px;
+        color: #202124;
+        font-size: 13px;
+        font-weight: 650;
+        text-transform: none;
+        letter-spacing: 0;
+      }
+
+      .section-title::after {
+        display: none;
+      }
+
+      .setting-label {
+        margin-bottom: 12px;
+        color: #5f6368;
+        font-size: 12px;
+        font-weight: 400;
+      }
+
+      .similarity-value {
+        min-width: 24px;
+        padding: 2px 6px;
+        color: #3c4043;
+        background: #f1f3f4;
+        border: 1px solid #dadce0;
+        border-radius: 4px;
+        font-size: 11px;
+        font-weight: 600;
+      }
+
+      .slider {
+        height: 4px;
+        border-radius: 2px;
+        background: #dfe1e5;
+      }
+
+      .slider::-webkit-slider-thumb {
+        width: 15px;
+        height: 15px;
+        background: #0d9488;
+        border: 2px solid #ffffff;
+        box-shadow: 0 0 0 1px #0d9488;
+      }
+
+      .preset-buttons {
+        gap: 6px;
+        margin-top: 12px;
+      }
+
+      .preset-btn {
+        padding: 6px 8px;
+        color: #5f6368;
+        background: #ffffff;
+        border: 1px solid #dadce0;
+        border-radius: 5px;
+        font-size: 11px;
+        font-weight: 500;
+        transition: background 0.12s ease, border-color 0.12s ease;
+      }
+
+      .preset-btn:hover {
+        color: #202124;
+        background: #f8f9fa;
+        border-color: #bdc1c6;
+      }
+
+      .preset-btn.active {
+        color: #115e59;
+        background: #ccfbf1;
+        border-color: #5eead4;
+        font-weight: 600;
+      }
+
+      .platform-grid {
+        gap: 7px;
+      }
+
+      .platform-chip {
+        gap: 8px;
+        padding: 9px 10px;
+        background: #ffffff;
+        border: 1px solid #dadce0;
+        border-radius: 6px;
+        transition: background 0.12s ease, border-color 0.12s ease;
+      }
+
+      .platform-chip:hover {
+        background: #f8f9fa;
+        border-color: #bdc1c6;
+      }
+
+      .chip-check {
+        width: 15px;
+        height: 15px;
+        border: 1px solid #9aa0a6;
+        border-radius: 3px;
+      }
+
+      .chip-check svg {
+        width: 9px;
+        height: 9px;
+      }
+
+      .chip-name {
+        color: #3c4043;
+        font-size: 12px;
+        font-weight: 500;
+      }
+
+      .chip-count {
+        color: #80868b;
+        font-size: 10px;
+        font-weight: 400;
+      }
+
+      .platform-chip.checked {
+        background: #f0fdfa;
+        border-color: #5eead4;
+      }
+
+      .platform-chip.checked .chip-check {
+        color: #ffffff;
+        background: #0d9488;
+        border-color: #0d9488;
+      }
+
+      .platform-chip.checked .chip-name {
+        color: #202124;
+      }
+
+      .hint {
+        margin-top: 10px;
+        color: #80868b;
+        font-size: 10px;
+        font-weight: 400;
+        line-height: 1.4;
+      }
+
+      .stats-section {
+        gap: 9px;
+      }
+
+      .stat-row {
+        font-size: 12px;
+      }
+
+      .stat-label {
+        color: #5f6368;
+        font-weight: 400;
+      }
+
+      .stat-value {
+        color: #202124;
+        font-size: 12px;
+        font-weight: 600;
+      }
+
+      .footer-note {
+        margin: 0;
+        padding: 12px 16px 14px;
+        color: #80868b;
+        font-size: 10px;
+        opacity: 1;
+        animation: none;
+      }
+
+      .footer-note a,
+      .footer-note a:hover {
+        color: #0f766e;
+      }
+
+      .status-blob {
+        width: 7px;
+        height: 7px;
+      }
+
+      .status-blob.active { background: #188038; }
+      .status-blob.inactive { background: #d93025; }
+
+      ::-webkit-scrollbar-track { background: #f1f3f4; }
+      ::-webkit-scrollbar-thumb { background: #bdc1c6; }
+
+      @media (prefers-color-scheme: dark) {
+        body {
+          color: #e5e7eb;
+          background: #111315;
+        }
+
+        .header {
+          background: #191c1f;
+          border-bottom-color: #303438;
+        }
+
+        .header h1,
+        .section-title,
+        .stat-value,
+        .platform-chip.checked .chip-name {
+          color: #f3f4f6;
+        }
+
+        .github-btn,
+        .setting-label,
+        .stat-label {
+          color: #a7adb4;
+        }
+
+        .github-btn:hover,
+        .footer-note a,
+        .footer-note a:hover {
+          color: #5eead4;
+        }
+
+        .toggle-btn {
+          color: #d1d5db;
+          background: #22262a;
+          border-color: #3b4045;
+        }
+
+        .toggle-btn:hover {
+          background: #2b3035;
+          border-color: #555b61;
+        }
+
+        .section {
+          background: #191c1f;
+          border-color: #303438;
+        }
+
+        .similarity-value {
+          color: #d1d5db;
+          background: #25292d;
+          border-color: #3b4045;
+        }
+
+        .slider {
+          background: #3b4045;
+        }
+
+        .slider::-webkit-slider-thumb {
+          background: #2dd4bf;
+          border-color: #191c1f;
+          box-shadow: 0 0 0 1px #2dd4bf;
+        }
+
+        .preset-btn {
+          color: #b7bdc3;
+          background: #191c1f;
+          border-color: #3b4045;
+        }
+
+        .preset-btn:hover {
+          color: #f3f4f6;
+          background: #25292d;
+          border-color: #555b61;
+        }
+
+        .preset-btn.active {
+          color: #99f6e4;
+          background: #123c38;
+          border-color: #277c72;
+        }
+
+        .platform-chip {
+          background: #191c1f;
+          border-color: #3b4045;
+        }
+
+        .platform-chip:hover {
+          background: #22262a;
+          border-color: #555b61;
+        }
+
+        .platform-chip.checked {
+          background: #162e2b;
+          border-color: #277c72;
+        }
+
+        .platform-chip.checked .chip-check {
+          color: #09201d;
+          background: #2dd4bf;
+          border-color: #2dd4bf;
+        }
+
+        .chip-check {
+          border-color: #6b737a;
+        }
+
+        .chip-name {
+          color: #d1d5db;
+        }
+
+        .chip-count,
+        .hint,
+        .footer-note {
+          color: #8c949c;
+        }
+
+        .status-blob.active { background: #34d399; }
+        .status-blob.inactive { background: #f87171; }
+
+        ::-webkit-scrollbar-track { background: #191c1f; }
+        ::-webkit-scrollbar-thumb { background: #555b61; }
+      }
+
+      .header {
+        grid-template-columns: 1fr auto;
+      }
+
+      .github-btn {
+        grid-column: 2;
+      }
+
+      .visibility-row {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin: 12px 12px 0;
+        padding: 11px 14px;
+        background: #ffffff;
+        border: 1px solid #dfe1e5;
+        border-radius: 8px;
+      }
+
+      .visibility-title,
+      .setting-heading {
+        color: #202124;
+        font-size: 13px;
+        font-weight: 650;
+      }
+
+      .setting-heading {
+        margin-bottom: 12px;
+      }
+
+      .toggle-btn {
+        width: auto;
+        height: auto;
+        gap: 8px;
+        padding: 0;
+        color: #5f6368;
+        background: transparent;
+        border: 0;
+        border-radius: 0;
+        font: inherit;
+      }
+
+      .toggle-btn:hover {
+        color: #202124;
+        background: transparent;
+        border-color: transparent;
+      }
+
+      .toggle-state {
+        min-width: 18px;
+        font-size: 11px;
+        font-weight: 500;
+        text-align: right;
+      }
+
+      .toggle-track {
+        position: relative;
+        width: 30px;
+        height: 18px;
+        flex: 0 0 auto;
+        background: #bdc1c6;
+        border-radius: 999px;
+        transition: background 0.15s ease;
+      }
+
+      .toggle-thumb {
+        position: absolute;
+        top: 3px;
+        left: 3px;
+        width: 12px;
+        height: 12px;
+        background: #ffffff;
+        border-radius: 50%;
+        box-shadow: 0 1px 2px rgba(0, 0, 0, 0.25);
+        transition: transform 0.15s ease;
+      }
+
+      .toggle-btn.enabled {
+        color: #0f766e;
+      }
+
+      .toggle-btn.enabled .toggle-track {
+        background: #0d9488;
+      }
+
+      .toggle-btn.enabled .toggle-thumb {
+        transform: translateX(12px);
+      }
+
+      .footer-note {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        text-align: left;
+      }
+
+      .footer-note strong {
+        color: #5f6368;
+        font-weight: 600;
+      }
+
+      .sr-only {
+        position: absolute;
+        width: 1px;
+        height: 1px;
+        padding: 0;
+        margin: -1px;
+        overflow: hidden;
+        clip: rect(0, 0, 0, 0);
+        white-space: nowrap;
+        border: 0;
+      }
+
+      @media (prefers-color-scheme: dark) {
+        .visibility-row {
+          background: #191c1f;
+          border-color: #303438;
+        }
+
+        .visibility-title,
+        .setting-heading {
+          color: #f3f4f6;
+        }
+
+        .toggle-btn,
+        .toggle-btn:hover {
+          color: #a7adb4;
+          background: transparent;
+        }
+
+        .toggle-btn.enabled {
+          color: #5eead4;
+        }
+
+        .toggle-btn.enabled .toggle-track {
+          background: #2dd4bf;
+        }
+
+        .toggle-btn.enabled .toggle-thumb {
+          background: #09201d;
+        }
+
+        .toggle-track {
+          background: #555b61;
+        }
+
+        .footer-note strong {
+          color: #b7bdc3;
+        }
+      }
     </style>
   </head>
   <body>
     <div class="header">
       <a class="github-btn" href="https://github.com/callmenixsh" target="_blank">GitHub</a>
       <h1>crossDSA</h1>
-      <div class="header-controls">
-        <span class="status-blob active" id="statusBlob"></span>
-        <button class="toggle-btn" id="toggleBtn" title="Show/hide the search button">
-          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
-            <circle cx="12" cy="12" r="3"></circle>
-          </svg>
-        </button>
-      </div>
+    </div>
+
+    <div class="visibility-row">
+      <span class="visibility-title">Search button</span>
+      <button class="toggle-btn enabled" id="toggleBtn" type="button" aria-pressed="true" title="Show or hide the search button">
+        <span class="toggle-state">On</span>
+        <span class="toggle-track" aria-hidden="true"><span class="toggle-thumb"></span></span>
+      </button>
     </div>
 
     <div class="section">
-      <div class="section-title">Similarity Grade</div>
-      <div class="setting-label">
-        <span>Match threshold</span>
+      <div class="setting-label setting-heading">
+        <span>Match strictness</span>
         <span class="similarity-value" id="similarityValue">0.4</span>
       </div>
       <input
@@ -378,14 +921,14 @@
         class="slider"
       />
       <div class="preset-buttons">
-        <button class="preset-btn" data-value="0.2">Lenient</button>
-        <button class="preset-btn" data-value="0.4">Moderate</button>
-        <button class="preset-btn" data-value="0.7">Strict</button>
+        <button class="preset-btn" data-value="0.2">Broad</button>
+        <button class="preset-btn" data-value="0.4">Balanced</button>
+        <button class="preset-btn" data-value="0.7">Exact</button>
       </div>
     </div>
 
     <div class="section">
-      <div class="section-title">Search Platforms</div>
+      <div class="section-title">Search on</div>
       <div class="platform-grid" id="platformGrid">
         <label class="platform-chip" data-platform="leetcode">
           <input type="checkbox" class="platform-check" />
@@ -393,7 +936,6 @@
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
           </span>
           <span class="chip-name">LeetCode</span>
-          <span class="chip-count">—</span>
         </label>
         <label class="platform-chip" data-platform="geeksforgeeks">
           <input type="checkbox" class="platform-check" />
@@ -401,7 +943,6 @@
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
           </span>
           <span class="chip-name">GfG</span>
-          <span class="chip-count">—</span>
         </label>
         <label class="platform-chip" data-platform="codeforces">
           <input type="checkbox" class="platform-check" />
@@ -409,7 +950,6 @@
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
           </span>
           <span class="chip-name">Codeforces</span>
-          <span class="chip-count">—</span>
         </label>
         <label class="platform-chip" data-platform="codechef">
           <input type="checkbox" class="platform-check" />
@@ -417,7 +957,6 @@
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
           </span>
           <span class="chip-name">CodeChef</span>
-          <span class="chip-count">—</span>
         </label>
         <label class="platform-chip" data-platform="code360">
           <input type="checkbox" class="platform-check" />
@@ -425,33 +964,16 @@
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
           </span>
           <span class="chip-name">Code 360</span>
-          <span class="chip-count">—</span>
         </label>
-      </div>
-      <div class="hint">Similar problems are searched only on enabled platforms.</div>
-    </div>
-
-    <div class="section">
-      <div class="section-title">Overview</div>
-      <div class="stats-section">
-        <div class="stat-row">
-          <span class="stat-label">Problems Indexed</span>
-          <span class="stat-value" id="problemCount">—</span>
-        </div>
-        <div class="stat-row">
-          <span class="stat-label">Platforms Active</span>
-          <span class="stat-value" id="activePlatforms">—</span>
-        </div>
-        <div class="stat-row">
-          <span class="stat-label">Last Results</span>
-          <span class="stat-value" id="lastResults">—</span>
-        </div>
       </div>
     </div>
 
     <div class="footer-note">
-      Find similar DSA problems across platforms &middot; <a href="#" id="resetLink">Reset settings</a>
+      <span><strong id="problemCount">—</strong> problems indexed</span>
+      <a href="#" id="resetLink">Reset</a>
     </div>
+
+    <span class="sr-only" id="statusMessage" aria-live="polite"></span>
 
     <script src="popup.js"></script>
   </body>

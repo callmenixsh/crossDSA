@@ -1,11 +1,4 @@
 const DEFAULT_PLATFORMS = ["leetcode", "geeksforgeeks", "codeforces", "codechef", "code360"];
-const PLATFORM_DISPLAY = {
-  leetcode: "LeetCode",
-  geeksforgeeks: "GfG",
-  codeforces: "Codeforces",
-  codechef: "CodeChef",
-  code360: "Code 360",
-};
 
 async function sendMessageToActiveTab(message) {
   const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
@@ -18,20 +11,19 @@ async function sendMessageToActiveTab(message) {
 }
 
 function showStatus(message, type, duration = 2000) {
-  const statusBlob = document.getElementById("statusBlob");
-  statusBlob.className = `status-blob ${type === "error" ? "inactive" : "active"}`;
-  if (type !== "error") {
-    setTimeout(() => {
-      statusBlob.className = "status-blob active";
-    }, duration);
-  }
+  const statusMessage = document.getElementById("statusMessage");
+  if (!statusMessage) return;
+  statusMessage.textContent = message;
+  setTimeout(() => {
+    if (statusMessage.textContent === message) statusMessage.textContent = "";
+  }, duration);
 }
 
-function updateEyeIcon(isEnabled) {
+function updateToggleUI(isEnabled) {
   const toggleBtn = document.getElementById("toggleBtn");
-  toggleBtn.innerHTML = isEnabled
-    ? '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>'
-    : '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path><line x1="1" y1="1" x2="23" y2="23"></line></svg>';
+  toggleBtn.classList.toggle("enabled", isEnabled);
+  toggleBtn.setAttribute("aria-pressed", isEnabled.toString());
+  toggleBtn.querySelector(".toggle-state").textContent = isEnabled ? "On" : "Off";
 }
 
 function updatePresetButtons(value) {
@@ -47,8 +39,6 @@ document.addEventListener("DOMContentLoaded", async () => {
   const toggleBtn = document.getElementById("toggleBtn");
   const presetBtns = document.querySelectorAll(".preset-btn");
   const problemCount = document.getElementById("problemCount");
-  const activePlatforms = document.getElementById("activePlatforms");
-  const lastResults = document.getElementById("lastResults");
   const platformGrid = document.getElementById("platformGrid");
   const chips = [...platformGrid.querySelectorAll(".platform-chip")];
   const resetLink = document.getElementById("resetLink");
@@ -63,36 +53,23 @@ document.addEventListener("DOMContentLoaded", async () => {
     code360: "data/code360-data.json",
   };
 
-  // ---- Load per-platform counts --------------------------------------------
+  // ---- Load total index size ------------------------------------------------
   async function loadProblemCount() {
-    problemCount.textContent = "Loading...";
+    problemCount.textContent = "…";
     try {
-      const results = await Promise.all(
-        Object.entries(PROBLEM_DATA_FILES).map(async ([key, file]) => {
-          if (!selectedPlatforms.includes(key)) return { key, count: 0 };
+      const counts = await Promise.all(
+        Object.values(PROBLEM_DATA_FILES).map(async (file) => {
           try {
             const response = await fetch(chrome.runtime.getURL(file));
-            if (!response.ok) return { key, count: 0 };
+            if (!response.ok) return 0;
             const data = await response.json();
-            return { key, count: Array.isArray(data) ? data.length : 0 };
+            return Array.isArray(data) ? data.length : 0;
           } catch {
-            return { key, count: 0 };
+            return 0;
           }
         })
       );
-      const counts = {};
-      let total = 0;
-      results.forEach(({ key, count }) => {
-        counts[key] = count;
-        total += count;
-      });
-      chips.forEach((chip) => {
-        const platform = chip.dataset.platform;
-        const countEl = chip.querySelector(".chip-count");
-        if (countEl && counts[platform] !== undefined) {
-          countEl.textContent = counts[platform] > 0 ? counts[platform].toLocaleString() : "0";
-        }
-      });
+      const total = counts.reduce((sum, count) => sum + count, 0);
       problemCount.textContent = total > 0 ? total.toLocaleString() : "—";
     } catch {
       problemCount.textContent = "—";
@@ -101,20 +78,16 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   // ---- Platform selection rendering ----------------------------------------
   function renderChips() {
-    let active = 0;
     chips.forEach((chip) => {
       const platform = chip.dataset.platform;
       const checked = selectedPlatforms.includes(platform);
       chip.classList.toggle("checked", checked);
       chip.querySelector(".platform-check").checked = checked;
-      if (checked) active++;
     });
-    activePlatforms.textContent = `${active} / ${DEFAULT_PLATFORMS.length}`;
   }
 
   async function persistPlatforms() {
     renderChips();
-    await loadProblemCount();
     try {
       await chrome.storage.local.set({ "dsa-preferred-platforms": selectedPlatforms });
     } catch (e) {
@@ -187,7 +160,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   toggleBtn.addEventListener("click", async () => {
     try {
       const response = await sendMessageToActiveTab({ action: "toggle" });
-      updateEyeIcon(response?.visible !== false);
+      updateToggleUI(response?.visible !== false);
       showStatus(response?.visible !== false ? "Enabled" : "Hidden", "success");
     } catch (e) {
     }
@@ -217,13 +190,6 @@ document.addEventListener("DOMContentLoaded", async () => {
   loadProblemCount();
 
   try {
-    const data = await chrome.storage.local.get(["lastSearchResults"]);
-    lastResults.textContent = data.lastSearchResults !== undefined ? data.lastSearchResults.toString() : "—";
-  } catch (e) {
-    lastResults.textContent = "—";
-  }
-
-  try {
     const response = await chrome.runtime.sendMessage({ action: "getSimilarityThreshold" });
     if (response && typeof response.value === "number") {
       similaritySlider.value = response.value.toString();
@@ -247,9 +213,9 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   try {
     const response = await sendMessageToActiveTab({ action: "getToggleState" });
-    updateEyeIcon(response?.enabled !== false);
+    updateToggleUI(response?.enabled !== false);
   } catch (e) {
-    updateEyeIcon(true);
+    updateToggleUI(true);
   }
 
   showStatus("Extension ready!", "success");

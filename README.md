@@ -1,23 +1,23 @@
 # crossDSA
 
-Chrome extension that finds the same or similar DSA problems across different platforms. If you're grinding a problem on Codeforces and want the LeetCode equivalent (or the GfG one, or the CodeChef one), this saves you the manual hunt.
+Chrome extension that finds equivalent or closely matching DSA problems across different platforms. If you're solving a problem on Codeforces and want to find the same problem on LeetCode, GeeksforGeeks, CodeChef, or Code 360, this saves you the manual hunt.
 
-Backs onto a local index of ~18,000 problems pulled from all five platforms, so matching works offline-ish and fast.
+Backs onto a local index of ~27,000 problems pulled from all five platforms, so matching works locally and fast.
 
 ## What it does
 
-- Adds a search button next to the problem title on any supported page. One click, done.
+- Adds a draggable floating match button on every supported problem page.
 - Matches against LeetCode, GeeksforGeeks, Codeforces, CodeChef, and Code 360.
 - Compares titles *and* descriptions, not just keywords — tokenizes, strips stopwords, stems, and weighs rare words higher, so "find the shortest path in a grid" actually finds shortest-path-grid problems instead of everything containing the word "grid".
-- Ranks results and flags them exact vs similar, with a confidence percentage.
+- Ranks equivalent and closely matching results with a confidence percentage.
 - Groups results by platform with tabs, and shows difficulty and topic tags on each one.
 - Built-in YouTube search that uses the right key for each platform (contest ID + index for Codeforces, problem code for CodeChef, etc.).
-- Works on platforms with messy/mutating DOMs via a floating fallback button.
+- Remembers the floating button's last position separately for each site.
 - Dark-mode friendly.
 
 ## Supported platforms
 
-There's a difference worth spelling out: platforms the extension **has data for** (you get full similar-matching both ways, targeted by problem title/description), versus platforms it **just runs on**.
+There's a difference worth spelling out: platforms the extension **has data for** (you can find equivalent or closely matching problems in the index), versus platforms it **just runs on**.
 
 ### Indexed — full matching available
 
@@ -33,7 +33,7 @@ There's a difference worth spelling out: platforms the extension **has data for*
 
 | Platform | Site | Note |
 | --- | --- | --- |
-| TakeUForward | takeuforward.org/* | The button works and you can search for a TUF problem's equivalent among the five indexed platforms — but TUF problems aren't scraped yet, so no platform will ever suggest a *TUF* problem as a match. |
+| TakeUForward | takeuforward.org/practice/dsa/{problem} | The button works on individual DSA problem pages and you can search for a TUF problem's equivalent among the five indexed platforms — but TUF problems aren't scraped yet, so no platform will ever suggest a *TUF* problem as a match. |
 
 To bring TakeUForward into the full set, a `tuf_scraper.py` plus a `tuf-data.json` (and registering it in `manifest.json` + `content.js`) is what's missing.
 
@@ -46,11 +46,11 @@ To bring TakeUForward into the full set, a `tuf_scraper.py` plus a `tuf-data.jso
 
 ## Usage
 
-- Search button next to the title opens the results panel.
+- The floating **Find matches** button searches for the problem on other platforms. Drag it anywhere on-screen; its position is remembered for that site.
 - Tabs at the top of the panel switch between platforms.
 - Each result shows difficulty, match %, and tags — click to open in a new tab.
 - The panel header has a YouTube button that pre-builds the search query for the current problem.
-- The popup (extension icon) lets you hide/show the button and pick which platforms to search against. There's also a match-threshold slider — Lenient/Moderate/Strict presets if you don't want to fiddle with it.
+- The popup lets you hide/show the button, choose which platforms to search, and adjust match strictness with Broad, Balanced, and Exact presets.
 
 ## Development
 
