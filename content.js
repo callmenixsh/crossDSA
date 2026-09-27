@@ -1254,6 +1254,24 @@ function createYoutubeButton() {
     return btn;
 }
 
+function createCloseButton(container) {
+    const btn = document.createElement('button');
+    btn.className = 'dsa-helper-close-btn';
+    btn.type = 'button';
+    btn.setAttribute('aria-label', 'Close results');
+    btn.title = 'Close';
+    btn.innerHTML = `
+        <svg viewBox="0 0 20 20" width="16" height="16" aria-hidden="true">
+            <path d="M5 5l10 10M15 5L5 15" />
+        </svg>
+    `;
+    btn.addEventListener('click', (event) => {
+        event.stopPropagation();
+        container.style.display = 'none';
+    });
+    return btn;
+}
+
 function switchPlatformTab(source) {
     if (!buttonContainer) return;
     buttonContainer.querySelectorAll('.platform-tab').forEach(t => {
@@ -1292,11 +1310,7 @@ function updateUI(matches) {
         const emptyActions = document.createElement('div');
         emptyActions.className = 'header-actions';
         emptyActions.appendChild(createYoutubeButton());
-        const emptyClose = document.createElement('button');
-        emptyClose.className = 'close-btn';
-        emptyClose.innerHTML = '×';
-        emptyClose.addEventListener('click', () => { container.style.display = 'none'; });
-        emptyActions.appendChild(emptyClose);
+        emptyActions.appendChild(createCloseButton(container));
         emptyHeader.appendChild(emptyText);
         emptyHeader.appendChild(emptyActions);
 
@@ -1333,11 +1347,7 @@ function updateUI(matches) {
     const headerActions = document.createElement('div');
     headerActions.className = 'header-actions';
     headerActions.appendChild(createYoutubeButton());
-    const closeBtn = document.createElement('button');
-    closeBtn.className = 'close-btn';
-    closeBtn.innerHTML = '×';
-    closeBtn.addEventListener('click', () => { container.style.display = 'none'; });
-    headerActions.appendChild(closeBtn);
+    headerActions.appendChild(createCloseButton(container));
     header.appendChild(headerText);
     header.appendChild(headerActions);
     
@@ -1440,12 +1450,7 @@ function updateUnifiedUI(resultGroups) {
     const headerActions = document.createElement('div');
     headerActions.className = 'header-actions';
     headerActions.appendChild(createYoutubeButton());
-    const closeBtn = document.createElement('button');
-    closeBtn.className = 'close-btn';
-    closeBtn.type = 'button';
-    closeBtn.textContent = '×';
-    closeBtn.addEventListener('click', () => { container.style.display = 'none'; });
-    headerActions.appendChild(closeBtn);
+    headerActions.appendChild(createCloseButton(container));
     header.appendChild(headerText);
     header.appendChild(headerActions);
     container.appendChild(header);
