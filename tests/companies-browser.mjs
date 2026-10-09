@@ -119,6 +119,36 @@ try {
   assert.ok(await evaluate("document.querySelector('#questionList [data-key=\"leetcode:two-sum\"] .question-done input').checked"));
   assert.ok(await evaluate("document.querySelector('#questionList [data-key=\"leetcode:two-sum\"] .question-star').getAttribute('aria-pressed')==='true'"));
   await evaluate("location.hash='companies/not-a-company'"); await until("!document.getElementById('companyMissing').hidden");
+  await evaluate("location.hash='companies/amazon'"); await until("document.getElementById('companyTitle').textContent==='Amazon'");
+  await evaluate("document.getElementById('companyPlatform').value='code360';document.getElementById('companyPlatform').dispatchEvent(new Event('change'));document.getElementById('companyClear').click()");
+  assert.ok(await evaluate("document.getElementById('companyWindowLabel').hidden"));
+  assert.equal(await evaluate("document.querySelectorAll('#companyQuestionList .company-frequency').length"), 0);
+  assert.ok(await evaluate("[...document.querySelectorAll('#companyQuestionList .question-row')].every(n=>n.dataset.key.startsWith('code360:'))"));
+  assert.ok(await evaluate("[...document.querySelectorAll('#companyQuestionList .topic-tag')].every(n=>!['Amazon','Microsoft','Google inc'].includes(n.textContent))"));
+  assert.ok(await evaluate("[...document.querySelectorAll('#companyQuestionList .company-platform-tag')].every(n=>n.textContent==='Code360')"));
+  const code360Key = await evaluate("document.querySelector('#companyQuestionList .question-row').dataset.key");
+  await evaluate("document.querySelector('#companyQuestionList .question-done input').click()");
+  await until("document.querySelector('#companyQuestionList .solved-tag')");
+  await evaluate("document.querySelector('#companyQuestionList .question-star').click()");
+  await until("document.querySelector('#companyQuestionList .question-star').getAttribute('aria-pressed')==='true'");
+  await evaluate("document.getElementById('companyProgress').value='solved';document.getElementById('companyProgress').dispatchEvent(new Event('change'))");
+  assert.equal(await evaluate("document.querySelectorAll('#companyQuestionList .question-row').length"), 1);
+  assert.equal(await evaluate("document.querySelector('#companyQuestionList .question-row').dataset.key"), code360Key);
+  await evaluate("document.getElementById('companyClear').click();document.getElementById('companyPlatform').value='all';document.getElementById('companyPlatform').dispatchEvent(new Event('change'))");
+  assert.ok(await evaluate("document.getElementById('companyDetailSummary').textContent.includes('LeetCode + Code360')"));
+  await evaluate("document.getElementById('companyWindow').value='30d';document.getElementById('companyWindow').dispatchEvent(new Event('change'))");
+  assert.equal(await evaluate("document.getElementById('companyPlatform').value"), 'leetcode');
+  assert.ok(await evaluate("[...document.querySelectorAll('#companyQuestionList .question-row')].every(n=>n.dataset.key.startsWith('leetcode:'))"));
+  await evaluate("document.getElementById('companyPlatform').value='code360';document.getElementById('companyPlatform').dispatchEvent(new Event('change'));location.hash='companies'");
+  await until("!document.getElementById('companyDirectory').hidden");
+  assert.equal(await evaluate("document.getElementById('companyWindow').value"), 'all');
+  await evaluate("document.getElementById('companySearch').value='Google inc';document.getElementById('companySearch').dispatchEvent(new Event('input'))");
+  assert.equal(await evaluate("document.querySelectorAll('.company-card').length"), 1);
+  assert.equal(await evaluate("document.querySelector('.company-card').getAttribute('href')"), '#companies/google');
+  for (const width of [1440, 390]) {
+    await send('Emulation.setDeviceMetricsOverride', { width, height: 900, deviceScaleFactor: 1, mobile: false });
+    assert.ok(await evaluate('document.documentElement.scrollWidth<=innerWidth'), `Code360 fits at ${width}px`);
+  }
   assert.deepEqual(errors, []);
   console.log('PASS: company data, categories, aliases, time windows, sorting, pagination, shared Done/Star/lists, back navigation, unknown company, desktop and mobile. RPC is mocked.');
 } finally {

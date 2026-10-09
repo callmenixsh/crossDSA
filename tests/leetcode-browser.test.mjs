@@ -4,6 +4,14 @@ import vm from 'node:vm';
 import { readFile } from 'node:fs/promises';
 const source = await readFile(new URL('../tracker/leetcode-browser.js', import.meta.url), 'utf8');
 
+test('reattaching the accepted-submission watcher does not duplicate click listeners', () => {
+  let listeners = 0;
+  const context = vm.createContext({ document: { addEventListener: () => { listeners++; } } });
+  vm.runInContext(source, context);
+  vm.runInContext(source, context);
+  assert.equal(listeners, 1);
+});
+
 async function observe({ label = 'Submit', username = 'sample', status = 'Accepted', slug = 'two-sum', old = false } = {}) {
   let click; const messages = [], requests = [];
   const context = vm.createContext({

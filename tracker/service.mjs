@@ -1,9 +1,44 @@
 import { STORAGE_KEY, PLATFORMS, normalizeState, cleanHandle, mergeSnapshot, safeProblemUrl, problemKey } from './core.mjs';
 import { collectors } from './platforms.mjs';
+import { CONTEST_ORIGINS } from './contests.mjs';
 
 const ALARM = 'crossdsa-hourly-sync';
 let writes = Promise.resolve();
 const syncing = new Map();
+const LEETCODE_HELPERS = ['tracker/leetcode-session.js', 'tracker/leetcode-browser.js'];
+const LEETCODE_RECOVERY_ALARM = 'crossdsa-leetcode-recovery';
+
+async function attachLeetcodeHelpers(tabId) {
+  if (!chrome.scripting?.executeScript || !await chrome.permissions.contains({ permissions: ['scripting'] })) return false;
+  await chrome.scripting.executeScript({ target: { tabId }, files: LEETCODE_HELPERS });
+  return true;
+}
+
+async function recoverLeetcode() {
+  const state = await readState(), account = state.accounts.leetcode;
+  if (!account) return;
+  if (Date.now() - (account.recoveryAttemptedAt || 0) < 60000) {
+    // A quick sign-in/navigation during the cooldown still gets a later retry.
+    if (!await chrome.alarms.get(LEETCODE_RECOVERY_ALARM)) await chrome.alarms.create(LEETCODE_RECOVERY_ALARM, { delayInMinutes: 1 });
+    return;
+  }
+  const tabs = await chrome.tabs.query({ url: 'https://leetcode.com/*' });
+  if (!tabs.length) return;
+  let claimed = false;
+  await updateState(current => {
+    const connected = current.accounts.leetcode;
+    if (connected?.generation === account.generation && Date.now() - (connected.recoveryAttemptedAt || 0) >= 60000) {
+      connected.recoveryAttemptedAt = Date.now(); claimed = true;
+    }
+  });
+  if (!claimed) return;
+  await chrome.alarms.clear(LEETCODE_RECOVERY_ALARM);
+  // Restore acceptance observation even when periodic syncing is disabled.
+  await Promise.allSettled(tabs.map(tab => attachLeetcodeHelpers(tab.id)));
+  const latest = await readState(), current = latest.accounts.leetcode;
+  if (current?.generation !== account.generation || !latest.settings.autoSync) return;
+  if (!current.snapshot || current.snapshot.activityWarning || current.status === 'error' || Date.now() - (current.syncedAt || 0) >= 30 * 60000) await syncPlatform('leetcode');
+}
 export async function readState() {
   return normalizeState((await chrome.storage.local.get(STORAGE_KEY))[STORAGE_KEY]);
 }
@@ -50,18 +85,24 @@ async function leetcodeRecent(handle) {
   const tabs = await chrome.tabs.query({ url: 'https://leetcode.com/*' });
   if (!tabs.length) throw new Error(`Open LeetCode signed in as @${handle} to import accepted questions.`);
   let sessionError;
-  const refreshMessage = 'Refresh your LeetCode tab, then sync again.';
+  const refreshMessage = 'Could not read LeetCode activity. Open LeetCode and check that you are signed in.';
   for (const tab of tabs) {
     try {
+      // Both helpers are idempotent. Restore the watcher too, including tabs
+      // that still have a history receiver but predate an extension update.
+      try { await attachLeetcodeHelpers(tab.id); } catch { /* An existing receiver may still work. */ }
       const message = { action: 'leetcode:recent', handle };
       let result;
       try { result = await chrome.tabs.sendMessage(tab.id, message); }
       catch (cause) {
         if (!/receiving end does not exist|could not establish connection|message port closed/i.test(cause.message || '')) throw cause;
-        if (!await chrome.permissions.contains({ permissions: ['scripting'] })) continue;
+        if (!await chrome.permissions.contains({ permissions: ['scripting'] })) {
+          sessionError ||= new Error('Reconnect LeetCode in Connect platforms to allow automatic activity recovery.');
+          continue;
+        }
         // Existing tabs may predate an extension reload or host permission grant.
-        // Reattach only our fixed, isolated helper, then retry once.
-        await chrome.scripting.executeScript({ target: { tabId: tab.id }, files: ['tracker/leetcode-session.js'] });
+        // Reattach our fixed, isolated helpers, then retry once.
+        await attachLeetcodeHelpers(tab.id);
         result = await chrome.tabs.sendMessage(tab.id, message);
       }
       if (!result?.ok) { sessionError = new Error(result?.error || refreshMessage); continue; }
@@ -88,6 +129,8 @@ async function performSync(platform) {
       if (!account || account.generation !== generation) return;
       account.snapshot = mergeSnapshot(account.snapshot, snapshot);
       account.status = 'ready'; account.error = null; account.syncedAt = Date.now();
+      account.profileSyncedAt = account.syncedAt;
+      if (!snapshot.activityWarning) account.activitySyncedAt = account.syncedAt;
     });
   } catch (error) {
     await updateState(state => {
@@ -106,7 +149,7 @@ export function syncPlatform(platform) {
 }
 
 async function ensureAlarm() {
-  if (!await chrome.alarms.get(ALARM)) await chrome.alarms.create(ALARM, { periodInMinutes: 60 });
+  if ((await chrome.alarms.get(ALARM))?.periodInMinutes !== 30) await chrome.alarms.create(ALARM, { periodInMinutes: 30 });
 }
 
 export function registerTracker() {
@@ -198,6 +241,7 @@ export function registerTracker() {
           });
           await chrome.alarms.clear(`crossdsa-submission:${platform}`);
           await chrome.alarms.clear(`crossdsa-submission:${platform}:retry`);
+          if (platform === 'leetcode') await chrome.alarms.clear(LEETCODE_RECOVERY_ALARM);
           return state;
         }
         case 'tracker:sync': {
@@ -208,8 +252,11 @@ export function registerTracker() {
         }
         case 'tracker:contest-settings': {
           if (typeof message.contestsEnabled !== 'boolean' || typeof message.contestReminders !== 'boolean') throw new Error('Invalid contest settings.');
-          if (message.contestsEnabled && !await chrome.permissions.contains({ origins: ['https://leetcode.com/*'], ...(message.contestReminders ? { permissions: ['notifications'] } : {}) })) throw new Error('Allow contest access in Settings first.');
-          return updateState(state => { state.settings = { ...state.settings, contestsEnabled: message.contestsEnabled, contestReminders: message.contestsEnabled && message.contestReminders }; });
+          if (message.contestsEnabled || message.contestReminders) {
+            const access = await Promise.all(CONTEST_ORIGINS.map(origin => chrome.permissions.contains({ origins: [origin] })));
+            if (!access.some(Boolean) || message.contestReminders && !await chrome.permissions.contains({ permissions: ['notifications'] })) throw new Error('Allow contest access in Settings first.');
+          }
+          return updateState(state => { state.settings = { ...state.settings, contestsEnabled: message.contestsEnabled, contestReminders: message.contestReminders }; });
         }
         case 'tracker:settings': {
           const settings = message.settings || {};
@@ -261,6 +308,10 @@ export function registerTracker() {
     return true;
   });
   chrome.alarms.onAlarm.addListener(alarm => {
+    if (alarm.name === LEETCODE_RECOVERY_ALARM) {
+      recoverLeetcode().catch(console.error);
+      return;
+    }
     if (alarm.name.startsWith('crossdsa-verify:')) {
       const platform = alarm.name.split(':')[1];
       syncPlatform(platform).catch(console.error);
@@ -279,12 +330,24 @@ export function registerTracker() {
       const state = await readState();
       if (!state.settings.autoSync) return;
       for (const [platform, account] of Object.entries(state.accounts)) {
-        if (!account.syncedAt || Date.now() - account.syncedAt >= 55 * 60 * 1000) await syncPlatform(platform);
+        if (Date.now() - (account.attemptedAt || account.syncedAt || 0) >= 30 * 60 * 1000) await syncPlatform(platform);
       }
     })().catch(console.error);
   });
-  chrome.runtime.onInstalled.addListener(() => ensureAlarm().catch(console.error));
-  chrome.runtime.onStartup.addListener(() => ensureAlarm().catch(console.error));
+  chrome.tabs.onUpdated.addListener((_tabId, change, tab) => {
+    if ((change.status === 'complete' || change.url && tab.status === 'complete') && /^https:\/\/leetcode\.com\//.test(tab.url || change.url || '')) recoverLeetcode().catch(console.error);
+  });
+  chrome.tabs.onActivated.addListener(({ tabId }) => {
+    chrome.tabs.get(tabId).then(tab => {
+      if (/^https:\/\/leetcode\.com\//.test(tab.url || '')) return recoverLeetcode();
+    }).catch(console.error);
+  });
+  const startup = () => {
+    ensureAlarm().catch(console.error);
+    recoverLeetcode().catch(console.error);
+  };
+  chrome.runtime.onInstalled.addListener(startup);
+  chrome.runtime.onStartup.addListener(startup);
   // A suspended worker can leave a stale UI status; syncing resumes on next request.
   updateState(state => { for (const a of Object.values(state.accounts)) if (a.status === 'syncing') { a.status = 'error'; a.error = 'Previous sync was interrupted. Sync again to refresh.'; } }).catch(console.error);
 }

@@ -1,5 +1,5 @@
 import { STORAGE_KEY, normalizeState } from './core.mjs';
-import { CONTEST_KEY, CONTEST_ORIGINS, REFRESH_ALARM, REMINDER_PREFIX, normalizeContests, activeContests, reminderPlan, reminderName } from './contests.mjs';
+import { CONTEST_KEY, CONTEST_SOURCES, REFRESH_ALARM, REMINDER_PREFIX, normalizeContests, normalizeCodeforcesContests, activeContests, reminderPlan, reminderName, contestPlatform, sourceCache, sourceIsFresh, safeContestUrl, retainContests } from './contests.mjs';
 
 let running;
 let clickListenerRegistered = false;
@@ -12,42 +12,67 @@ async function clearReminders() {
 }
 async function reconcile() {
   const prefs = await settings();
-  if (!prefs.contestsEnabled || !prefs.contestReminders || !await chrome.permissions.contains({ permissions: ['notifications'], origins: CONTEST_ORIGINS })) { await clearReminders(); return; }
+  if (!prefs.contestReminders || !await chrome.permissions.contains({ permissions: ['notifications'] })) { await clearReminders(); return; }
   const now = Date.now();
   const cache = await readCache();
   // Keep alarms intact at their due time; periodic UI refreshes must not
   // clear an alarm just before Chrome dispatches it. Recover recent alarms
   // lost during a worker/browser restart within the delivery grace period.
-  const plan = cache.updatedAt && now - cache.updatedAt <= 6 * 3600000 ? reminderPlan(cache, now - 5 * 60000) : [];
+  const allowed = await sourcePermissions();
+  const plan = reminderPlan(cache, now - 5 * 60000).filter(item => allowed[contestPlatform(item.contest)] && sourceIsFresh(cache, contestPlatform(item.contest), now));
   const desired = new Map(plan.map(item => [item.name, item]));
   const existing = new Map((await chrome.alarms.getAll()).filter(alarm => alarm.name.startsWith(REMINDER_PREFIX)).map(alarm => [alarm.name, alarm]));
   for (const name of existing.keys()) if (!desired.has(name)) await chrome.alarms.clear(name);
   for (const item of plan) if (!existing.has(item.name)) await chrome.alarms.create(item.name, { when: Math.max(now + 1000, item.when) });
 }
+async function sourcePermissions() {
+  return Object.fromEntries(await Promise.all(Object.entries(CONTEST_SOURCES).map(async ([platform, source]) =>
+    [platform, await chrome.permissions.contains({ origins: [source.origin] })])));
+}
+async function fetchSchedule(platform) {
+  const options = { credentials: 'omit', signal: AbortSignal.timeout(20000) };
+  if (platform === 'codeforces') {
+    const response = await fetch('https://codeforces.com/api/contest.list?gym=false', options);
+    if (!response.ok) throw new Error('Schedule request failed.');
+    return { items: normalizeCodeforcesContests(await response.json()), limited: false };
+  }
+  const query = async field => {
+    const response = await fetch('https://leetcode.com/graphql/', { ...options, method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ query: `query { ${field} { title titleSlug startTime duration } }` }) });
+    if (!response.ok) throw new Error('Schedule request failed.');
+    return response.json();
+  };
+  const data = await query('allContests');
+  // Fall back only if LeetCode removes the full listing from its schema.
+  if (data.errors?.some(error => /Cannot query field ["']allContests["']/.test(error.message || ''))) {
+    return { items: normalizeContests(await query('topTwoContests')), limited: true };
+  }
+  return { items: normalizeContests(data), limited: false };
+}
 async function refresh() {
-  const prefs = await settings();
-  if (!prefs.contestsEnabled) {
-    await chrome.alarms.clear(REFRESH_ALARM); await clearReminders(); return;
-  }
-  if (!await chrome.permissions.contains({ origins: CONTEST_ORIGINS })) {
-    await chrome.alarms.clear(REFRESH_ALARM); await clearReminders();
-    await chrome.storage.local.set({ [CONTEST_KEY]: { ...await readCache(), error: 'Allow LeetCode access in Settings to load contests.', needsAccess: true } }); return;
-  }
-  if (!await chrome.alarms.get(REFRESH_ALARM)) await chrome.alarms.create(REFRESH_ALARM, { periodInMinutes: 60 });
-  let cache = await readCache();
-  if (!cache.attemptedAt || Date.now() - cache.attemptedAt >= 3600000 || cache.needsAccess) {
+  const cache = await readCache(), allowed = await sourcePermissions();
+  if (Object.values(allowed).some(Boolean)) {
+    if ((await chrome.alarms.get(REFRESH_ALARM))?.periodInMinutes !== 30) await chrome.alarms.create(REFRESH_ALARM, { periodInMinutes: 30 });
+  } else await chrome.alarms.clear(REFRESH_ALARM);
+  const sources = Object.fromEntries(await Promise.all(Object.keys(CONTEST_SOURCES).map(async platform => {
+    const saved = sourceCache(cache, platform);
+    if (!allowed[platform]) return [platform, { ...saved, needsAccess: true }];
+    if (cache.sources && saved.attemptedAt && Date.now() - saved.attemptedAt < 30 * 60000 && !saved.needsAccess) return [platform, saved];
     const attemptedAt = Date.now();
     try {
-      const response = await fetch('https://leetcode.com/graphql/', { method: 'POST', credentials: 'omit', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ query: 'query { topTwoContests { title titleSlug startTime duration } }' }), signal: AbortSignal.timeout(20000) });
-      if (!response.ok) throw new Error('Schedule request failed.');
-      const items = normalizeContests(await response.json());
-      const sent = Object.fromEntries(Object.entries(cache.sent || {}).filter(([, time]) => Date.now() - time < 7 * 86400000));
-      cache = { items, sent, updatedAt: Date.now(), attemptedAt, error: null, needsAccess: false };
+      const result = await fetchSchedule(platform);
+      // Retain past confirmed events; replace upcoming entries so cancellations disappear.
+      const history = (saved.items || []).filter(item => item.end <= attemptedAt);
+      const items = retainContests([...new Map([...history, ...result.items].map(item => [item.id, item])).values()], attemptedAt).sort((a, b) => a.start - b.start);
+      return [platform, { items, limited: result.limited, updatedAt: Date.now(), attemptedAt, error: null, needsAccess: false }];
     } catch {
-      cache = { ...cache, attemptedAt, error: 'Schedule unavailable. Showing saved times.', needsAccess: false };
+      return [platform, { ...saved, attemptedAt, error: 'Schedule unavailable. Showing saved times.', needsAccess: false }];
     }
-    await chrome.storage.local.set({ [CONTEST_KEY]: cache });
-  }
+  })));
+  const items = Object.values(sources).filter(source => !source.needsAccess).flatMap(source => retainContests(source.items || [])).sort((a, b) => a.start - b.start);
+  const sent = Object.fromEntries(Object.entries(cache.sent || {}).filter(([, time]) => Date.now() - time < 7 * 86400000));
+  await chrome.storage.local.set({ [CONTEST_KEY]: { sources, items, sent, updatedAt: Math.max(0, ...Object.values(sources).map(source => source.updatedAt || 0)),
+    needsAccess: !Object.values(allowed).some(Boolean), error: Object.entries(sources).filter(([, source]) => source.error && !source.needsAccess).map(([platform]) => `${CONTEST_SOURCES[platform].name} schedule unavailable`).join(' · ') || null } });
   await reconcile();
 }
 export function refreshContests() {
@@ -56,11 +81,12 @@ export function refreshContests() {
 }
 export async function deliverReminder(name, now = Date.now()) {
   const prefs = await settings();
-  if (!prefs.contestsEnabled || !prefs.contestReminders || !await chrome.permissions.contains({ permissions: ['notifications'], origins: CONTEST_ORIGINS })) return;
+  if (!prefs.contestReminders || !await chrome.permissions.contains({ permissions: ['notifications'] })) return;
   const cache = await readCache();
-  if (!cache.updatedAt || now - cache.updatedAt > 6 * 3600000 || cache.error || cache.sent?.[name]) return;
+  if (cache.sent?.[name]) return;
   const contest = activeContests(cache.items, now).find(item => [60, 10].some(minutes => reminderName(item, minutes) === name));
-  if (!contest || contest.start <= now) return;
+  if (!contest || contest.start <= now || !safeContestUrl(contest) || !sourceIsFresh(cache, contestPlatform(contest), now) ||
+    !await chrome.permissions.contains({ origins: [CONTEST_SOURCES[contestPlatform(contest)].origin] })) return;
   const minutes = name.endsWith(':60') ? 60 : 10;
   const due = contest.start - minutes * 60000;
   // Avoid overdue reminders after sleep, and never send the one-hour alert
@@ -69,7 +95,7 @@ export async function deliverReminder(name, now = Date.now()) {
   // Persist first: worker restarts must not deliver the same alert again.
   cache.sent = { ...cache.sent, [name]: now };
   await chrome.storage.local.set({ [CONTEST_KEY]: cache });
-  await chrome.notifications.create(name, { type: 'basic', iconUrl: chrome.runtime.getURL('icons/cDSA-128.png'), title: contest.title, message: `Starts in ${Math.ceil((contest.start - now) / 60000)} minutes. Click to open LeetCode.` });
+  await chrome.notifications.create(name, { type: 'basic', iconUrl: chrome.runtime.getURL('icons/cDSA-128.png'), title: contest.title, message: `Starts in ${Math.ceil((contest.start - now) / 60000)} minutes. Click to open ${CONTEST_SOURCES[contestPlatform(contest)].name}.` });
 }
 export function registerContests() {
   chrome.runtime.onMessage.addListener((message, sender, respond) => {
@@ -96,7 +122,7 @@ export function registerContests() {
       (async () => {
         const cache = await readCache();
         const contest = cache.items?.find(item => [60, 10].some(minutes => reminderName(item, minutes) === id));
-        if (contest && /^https:\/\/leetcode\.com\/contest\/(weekly|biweekly)-contest-\d+\/$/.test(contest.url)) await chrome.tabs.create({ url: contest.url });
+        if (contest && safeContestUrl(contest)) await chrome.tabs.create({ url: contest.url });
         await chrome.notifications.clear(id);
       })().catch(console.error);
     });

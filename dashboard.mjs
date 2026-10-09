@@ -1,7 +1,9 @@
 import { mountContestStrip } from './tracker/contest-ui.mjs';
+import { CONTEST_ORIGINS } from './tracker/contests.mjs';
 import { ratingSeries } from './tracker/ratings.mjs';
 import { filterLibrary } from './tracker/library.mjs';
 import { mountCompanies } from './tracker/company-ui.mjs';
+import { splitCode360Tags } from './tracker/code360-companies.mjs';
 import { STORAGE_KEY, PLATFORMS, emptyState, normalizeState, cleanHandle, problemKey, dateKey, shiftDay, dailyActivity, streaks, acceptedToday, practiceOverview, safeProblemUrl, doneQuestions, questionIsDone } from './tracker/core.mjs';
 
 const $ = id => document.getElementById(id);
@@ -48,10 +50,10 @@ async function rpc(action, payload = {}) {
 }
 function route() {
   const view = location.hash.slice(1).split('/')[0] || 'overview';
-  const known = ['overview', 'questions', 'companies', 'done', 'workspace', 'settings'].includes(view) ? view : 'overview';
+  const known = ['overview', 'questions', 'companies', 'done', 'workspace', 'contests', 'settings'].includes(view) ? view : 'overview';
   for (const node of document.querySelectorAll('.view')) node.hidden = node.id !== `view-${known}`;
   for (const node of document.querySelectorAll('[data-view]')) { node.classList.toggle('active', node.dataset.view === known); if (node.dataset.view === known) node.setAttribute('aria-current', 'page'); else node.removeAttribute('aria-current'); }
-  $('breadcrumb').textContent = { overview: 'Overview', questions: 'Question library', companies: 'Companies', done: 'Done Questions', workspace: 'My lists', settings: 'Settings' }[known];
+  $('breadcrumb').textContent = { overview: 'Overview', questions: 'Question library', companies: 'Companies', done: 'Done Questions', workspace: 'My lists', contests: 'Contests', settings: 'Settings' }[known];
   if (known === 'done') renderDone();
   if (known === 'workspace') renderWorkspace();
   if (known === 'questions') renderQuestions();
@@ -90,7 +92,6 @@ function render() {
   if (!$('contestSettingsForm').contains(document.activeElement)) {
     $('contestsEnabled').checked = state.settings.contestsEnabled;
     $('contestReminders').checked = state.settings.contestReminders;
-    $('contestReminders').disabled = !state.settings.contestsEnabled;
   }
   updateConnectionResults();
 }
@@ -169,9 +170,10 @@ function renderHeatmap() {
 const hiddenRatingSeries = new Set();
 function renderRatings() {
   const selected = $('progressPlatform').value;
-  const isScore = selected === 'geeksforgeeks';
-  $('ratingsTitle').textContent = isScore ? 'Coding score' : 'Rating over time';
   const series = ratingSeries(state.accounts, Number($('progressYear').value), state.settings.timeZone, selected);
+  const isScore = selected === 'geeksforgeeks' || (series.length > 0 && series.every(s => s.score));
+  const hasScore = series.some(s => s.score);
+  $('ratingsTitle').textContent = isScore ? 'Coding score' : hasScore ? 'Rating & coding score' : 'Rating over time';
   const legend = document.createDocumentFragment();
   for (const item of series) {
     const platform = PLATFORMS[item.id], visible = !hiddenRatingSeries.has(item.id);
@@ -186,8 +188,6 @@ function renderRatings() {
     legend.append(toggle);
   }
   $('ratingLegend').replaceChildren(legend);
-  if (!series.length) { $('ratingPlot').replaceChildren(empty(isScore ? 'No tracked scores this year.' : 'No rating data.')); return; }
-  if (series.every(s => hiddenRatingSeries.has(s.id))) { $('ratingPlot').replaceChildren(empty('Select a platform above.')); return; }
   const node = (tag, attrs, text) => {
     const result = document.createElementNS('http://www.w3.org/2000/svg', tag);
     for (const [key, value] of Object.entries(attrs)) result.setAttribute(key, String(value));
@@ -197,23 +197,25 @@ function renderRatings() {
   // Both axes are shared, and remain stable while legend items are toggled.
   const points = series.flatMap(s => s.points);
   const times = points.map(p => p.timestamp), values = points.map(p => p.rating);
-  const first = Math.min(...times), last = Math.max(...times);
-  const maximum = Math.max(100, Math.ceil(Math.max(...values) / 100) * 100);
+  const first = times.length ? Math.min(...times) : null, last = times.length ? Math.max(...times) : null;
+  const maximum = Math.max(100, Math.ceil(Math.max(0, ...values) / 100) * 100);
   const x = timestamp => first === last ? 224 : 40 + (timestamp - first) / (last - first) * 368;
   const y = rating => 140 - rating / maximum * 124;
-  const svg = node('svg', { viewBox: '0 0 440 164', class: 'ratings-svg', role: 'group', 'aria-label': `${isScore ? 'Tracked coding score' : 'Contest ratings'} in ${$('progressYear').value}` });
+  const svg = node('svg', { viewBox: '0 0 440 164', class: 'ratings-svg', role: 'group', 'aria-label': `${isScore ? 'Tracked coding score' : hasScore ? 'Contest ratings and coding score' : 'Contest ratings'} in ${$('progressYear').value}` });
   for (let i = 0; i <= 4; i++) {
     const value = maximum / 4 * i, position = y(value);
     svg.append(node('line', { x1: 40, x2: 408, y1: position, y2: position, class: 'chart-grid' }), node('text', { x: 34, y: position + 3, 'text-anchor': 'end', class: 'chart-label' }, format(Math.round(value))));
   }
-  svg.append(node('text', { x: first === last ? 224 : 40, y: 159, 'text-anchor': first === last ? 'middle' : 'start', class: 'chart-label' }, displayDate(first)));
-  if (first !== last) svg.append(node('text', { x: 408, y: 159, 'text-anchor': 'end', class: 'chart-label' }, displayDate(last)));
+  if (points.length) {
+    svg.append(node('text', { x: first === last ? 224 : 40, y: 159, 'text-anchor': first === last ? 'middle' : 'start', class: 'chart-label' }, displayDate(first)));
+    if (first !== last) svg.append(node('text', { x: 408, y: 159, 'text-anchor': 'end', class: 'chart-label' }, displayDate(last)));
+  }
   const tooltip = el('div', 'rating-tooltip'); tooltip.hidden = true; tooltip.setAttribute('role', 'status');
   for (const item of series.filter(s => !hiddenRatingSeries.has(s.id))) {
     const platform = PLATFORMS[item.id];
     if (item.points.length > 1) svg.append(node('polyline', { points: item.points.map(p => `${x(p.timestamp)},${y(p.rating)}`).join(' '), fill: 'none', stroke: platform.color, 'stroke-width': 2, 'stroke-linejoin': 'round', 'data-platform': item.id }));
     for (const point of item.points) {
-      const description = `${platform.name} · ${displayDate(point.timestamp, { year: 'numeric' })} · ${format(Math.round(point.rating))}${point.title ? ` · ${point.title}` : ''}`;
+      const description = `${platform.name} · ${displayDate(point.timestamp, { year: 'numeric' })} · ${item.score ? 'Coding score' : 'Rating'} ${format(Math.round(point.rating))}${point.title ? ` · ${point.title}` : ''}`;
       const dot = node('circle', { cx: x(point.timestamp), cy: y(point.rating), r: 4, fill: platform.color, tabindex: 0, role: 'img', 'aria-label': description, 'data-platform': item.id });
       dot.append(node('title', {}, description));
       const show = () => { tooltip.textContent = description; tooltip.hidden = false; };
@@ -233,7 +235,7 @@ function renderPlatforms() {
     const card = el('article', 'platform-card'); card.style.setProperty('--platform', platform.color);
     const heading = el('div', 'platform-heading'), name = el('div', 'platform-name');
     name.append(el('span', 'platform-avatar', platform.short), el('h3', '', platform.name));
-    const status = !account ? 'Not connected' : account.status === 'syncing' ? 'Syncing' : account.status === 'error' ? 'Needs attention' : snapshot?.activityWarning ? 'Activity unavailable' : snapshot?.partial ? 'Partial history' : snapshot ? 'Synced' : 'Not synced';
+    const status = !account ? 'Not connected' : account.status === 'syncing' ? 'Syncing' : account.status === 'error' ? 'Needs attention' : snapshot?.activityWarning ? id === 'leetcode' ? 'Profile updated · Activity needs LeetCode' : 'Activity unavailable' : snapshot?.partial ? 'Partial history' : snapshot ? 'Synced' : 'Not synced';
     const statusPill = el('span', `status-pill ${account?.status || ''}`, status);
     if (snapshot?.coverage) statusPill.title = snapshot.coverage;
     if (snapshot?.activityWarning) statusPill.classList.add('warning');
@@ -256,9 +258,14 @@ function renderPlatforms() {
       }
       if (account.error) card.append(el('p', 'platform-error', account.error));
       if (snapshot?.activityWarning) card.append(el('p', 'platform-error', snapshot.activityWarning));
+      if (id === 'leetcode' && snapshot) {
+        const freshness = el('p', 'rating-caption', `Profile: ${timeAgo(account.profileSyncedAt || account.syncedAt)} · Activity: ${account.activitySyncedAt ? timeAgo(account.activitySyncedAt) : 'Not synced yet'}`);
+        card.append(freshness);
+      }
       const actions = el('div', 'inline-controls platform-actions');
       const sync = button(account.status === 'syncing' ? 'Syncing…' : '↻ Refresh', 'text-button', () => syncAccounts(id)); sync.disabled = account.status === 'syncing'; actions.append(sync);
       if (id === 'tuf') actions.append(link('Open TUF ↗', platform.profile(account.handle), 'text-button'));
+      if (id === 'leetcode' && snapshot?.activityWarning) actions.append(link('Open LeetCode ↗', platform.profile(account.handle), 'text-button'));
       const disconnect = button('Disconnect', 'text-button', () => disconnectPlatform(id));
       disconnect.setAttribute('aria-label', `Disconnect ${platform.name}`); actions.append(disconnect);
       card.append(actions);
@@ -365,12 +372,15 @@ function createLibraryRow(p, { open = false, frequency = false, onTopic = topic 
     const tag = button(topic, 'tag topic-tag', () => onTopic(topic)); tags.append(tag);
   }
   copy.append(tags);
-  if (frequency) tags.append(el('span', 'tag company-frequency-tag', `Frequency ${p.frequency}%`));
+  if (frequency) {
+    tags.append(el('span', 'tag company-platform-tag', p.platform === 'code360' ? 'Code360' : 'LeetCode'));
+    if (Number.isFinite(p.frequency)) tags.append(el('span', 'tag company-frequency-tag', `Frequency ${p.frequency}%`));
+  }
   const details = el('details', 'question-details'); details.open = open; details.append(el('summary', '', 'Read question'));
   details.append(el('p', 'question-statement', p.description || 'A question statement is not available in the local index. Open the problem to read it on the platform.'));
   if (p.constraints) details.append(el('h3', '', 'Constraints / input'), el('p', 'question-statement', p.constraints));
   details.append(link('Open problem ↗', p.url, 'text-link')); copy.append(details);
-  appendQuestionRow(row, p, copy, frequency ? el('span', 'muted company-frequency', `${p.frequency}%`) : el('span', 'muted', PLATFORMS[p.platform].short), el('span', `difficulty ${p.difficulty.toLowerCase()}`, p.difficulty)); return row;
+  appendQuestionRow(row, p, copy, frequency && Number.isFinite(p.frequency) ? el('span', 'muted company-frequency', `${p.frequency}%`) : el('span', 'muted', PLATFORMS[p.platform].short), el('span', `difficulty ${p.difficulty.toLowerCase()}`, p.difficulty)); return row;
 }
 function renderQuestions() {
   if (!indexReady) { $('questionList').replaceChildren(el('div', 'loading-note', 'Loading the local question index…')); return; }
@@ -503,7 +513,7 @@ async function loadLibrary() {
       const response = await fetch(chrome.runtime.getURL(`data/${platform}-data.json`));
       if (!response.ok) throw new Error();
       const records = await response.json();
-      return records.filter(p => p.title && safeProblemUrl(p.url, platform)).map(p => ({ key: problemKey(platform, p.url), platform, id: p.id, title: p.title, url: p.url, description: typeof p.description === 'string' ? p.description : '', constraints: typeof p.constraints === 'string' ? p.constraints : '', isPremium: Boolean(p.isPremium), difficulty: p.difficulty || 'Unknown', topics: Array.isArray(p.topics) ? [...new Set(p.topics.filter(v => typeof v === 'string'))] : [] }));
+      return records.filter(p => p.title && safeProblemUrl(p.url, platform)).map(p => ({ key: problemKey(platform, p.url), platform, id: p.id, title: p.title, url: p.url, description: typeof p.description === 'string' ? p.description : '', constraints: typeof p.constraints === 'string' ? p.constraints : '', isPremium: Boolean(p.isPremium), difficulty: p.difficulty || 'Unknown', ...(platform === 'code360' ? splitCode360Tags(p) : { topics: Array.isArray(p.topics) ? [...new Set(p.topics.filter(v => typeof v === 'string'))] : [] }) }));
     } catch { failures.push(PLATFORMS[platform].name); return []; }
   }));
   library = datasets.flat(); indexReady = true;
@@ -514,16 +524,12 @@ async function loadLibrary() {
 
 async function init() {
   mountContestStrip($('contestStrip')).catch(console.error);
-  $('contestsEnabled').addEventListener('change', () => {
-    $('contestReminders').disabled = !$('contestsEnabled').checked;
-    if (!$('contestsEnabled').checked) $('contestReminders').checked = false;
-  });
   $('contestSettingsForm').addEventListener('submit', async event => {
     event.preventDefault();
     const submit = event.submitter; submit.disabled = true;
-    const enabled = $('contestsEnabled').checked, reminders = enabled && $('contestReminders').checked;
+    const enabled = $('contestsEnabled').checked, reminders = $('contestReminders').checked;
     try {
-      if (enabled && !await chrome.permissions.request({ origins: ['https://leetcode.com/*'], ...(reminders ? { permissions: ['notifications'] } : {}) })) throw new Error('Permission declined. Contest settings were not changed.');
+      if ((enabled || reminders) && !await chrome.permissions.request({ origins: CONTEST_ORIGINS, ...(reminders ? { permissions: ['notifications'] } : {}) })) throw new Error('Permission declined. Contest settings were not changed.');
       await rpc('contest-settings', { contestsEnabled: enabled, contestReminders: reminders });
       render(); toast('Contest settings saved.');
     } catch (error) { toast(error.message, true); } finally { submit.disabled = false; }
@@ -600,7 +606,7 @@ async function init() {
   async function refreshStaleActivity() {
     if (document.hidden || !state.settings.autoSync) return;
     for (const [platform, account] of Object.entries(state.accounts)) {
-      if (account.status !== 'syncing' && Date.now() - (account.attemptedAt || account.syncedAt || 0) >= 120000) {
+      if (account.status !== 'syncing' && Date.now() - (account.attemptedAt || account.syncedAt || 0) >= 30 * 60000) {
         try { await rpc('sync', { platform }); render(); } catch (error) { toast(error.message, true); }
       }
     }

@@ -1,4 +1,4 @@
-import { buildCompanyIndex, companyCounts, filterCompanyQuestions, COMPANY_CATEGORIES, COMPANY_WINDOWS } from './companies.mjs';
+import { buildCompanyIndex, companyCounts, companyQuestions, filterCompanyQuestions, COMPANY_CATEGORIES, COMPANY_WINDOWS } from './companies.mjs';
 
 export function mountCompanies(root, { getState, solvedKeys, createRow }) {
   const $ = id => root.querySelector(`#${id}`);
@@ -20,7 +20,11 @@ export function mountCompanies(root, { getState, solvedKeys, createRow }) {
   }
   // A hidden select keeps the category value stable while chip buttons are rebuilt visually.
   $('companySearch').addEventListener('input', render);
-  $('companyWindow').addEventListener('change', () => { page = 0; render(); });
+  $('companyWindow').addEventListener('change', () => {
+    if ($('companyWindow').value !== 'all') $('companyPlatform').value = 'leetcode';
+    page = 0; render();
+  });
+  $('companyPlatform').addEventListener('change', () => { $('companyWindow').value = 'all'; page = 0; render(); });
   for (const id of ['companyQuestionSearch', 'companyDifficulty', 'companyProgress', 'companyTopic', 'companyAccess', 'companySort']) {
     $(id).addEventListener(id === 'companyQuestionSearch' ? 'input' : 'change', () => { page = 0; render(); });
   }
@@ -55,14 +59,15 @@ export function mountCompanies(root, { getState, solvedKeys, createRow }) {
     $('companyContent').hidden = !data || !libraryReady;
     if (!data || !libraryReady) return;
     $('companySource').href = data.source.url;
-    $('companySource').textContent = 'Community dataset';
-    $('companySnapshot').textContent = `Snapshot: ${data.source.snapshotDate}. Time windows are relative to this snapshot; frequency is the source's score.`;
+    $('companySource').textContent = 'LeetCode dataset';
+    $('companySnapshot').textContent = `LeetCode snapshot: ${data.source.snapshotDate}; time windows and frequency refer to that snapshot. Code360 tags have no frequency or date data.`;
     const requestedId = location.hash.split('/')[1] || '';
     const company = companies.find(c => c.id === requestedId);
     $('companyDirectory').hidden = Boolean(requestedId);
     $('companyGrid').hidden = Boolean(requestedId);
     $('companyDetail').hidden = !requestedId;
-    $('companyWindowLabel').hidden = Boolean(requestedId) && !company;
+    $('companyWindowLabel').hidden = $('companyPlatform').value === 'code360' || Boolean(requestedId) && !company;
+    $('companySort').querySelector('[value="frequency"]').textContent = $('companyPlatform').value === 'code360' ? 'Title A–Z (frequency unavailable)' : 'Most asked first';
     if (requestedId) {
       $('companyDetailBody').hidden = !company;
       $('companyMissing').hidden = Boolean(company);
@@ -73,20 +78,22 @@ export function mountCompanies(root, { getState, solvedKeys, createRow }) {
     } else renderDirectory();
   }
   function renderDirectory() {
-    const query = $('companySearch').value.trim().toLowerCase(), category = $('companyCategory').value, window = $('companyWindow').value;
+    const query = $('companySearch').value.trim().toLowerCase(), category = $('companyCategory').value, window = $('companyWindow').value, platform = $('companyPlatform').value;
+    const countsByCompany = new Map(companies.map(c => [c.id, companyCounts(c, window, platform)]));
     for (const chip of chips.children) chip.setAttribute('aria-pressed', String(chip.dataset.category === category));
-    const visible = companies.filter(c => (category === 'all' || category === c.category) && [c.name, c.id, ...(c.aliases || [])].some(name => name.toLowerCase().includes(query)) && companyCounts(c, window).total);
-    const unique = new Set(companies.flatMap(c => (c.windows[window] || []).map(p => p.key)));
-    $('companySummary').textContent = `${unique.size.toLocaleString()} LeetCode questions across ${companies.filter(c => companyCounts(c, window).total).length} companies`;
+    const visible = companies.filter(c => (category === 'all' || category === c.category) && [c.name, c.id, ...(c.aliases || [])].some(name => name.toLowerCase().includes(query)) && countsByCompany.get(c.id).total);
+    const unique = new Set(companies.flatMap(c => companyQuestions(c, window, platform).map(p => p.key)));
+    const platformName = $('companyPlatform').selectedOptions[0].textContent;
+    $('companySummary').textContent = `${unique.size.toLocaleString()} ${platformName} questions across ${companies.filter(c => countsByCompany.get(c.id).total).length} companies`;
     const fragment = document.createDocumentFragment();
     for (const group of COMPANY_CATEGORIES) {
-      const members = visible.filter(c => c.category === group).sort((a, b) => companyCounts(b, window).total - companyCounts(a, window).total || a.name.localeCompare(b.name));
+      const members = visible.filter(c => c.category === group).sort((a, b) => countsByCompany.get(b.id).total - countsByCompany.get(a.id).total || a.name.localeCompare(b.name));
       if (!members.length) continue;
       const section = node('section', 'company-group'), heading = node('h2', '', group);
       heading.append(node('span', 'muted', `${members.length} companies`)); section.append(heading);
       const grid = node('div', 'company-grid');
       for (const company of members) {
-        const counts = companyCounts(company, window), card = node('a', 'company-card'); card.href = `#companies/${company.id}`;
+        const counts = countsByCompany.get(company.id), card = node('a', 'company-card'); card.href = `#companies/${company.id}`;
         card.setAttribute('aria-label', `${company.name}, ${counts.total} questions`);
         const header = node('div', 'company-card-heading'), mark = node('span', 'company-mark', company.name.split(/\s+/).map(w => w[0]).slice(0, 2).join(''));
         mark.setAttribute('aria-hidden', 'true');
@@ -104,15 +111,15 @@ export function mountCompanies(root, { getState, solvedKeys, createRow }) {
     $('companyGrid').replaceChildren(fragment);
   }
   function renderDetail(company) {
-    const window = $('companyWindow').value, sourceRows = company.windows[window] || [], currentTopic = $('companyTopic').value;
+    const window = $('companyWindow').value, platform = $('companyPlatform').value, sourceRows = companyQuestions(company, window, platform), currentTopic = $('companyTopic').value;
     const topics = [...new Set(sourceRows.flatMap(p => p.topics))].sort();
     select('companyTopic', [['all', 'All topics'], ...[...new Set([...topics, ...(currentTopic !== 'all' ? [currentTopic] : [])])].map(t => [t, t])]);
     $('companyTopic').value = currentTopic;
     const available = Object.hasOwn(company.windows, window);
-    $('companyDetailSummary').textContent = available ? `${sourceRows.length.toLocaleString()} questions · LeetCode · ${COMPANY_WINDOWS[window]}` : `No ${COMPANY_WINDOWS[window].toLowerCase()} data in this snapshot.`;
+    $('companyDetailSummary').textContent = available ? `${sourceRows.length.toLocaleString()} questions · ${$('companyPlatform').selectedOptions[0].textContent}${platform === 'code360' ? '' : ` · ${COMPANY_WINDOWS[window]}`}` : `No ${COMPANY_WINDOWS[window].toLowerCase()} data in this snapshot.`;
     const state = getState();
     const solved = new Set([...solvedKeys(), ...Object.entries(state.workspace).filter(([, entry]) => entry.done === true).map(([key]) => key)]);
-    const rows = filterCompanyQuestions(company, { window, query: $('companyQuestionSearch').value, difficulty: $('companyDifficulty').value, status: $('companyProgress').value, topics: currentTopic === 'all' ? [] : [currentTopic], access: $('companyAccess').value, sort: $('companySort').value, workspace: state.workspace, solved });
+    const rows = filterCompanyQuestions(company, { window, platform, query: $('companyQuestionSearch').value, difficulty: $('companyDifficulty').value, status: $('companyProgress').value, topics: currentTopic === 'all' ? [] : [currentTopic], access: $('companyAccess').value, sort: $('companySort').value, workspace: state.workspace, solved });
     const pages = Math.max(1, Math.ceil(rows.length / size)); page = Math.max(0, Math.min(page, pages - 1));
     const open = new Set([...$('companyQuestionList').querySelectorAll('.question-row:has(.question-details[open])')].map(row => row.dataset.key));
     const rendered = rows.slice(page * size, (page + 1) * size).map(p => createRow(p, { open: open.has(p.key), frequency: true, onTopic: topic => { $('companyTopic').value = topic; page = 0; render(); } }));

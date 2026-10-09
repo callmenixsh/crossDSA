@@ -6,8 +6,6 @@ export function ratingSeries(accounts, year, timeZone, selected = 'all') {
     const snapshot = account.snapshot;
     if (!snapshot || (selected !== 'all' && selected !== id)) continue;
     const score = id === 'geeksforgeeks';
-    // Coding scores are a separate metric, never a contest-rating series.
-    if (score && selected === 'all') continue;
     const current = score ? snapshot.score : snapshot.rating;
     let points = (score ? snapshot.scoreHistory || [] : snapshot.ratings || [])
       .filter(p => Number.isFinite(p.rating) && Number.isFinite(p.timestamp) && p.timestamp > 0)

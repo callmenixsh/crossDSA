@@ -73,7 +73,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   async function refreshActivity(manual = false) {
     refresh.disabled = true;
     try {
-      const candidates = Object.entries(trackerState.accounts).filter(([, account]) => manual || Date.now() - (account.attemptedAt || account.syncedAt || 0) >= 30000);
+      const candidates = Object.entries(trackerState.accounts).filter(([, account]) => manual || Date.now() - (account.attemptedAt || account.syncedAt || 0) >= 30 * 60000);
       for (const [platform] of candidates) {
         const result = await chrome.runtime.sendMessage({ action: 'tracker:sync', platform });
         if (!result?.ok) throw new Error(result?.error || 'Could not refresh activity.');
@@ -95,7 +95,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     if (trackerState.settings.autoSync) refreshActivity();
   }).catch(error => { document.getElementById('overviewStatus').textContent = error.message; });
 
-  document.getElementById('openDashboard')?.addEventListener('click', () => {
+  for (const id of ['openDashboard', 'dashboardLink']) document.getElementById(id)?.addEventListener('click', () => {
     chrome.tabs.create({ url: chrome.runtime.getURL('dashboard.html') });
   });
   const similaritySlider = document.getElementById("similaritySlider");

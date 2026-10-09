@@ -24,7 +24,7 @@
 .company-breakdown strong{margin-top:5px;font-size:11px;font-weight:500}
 .company-detail-heading{margin-top:16px;margin-bottom:20px}
 .company-frequency{font-variant-numeric:tabular-nums;font-size:10px}
-#companyQuestionList .question-tags .company-frequency-tag{display:inline-block}
+#companyQuestionList .question-tags .company-frequency-tag,#companyQuestionList .question-tags .company-platform-tag{display:inline-block}
 @media(max-width:1250px){.company-grid{grid-template-columns:repeat(3,minmax(0,1fr))}}
 @media(max-width:1000px){.company-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media(max-width:520px){.company-grid{grid-template-columns:1fr}.company-card{padding:14px}.company-toolbar>input{width:100%}.company-categories{gap:5px}.company-category{padding:6px 10px;font-size:10px}.company-source-row{font-size:9px}}

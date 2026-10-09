@@ -12,7 +12,7 @@ async function harness(fetcher = async () => { throw new Error('Offline'); }) {
     runtime: { id: 'test-extension', getURL: path => `chrome-extension://test-extension/${path}`, onMessage: event(), onInstalled: event(), onStartup: event() },
     alarms: { clear: async name => scheduled.delete(name), get: async name => scheduled.get(name), create: async (name, options) => { scheduled.set(name, options); }, onAlarm: event() },
     permissions: { contains: async () => allowed },
-    tabs: { query: async () => [] },
+    tabs: { query: async () => [], get: async () => ({ url: 'https://leetcode.com/' }), onUpdated: event(), onActivated: event() },
   };
   globalThis.fetch = fetcher;
   const service = await import(`../tracker/service.mjs?test=${crypto.randomUUID()}`);
@@ -28,6 +28,14 @@ async function harness(fetcher = async () => { throw new Error('Offline'); }) {
 const settings = { dailyGoal: 3, timeZone: 'Asia/Kolkata', autoSync: false };
 const entry = { key: 'leetcode:two-sum', platform: 'leetcode', title: 'Two Sum', url: 'https://leetcode.com/problems/two-sum/', topics: ['Array'], difficulty: 'Easy', listIds: ['saved'] };
 const response = value => ({ ok: true, json: async () => value });
+
+test('startup migrates the activity refresh alarm from hourly to every 30 minutes', async () => {
+  const h = await harness();
+  h.scheduled.set('crossdsa-hourly-sync', { periodInMinutes: 60 });
+  chrome.runtime.onStartup.listeners[0]();
+  await new Promise(resolve => setImmediate(resolve));
+  assert.equal(h.scheduled.get('crossdsa-hourly-sync').periodInMinutes, 30);
+});
 const leetcodeData = total => ({ data: { matchedUser: { profile: {}, submitStatsGlobal: { acSubmissionNum: [{ difficulty: 'All', count: total }] }, badges: [], userCalendar: { activeYears: [], submissionCalendar: '{}' } }, recentAcSubmissionList: [], userContestRanking: null, userContestRankingHistory: [] } });
 
 test('browser accepts update immediately, deduplicate, and become verified on sync', async () => {
@@ -149,7 +157,11 @@ test('contest preferences persist independently of activity settings and validat
   assert.equal(h.storage[STORAGE_KEY].settings.contestReminders, true);
   h.setAllowed(false);
   assert.equal((await h.send('contest-settings', { contestsEnabled: true, contestReminders: true })).ok, false);
+  assert.equal((await h.send('contest-settings', { contestsEnabled: false, contestReminders: true })).ok, false);
+  h.setAllowed(true);
   assert.equal((await h.send('contest-settings', { contestsEnabled: false, contestReminders: true })).ok, true);
+  assert.equal(h.storage[STORAGE_KEY].settings.contestReminders, true);
+  assert.equal((await h.send('contest-settings', { contestsEnabled: false, contestReminders: false })).ok, true);
   assert.equal(h.storage[STORAGE_KEY].settings.contestReminders, false);
   assert.equal(h.storage[STORAGE_KEY].settings.dailyGoal, 3);
 });
@@ -296,7 +308,7 @@ test('an in-flight sync cannot restore a disconnected account', async () => {
   assert.equal(h.storage[STORAGE_KEY].disconnectedAccounts.leetcode.snapshot.totalSolved, 42);
 });
 
-test('LeetCode missing receiver is repaired once and still verifies the account', async () => {
+test('LeetCode restores both helpers and retries a missing receiver while verifying the account', async () => {
   const h = await harness(async () => response(leetcodeData(299)));
   const initial = emptyState(); initial.accounts.leetcode = { handle: 'sample', generation: 'test' }; h.storage[STORAGE_KEY] = initial;
   chrome.tabs.query = async () => [{ id: 7 }];
@@ -305,9 +317,9 @@ test('LeetCode missing receiver is repaired once and still verifies the account'
     if (++messages === 1) throw new Error('Could not establish connection. Receiving end does not exist.');
     return { ok: true, username: 'sample', submissions: [{ id: 42, title: 'Two Sum', titleSlug: 'two-sum', timestamp: Math.floor(Date.now() / 1000) }] };
   };
-  chrome.scripting = { executeScript: async options => { injections++; assert.deepEqual(options, { target: { tabId: 7 }, files: ['tracker/leetcode-session.js'] }); } };
+  chrome.scripting = { executeScript: async options => { injections++; assert.deepEqual(options, { target: { tabId: 7 }, files: ['tracker/leetcode-session.js', 'tracker/leetcode-browser.js'] }); } };
   const result = await h.send('sync', { platform: 'leetcode' });
-  assert.equal(injections, 1); assert.equal(messages, 2);
+  assert.equal(injections, 2); assert.equal(messages, 2);
   assert.equal(result.state.accounts.leetcode.snapshot.recentSource, 'signed-in');
   messages = 0;
   chrome.tabs.sendMessage = async () => {
@@ -319,7 +331,7 @@ test('LeetCode missing receiver is repaired once and still verifies the account'
   assert.equal(mismatch.state.accounts.leetcode.snapshot.recent.length, 1);
 });
 
-test('missing LeetCode receiver without scripting permission shows refresh guidance and retains totals', async () => {
+test('missing LeetCode receiver without scripting permission shows reconnect guidance and retains totals', async () => {
   const h = await harness(async () => response(leetcodeData(299)));
   const initial = emptyState(); initial.accounts.leetcode = { handle: 'sample', generation: 'test' }; h.storage[STORAGE_KEY] = initial;
   chrome.permissions.contains = async permissions => !permissions.permissions?.includes('scripting');
@@ -327,7 +339,7 @@ test('missing LeetCode receiver without scripting permission shows refresh guida
   chrome.tabs.sendMessage = async () => { throw new Error('Could not establish connection. Receiving end does not exist.'); };
   const result = await h.send('sync', { platform: 'leetcode' });
   assert.equal(result.state.accounts.leetcode.snapshot.totalSolved, 299);
-  assert.match(result.state.accounts.leetcode.snapshot.activityWarning, /Refresh your LeetCode tab/);
+  assert.match(result.state.accounts.leetcode.snapshot.activityWarning, /Reconnect LeetCode/);
   assert.doesNotMatch(result.state.accounts.leetcode.snapshot.activityWarning, /Receiving end/);
 });
 
@@ -342,6 +354,96 @@ test('a missing receiver on another tab does not mask the signed-in account erro
   };
   const result = await h.send('sync', { platform: 'leetcode' });
   assert.match(result.state.accounts.leetcode.snapshot.activityWarning, /Sign in.*@sample/);
+});
+
+const settleRecovery = async () => {
+  for (let i = 0; i < 30; i++) await new Promise(resolve => setImmediate(resolve));
+};
+
+test('opening LeetCode recovers activity automatically and coalesces repeated tab events', async () => {
+  let requests = 0, injections = 0;
+  const h = await harness(async () => { requests++; return response(leetcodeData(299)); });
+  const initial = emptyState();
+  initial.accounts.leetcode = { handle: 'sample', generation: 'test', syncedAt: Date.now(), snapshot: { totalSolved: 299, activityWarning: 'Open LeetCode', recent: [] } };
+  h.storage[STORAGE_KEY] = initial;
+  chrome.tabs.query = async () => [{ id: 7 }];
+  chrome.scripting = { executeScript: async () => { injections++; } };
+  chrome.tabs.sendMessage = async () => ({ ok: true, username: 'sample', submissions: [{ id: 42, title: 'Two Sum', titleSlug: 'two-sum', timestamp: Math.floor(Date.now() / 1000) }] });
+  const opened = () => chrome.tabs.onUpdated.listeners[0](7, { status: 'complete' }, { url: 'https://leetcode.com/problems/two-sum/' });
+  opened(); opened(); opened();
+  await settleRecovery();
+  const account = h.storage[STORAGE_KEY].accounts.leetcode;
+  assert.equal(requests, 1);
+  assert.equal(account.snapshot.activityWarning, '');
+  assert.equal(account.snapshot.recent[0].id, 'leetcode:42');
+  assert.equal(account.activitySyncedAt, account.profileSyncedAt);
+  assert.ok(injections > 0);
+  chrome.tabs.onActivated.listeners[0]({ tabId: 7 });
+  await settleRecovery();
+  assert.equal(requests, 1);
+  assert.ok(h.scheduled.has('crossdsa-leetcode-recovery'));
+});
+
+test('activity freshness and cached accepts survive closed tabs, expired sessions and wrong accounts', async () => {
+  const h = await harness(async () => response(leetcodeData(299)));
+  const initial = emptyState();
+  const saved = { id: 'leetcode:42', key: 'leetcode:two-sum', platform: 'leetcode', title: 'Two Sum', url: 'https://leetcode.com/problems/two-sum/', timestamp: Date.now() - 10000 };
+  initial.accounts.leetcode = { handle: 'sample', generation: 'test', profileSyncedAt: 123, activitySyncedAt: 100, snapshot: { totalSolved: 299, recent: [saved] } };
+  h.storage[STORAGE_KEY] = initial;
+  for (const result of [null, { ok: false, error: 'Sign in to LeetCode to import your accepted questions.' }, { ok: true, username: 'other', submissions: [] }]) {
+    chrome.tabs.query = async () => result ? [{ id: 7 }] : [];
+    chrome.tabs.sendMessage = async () => result;
+    const { state } = await h.send('sync', { platform: 'leetcode' });
+    const account = state.accounts.leetcode;
+    assert.ok(account.profileSyncedAt > 123);
+    assert.equal(account.activitySyncedAt, 100);
+    assert.deepEqual(account.snapshot.recent, [saved]);
+    assert.ok(account.snapshot.activityWarning);
+  }
+});
+
+test('sign-in during recovery cooldown gets a deferred retry without another manual refresh', async () => {
+  const h = await harness(async () => response(leetcodeData(299)));
+  const initial = emptyState();
+  initial.accounts.leetcode = { handle: 'sample', generation: 'test', recoveryAttemptedAt: Date.now(), snapshot: { totalSolved: 299, recent: [], activityWarning: 'Sign in' } };
+  h.storage[STORAGE_KEY] = initial;
+  chrome.tabs.query = async () => [{ id: 7 }];
+  chrome.tabs.sendMessage = async () => ({ ok: true, username: 'sample', submissions: [] });
+  chrome.tabs.onUpdated.listeners[0](7, { status: 'complete' }, { url: 'https://leetcode.com/' });
+  await settleRecovery();
+  assert.deepEqual(h.scheduled.get('crossdsa-leetcode-recovery'), { delayInMinutes: 1 });
+  h.storage[STORAGE_KEY].accounts.leetcode.recoveryAttemptedAt -= 61000;
+  chrome.alarms.onAlarm.listeners[0]({ name: 'crossdsa-leetcode-recovery' });
+  await settleRecovery();
+  assert.equal(h.storage[STORAGE_KEY].accounts.leetcode.snapshot.activityWarning, '');
+  assert.ok(h.storage[STORAGE_KEY].accounts.leetcode.activitySyncedAt);
+});
+
+test('extension startup repairs both helpers while respecting disabled automatic sync', async () => {
+  let requests = 0; const files = [];
+  const h = await harness(async () => { requests++; return response(leetcodeData(299)); });
+  const initial = emptyState(); initial.settings.autoSync = false;
+  initial.accounts.leetcode = { handle: 'sample', generation: 'test', snapshot: { recent: [], activityWarning: 'Open LeetCode' } };
+  h.storage[STORAGE_KEY] = initial;
+  chrome.tabs.query = async () => [{ id: 7 }];
+  chrome.scripting = { executeScript: async options => files.push(options.files) };
+  chrome.runtime.onInstalled.listeners[0]();
+  await settleRecovery();
+  assert.deepEqual(files, [['tracker/leetcode-session.js', 'tracker/leetcode-browser.js']]);
+  assert.equal(requests, 0);
+  assert.equal(h.storage[STORAGE_KEY].accounts.leetcode.snapshot.activityWarning, 'Open LeetCode');
+});
+
+test('unrelated tab navigation does not request LeetCode recovery', async () => {
+  const h = await harness(); let queries = 0;
+  const initial = emptyState(); initial.accounts.leetcode = { handle: 'sample', generation: 'test' };
+  h.storage[STORAGE_KEY] = initial;
+  chrome.tabs.query = async () => { queries++; return []; };
+  chrome.tabs.get = async () => ({ url: 'https://example.com/' });
+  chrome.tabs.onUpdated.listeners[0](7, { status: 'complete' }, { url: 'https://example.com/' });
+  chrome.tabs.onActivated.listeners[0]({ tabId: 7 });
+  await settleRecovery();
+  assert.equal(queries, 0);
 });
 
 test('sync all starts independent platforms together and preserves per-platform status', async () => {

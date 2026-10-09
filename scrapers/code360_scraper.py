@@ -283,9 +283,7 @@ def fetch_all_questions(limit=0):
         raw_topics = problem_data.get('practice_topics') or []
         if raw_topics:
             topics.extend(raw_topics)
-        for c in (problem_data.get('company_list') or []):
-            if c.get('name'):
-                topics.append(c['name'])
+        companies = list(dict.fromkeys(c['name'] for c in (problem_data.get('company_list') or []) if c.get('name')))
         topics = list(dict.fromkeys(topics))
 
         description, constraints, is_sql = extract_description_and_constraints(html_desc)
@@ -304,6 +302,7 @@ def fetch_all_questions(limit=0):
             'difficulty': difficulty,
             'isPremium': False,
             'topics': topics,
+            'companies': companies,
             'description': description,
             'constraints': constraints,
             'is_sql': is_sql,
