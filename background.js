@@ -1,3 +1,7 @@
+import { registerTracker } from './tracker/service.mjs';
+
+registerTracker();
+
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
     if (request.action === 'getSimilarityThreshold') {
         chrome.storage.local.get(['dsa-helper-similarity-threshold'], (result) => {

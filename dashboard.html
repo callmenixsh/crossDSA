@@ -1,0 +1,93 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="color-scheme" content="dark">
+  <title>Your workspace · crossDSA</title>
+  <link rel="icon" href="icons/cDSA-32.png">
+  <link rel="stylesheet" href="dashboard.css">
+</head>
+<body>
+  <aside class="sidebar">
+    <a class="brand" href="#overview"><img src="icons/cDSA-48.png" alt="" width="30" height="30"><span>cross<span class="accent">DSA</span></span></a>
+    <nav aria-label="Dashboard">
+      <a href="#overview" class="nav-item" data-view="overview"><span aria-hidden="true">◫</span> Overview</a>
+      <a href="#questions" class="nav-item" data-view="questions"><span aria-hidden="true">⌘</span> Question library <span class="nav-count" id="libraryCount">…</span></a>
+      <a href="#done" class="nav-item" data-view="done"><span aria-hidden="true">✓</span> Done Questions</a>
+      <a href="#workspace" class="nav-item" data-view="workspace"><span aria-hidden="true">▣</span> My lists <span class="nav-count" id="savedCount">0</span></a>
+      <a href="#settings" class="nav-item" data-view="settings"><span aria-hidden="true">⚙</span> Settings</a>
+    </nav>
+  </aside>
+  <main>
+    <header class="topbar"><div class="breadcrumbs">Workspace <span>/</span> <strong id="breadcrumb">Overview</strong></div><div class="topbar-right"><span id="todayLabel"></span><button class="button ghost" id="connectTop">＋ Connect platforms</button></div></header>
+    <div class="page">
+      <section id="view-overview" class="view">
+        <div class="page-heading"><div><h1>Overview</h1></div><div class="sync-controls"><button class="button" id="syncAll">↻ Sync activity</button><p id="syncSummary" class="small muted" role="status" hidden></p></div></div>
+        <div class="metrics">
+          <article class="metric goal-metric"><div id="goalRing" class="goal-ring"><strong id="goalCount">0</strong></div><div><span class="metric-label">TODAY'S PRACTICE</span><div class="goal-caption" id="goalCaption">of 2 accepted problems</div><a href="#settings" class="text-link">Edit goal ↗</a></div></article>
+          <article class="metric"><span class="metric-label">PROBLEMS SOLVED</span><strong id="solvedTotal">—</strong></article>
+          <article class="metric"><span class="metric-label">ACTIVITY STREAK</span><strong><span id="currentStreak">0</span><small> days</small></strong><span class="metric-hint" id="longestStreak">Best: 0 days</span></article>
+
+        </div>
+        <article class="panel progress-panel" aria-labelledby="progressTitle">
+          <div class="section-heading progress-toolbar"><h2 id="progressTitle">Progress</h2><div class="inline-controls"><select id="progressPlatform" aria-label="Progress platform"><option value="all">No platforms</option></select><select id="progressYear" aria-label="Progress year"></select></div></div>
+          <div class="insights-grid">
+            <section class="activity-panel" aria-labelledby="activityTitle"><div class="section-heading"><div><h3 id="activityTitle">Practice activity</h3><p id="activitySummary"></p></div></div><div class="heatmap-scroll"><div id="heatmap" class="heatmap" role="group" aria-label="Coding activity calendar"></div></div><div class="heatmap-footer"><div class="legend">Less <i></i><i class="level-1"></i><i class="level-2"></i><i class="level-3"></i><i class="level-4"></i> More</div></div></section>
+            <section class="ratings-panel" aria-labelledby="ratingsTitle"><div class="section-heading"><h3 id="ratingsTitle">Rating over time</h3></div><div id="ratingLegend" class="rating-legend" aria-label="Chart series"></div><div id="ratingPlot" class="rating-plot"></div></section>
+          </div>
+          <details class="coverage-details"><summary>About these numbers</summary><p>Activity may include repeat submissions. Goals count distinct accepted questions today, including browser-observed accepts awaiting sync. Totals come from platform profiles and count each platform separately; imported question history may be incomplete.</p></details>
+        </article>
+        <div class="platforms-section"><div><div class="section-heading outside"><div><h2>Platforms</h2></div><button class="text-button" id="connectCards">Manage ↗</button></div><div id="platformCards" class="platform-grid"></div></div></div>
+        <article class="panel recent-panel"><div class="section-heading"><div><h2>Recent solves</h2></div><a class="text-link" href="#done">View all →</a></div><div id="recentList"></div></article>
+      </section>
+      <section id="view-done" class="view" hidden>
+        <div class="page-heading"><h1>Done Questions</h1></div>
+        <div class="panel library-panel">
+          <div class="filters"><input type="search" id="doneSearch" placeholder="Search done questions…" aria-label="Search done questions"><select id="donePlatform" aria-label="Done questions platform"><option value="all">All platforms</option></select><input type="date" id="doneFrom" aria-label="Solved from date"><input type="date" id="doneTo" aria-label="Solved through date"><select id="doneSort" aria-label="Sort done questions"><option value="newest">Newest first</option><option value="oldest">Oldest first</option></select></div>
+          <p class="list-meta">Imported history may be incomplete. Dates show the latest recorded solve or manual Done date. Manual marks do not change submission counts.</p>
+          <div class="list-meta" id="doneMeta"></div><div id="doneList"></div>
+          <div class="pagination"><button class="button ghost" id="donePrevious">← Previous</button><span id="donePageLabel"></span><button class="button ghost" id="doneNext">Next →</button></div>
+        </div>
+      </section>
+      <section id="view-questions" class="view" hidden>
+        <div class="page-heading"><div><h1>Question library</h1></div><button class="button" id="randomQuestion">↗ Random problem</button></div>
+        <div class="panel library-panel">
+          <div class="library-search"><input type="search" id="questionSearch" placeholder="Search titles, IDs or topics…" aria-label="Search questions"><button class="button ghost" id="resetQuestions">Clear filters</button></div>
+          <div class="filters library-filters">
+            <label>Platform<select id="questionPlatform"><option value="all">All connected</option></select></label>
+            <label>Difficulty<select id="questionDifficulty"><option value="all">Any difficulty</option></select></label>
+            <label>Progress<select id="questionStatus"><option value="all">All questions</option><option value="unsolved">Unsolved</option><option value="solved">Solved</option><option value="starred">Starred</option></select></label>
+            <label>Access<select id="questionAccess"><option value="all">Free &amp; premium</option><option value="free">Free only</option><option value="premium">Premium only</option></select></label>
+            <label>Sort<select id="questionSort"><option value="default">Relevance / index order</option><option value="title">Title A–Z</option><option value="easy">Difficulty: easy first</option><option value="hard">Difficulty: hard first</option></select></label>
+            <details class="topic-picker" id="topicPicker"><summary id="topicSummary">Topics · All</summary><div class="topic-popover"><input type="search" id="topicSearch" placeholder="Find a topic…" aria-label="Search topic filters"><p>Match any selected topic</p><div id="questionTopics"></div></div></details>
+          </div>
+          <div id="activeQuestionFilters" class="active-question-filters" aria-label="Active filters"></div>
+          <div class="list-meta" id="questionMeta" role="status">Loading index…</div><div id="questionList"></div>
+          <div class="pagination"><button class="button ghost" id="previousPage">← Previous</button><span id="pageLabel"></span><button class="button ghost" id="nextPage">Next →</button></div>
+        </div>
+      </section>
+      <section id="view-workspace" class="view" hidden>
+        <div class="page-heading"><div><h1>My lists</h1></div><a href="#questions" class="button">＋ Find questions</a></div>
+        <form id="createListForm" class="filters"><input id="newListName" placeholder="New list name" aria-label="New list name" maxlength="80" required><button class="button primary" type="submit">Create list</button></form><div id="workspaceSummary" class="workspace-summary"></div><div class="panel library-panel"><div class="filters"><input type="search" id="workspaceSearch" placeholder="Search your saved practice…" aria-label="Search saved practice"><select id="workspaceFilter" aria-label="Filter by list"><option value="all">All lists</option></select></div><div id="workspaceList"></div></div>
+      </section>
+      <section id="view-settings" class="view" hidden>
+        <div class="page-heading"><div><h1>Settings</h1></div></div>
+        <div class="settings-grid"><form id="settingsForm" class="panel"><h2>Goals &amp; activity</h2><label class="field">Daily goal<input id="dailyGoal" type="number" min="1" max="50" required></label><label class="field">Timezone<input id="timeZone" required placeholder="Asia/Kolkata"></label><label class="check-field"><input id="autoSync" type="checkbox"> Auto-refresh activity</label><button class="button primary" type="submit">Save settings</button></form><article class="panel"><h2>Your data</h2><p>Stored in this browser.</p><button class="button" id="exportData">↓ Export my data</button></article></div>
+      </section>
+    </div>
+  </main>
+  <dialog id="connectionsDialog"><div class="dialog-heading"><div><h2>Connect platforms</h2></div><button class="icon-button" data-close="connectionsDialog" aria-label="Close connections">×</button></div><div id="connectionForms"></div></dialog>
+  <dialog id="practiceDialog" aria-labelledby="listPickerTitle"><form id="practiceForm">
+    <div class="dialog-heading"><h2 id="listPickerTitle">Add to list</h2><button class="icon-button" type="button" data-close="practiceDialog" aria-label="Close list selection">&times;</button></div>
+    <div class="list-picker-problem"><span id="practicePlatform" class="eyebrow"></span><h3 id="practiceTitle"></h3><a id="practiceLink" class="text-link" target="_blank" rel="noopener noreferrer">Open problem ↗</a></div>
+    <input id="listSearch" type="search" placeholder="Search custom lists…" aria-label="Search custom lists">
+    <div class="list-picker-meta"><span>Custom lists</span><span id="listSelectionCount">0 selected</span></div><div id="problemLists"></div>
+    <div class="inline-list-create"><input id="inlineListName" placeholder="New list name" aria-label="New custom list name" maxlength="80"><button id="inlineCreateList" class="button ghost" type="button">+ Create</button></div>
+    <p id="listPickerStatus" class="connection-result" role="status"></p>
+    <div class="dialog-actions"><button class="button ghost" type="button" data-close="practiceDialog">Cancel</button><button class="button primary" type="submit">Save lists</button></div>
+  </form></dialog>
+  <div id="toast" role="status" aria-live="polite" hidden></div>
+  <script type="module" src="dashboard.mjs"></script>
+</body>
+</html>

@@ -1,4 +1,7 @@
+import { STORAGE_KEY, normalizeState, practiceOverview } from './tracker/core.mjs';
+
 const DEFAULT_PLATFORMS = ["leetcode", "geeksforgeeks", "codeforces", "codechef", "code360"];
+const SEARCH_ENABLED_KEY = 'dsa-helper-visibility-enabled';
 const PLATFORM_NAMES = {
   leetcode: "LeetCode",
   geeksforgeeks: "GeeksforGeeks",
@@ -30,17 +33,69 @@ function showStatus(message, type, duration = 2000) {
 
 function updateToggleUI(isEnabled) {
   const toggleBtn = document.getElementById("toggleBtn");
-  const thresholdLabel = document.getElementById("thresholdLabel");
-  const thresholdMinLabel = document.getElementById("thresholdMinLabel");
-  const thresholdMaxLabel = document.getElementById("thresholdMaxLabel");
   if (!toggleBtn) return;
   toggleBtn.classList.toggle("enabled", isEnabled);
   toggleBtn.setAttribute("aria-pressed", isEnabled.toString());
   const stateLabel = toggleBtn.querySelector(".toggle-state");
   if (stateLabel) stateLabel.textContent = isEnabled ? "On" : "Off";
+  const card = toggleBtn.closest('.search-settings');
+  card?.classList.toggle('search-disabled', !isEnabled);
+  card?.querySelectorAll('.platform-check, #similaritySlider').forEach(control => {
+    control.disabled = !isEnabled;
+  });
+  const platforms = document.getElementById('platformGrid');
+  if (platforms) {
+    platforms.inert = !isEnabled;
+    platforms.setAttribute('aria-disabled', String(!isEnabled));
+  }
 }
 
 document.addEventListener("DOMContentLoaded", async () => {
+  let trackerState = normalizeState();
+  const refresh = document.getElementById('refreshOverview');
+  function renderOverview() {
+    const summary = practiceOverview(trackerState);
+    const number = value => Number(value).toLocaleString();
+    document.getElementById('overviewToday').textContent = summary.warning ? (summary.today ? `${number(summary.today)}+` : '\u2014') : number(summary.today);
+    document.getElementById('overviewGoal').textContent = `OF ${summary.goal} TODAY`;
+    document.getElementById('overviewRing').style.setProperty('--progress', `${Math.min(100, summary.today / summary.goal * 100)}%`);
+    document.getElementById('overviewTotal').textContent = summary.total == null ? '\u2014' : `${summary.lowerBound ? '\u2265 ' : ''}${number(summary.total)}`;
+    document.getElementById('overviewStreak').textContent = summary.streak == null ? '\u2014' : `${number(summary.streak)}d`;
+    document.getElementById('overviewStreakLabel').textContent = summary.streakLabel.toUpperCase();
+    const accounts = Object.values(trackerState.accounts);
+    const oldest = Math.min(...accounts.map(account => account.syncedAt || 0));
+    document.getElementById('overviewStatus').textContent = summary.syncing ? 'Refreshing...' : summary.error || summary.warning || (accounts.length ? `Updated ${oldest ? new Date(oldest).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'never'}` : 'Connect a platform.');
+    refresh.disabled = summary.syncing || !accounts.length;
+    document.getElementById('openDashboard').title = summary.error || summary.warning || 'Open your DSA dashboard';
+  }
+  async function refreshActivity(manual = false) {
+    refresh.disabled = true;
+    try {
+      const candidates = Object.entries(trackerState.accounts).filter(([, account]) => manual || Date.now() - (account.attemptedAt || account.syncedAt || 0) >= 30000);
+      for (const [platform] of candidates) {
+        const result = await chrome.runtime.sendMessage({ action: 'tracker:sync', platform });
+        if (!result?.ok) throw new Error(result?.error || 'Could not refresh activity.');
+        trackerState = normalizeState(result.state);
+      }
+      renderOverview();
+    } catch (error) { renderOverview(); document.getElementById('overviewStatus').textContent = error.message; }
+  }
+  refresh.addEventListener('click', () => refreshActivity(true));
+  chrome.storage.onChanged.addListener((changes, area) => {
+    if (area === 'local' && changes[STORAGE_KEY]) { trackerState = normalizeState(changes[STORAGE_KEY].newValue); renderOverview(); }
+    if (area === 'local' && changes[SEARCH_ENABLED_KEY]) updateToggleUI(changes[SEARCH_ENABLED_KEY].newValue !== false);
+  });
+  chrome.storage.local.get(SEARCH_ENABLED_KEY).then(value => {
+    updateToggleUI(value[SEARCH_ENABLED_KEY] !== false);
+  }).catch(() => {});
+  chrome.storage.local.get(STORAGE_KEY).then(value => {
+    trackerState = normalizeState(value[STORAGE_KEY]); renderOverview();
+    if (trackerState.settings.autoSync) refreshActivity();
+  }).catch(error => { document.getElementById('overviewStatus').textContent = error.message; });
+
+  document.getElementById('openDashboard')?.addEventListener('click', () => {
+    chrome.tabs.create({ url: chrome.runtime.getURL('dashboard.html') });
+  });
   const similaritySlider = document.getElementById("similaritySlider");
   const similarityValue = document.getElementById("similarityValue");
   const thresholdLabel = document.getElementById("thresholdLabel");
@@ -140,6 +195,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   chips.forEach((chip) => {
     chip.addEventListener("click", async (e) => {
       e.preventDefault();
+      if (chip.querySelector('.platform-check').disabled) return;
       const platform = chip.dataset.platform;
       const willBeSelected = !selectedPlatforms.includes(platform);
       if (!willBeSelected && selectedPlatforms.length === 1) {
@@ -213,11 +269,16 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   // ---- Show/hide toggle -----------------------------------------------------
   toggleBtn.addEventListener("click", async () => {
+    const enabled = toggleBtn.getAttribute('aria-pressed') !== 'true';
+    toggleBtn.disabled = true;
     try {
-      const response = await sendMessageToActiveTab({ action: "toggle" });
-      updateToggleUI(response?.visible !== false);
-      showStatus(response?.visible !== false ? "Enabled" : "Hidden", "success");
+      await chrome.storage.local.set({ [SEARCH_ENABLED_KEY]: enabled });
+      updateToggleUI(enabled);
+      showStatus(enabled ? "Search enabled everywhere" : "Search disabled everywhere", "success");
     } catch (e) {
+      showStatus("Could not save search setting", "error");
+    } finally {
+      toggleBtn.disabled = false;
     }
   });
 
@@ -268,13 +329,6 @@ document.addEventListener("DOMContentLoaded", async () => {
   } catch (e) {
   }
   renderChips();
-
-  try {
-    const response = await sendMessageToActiveTab({ action: "getToggleState" });
-    updateToggleUI(response?.enabled !== false);
-  } catch (e) {
-    updateToggleUI(true);
-  }
 
   showStatus("Extension ready!", "success");
 });

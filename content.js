@@ -1595,12 +1595,6 @@ function createTitleButton() {
 }
 
 let visibilityEnabled = true;
-if (typeof localStorage !== 'undefined') {
-    const storedVisibility = localStorage.getItem('dsa-helper-visibility-enabled');
-    if (storedVisibility !== null) {
-        visibilityEnabled = storedVisibility === 'true';
-    }
-}
 
 function removeTitleButton() {
     document.querySelectorAll('.dsa-helper-title-btn, .dsa-helper-float-btn').forEach(btn => btn.remove());
@@ -1785,26 +1779,7 @@ function debounce(func, wait) {
 }
 
 async function init() {
-    try {
-        const result = await chrome.storage.local.get([
-            'dsa-preferred-platforms'
-        ]);
-        const stored = Array.isArray(result['dsa-preferred-platforms']) ? result['dsa-preferred-platforms'] : [];
-        const valid = stored.filter(p => DEFAULT_PLATFORMS.includes(p));
-        if (valid.length) {
-            preferredPlatforms = valid;
-        }
-    } catch (e) {
-    }
-    await loadProblemsData();
-    try {
-        if (!chrome.runtime?.id) return;
-    } catch (e) {
-        return;
-    }
-    computeTitleIdf();
-    createButtonContainer();
-
+    let visibilityRevision = 0;
     // React to setting changes (platform toggles, threshold, visibility) from the
     // popup/background immediately, instead of waiting for the next page load.
     const handleStorageChange = (changes, area) => {
@@ -1825,11 +1800,12 @@ async function init() {
 
 
         if (changes['dsa-helper-visibility-enabled']) {
-            visibilityEnabled = changes['dsa-helper-visibility-enabled'].newValue === true;
+            visibilityRevision += 1;
+            visibilityEnabled = changes['dsa-helper-visibility-enabled'].newValue !== false;
             if (!visibilityEnabled) {
                 removeTitleButton();
-                hidePopup();
-            } else {
+                closeSearchResults();
+            } else if (buttonContainer) {
                 injectTitleButton();
             }
         }
@@ -1839,6 +1815,35 @@ async function init() {
     } catch (e) {
         return;
     }
+
+    try {
+        const revision = visibilityRevision;
+        const result = await chrome.storage.local.get([
+            'dsa-preferred-platforms', 'dsa-helper-visibility-enabled'
+        ]);
+        if (revision === visibilityRevision) visibilityEnabled = result['dsa-helper-visibility-enabled'] !== false;
+        const stored = Array.isArray(result['dsa-preferred-platforms']) ? result['dsa-preferred-platforms'] : [];
+        const valid = stored.filter(p => DEFAULT_PLATFORMS.includes(p));
+        if (valid.length) preferredPlatforms = valid;
+    } catch (e) {
+    }
+    await loadProblemsData();
+    try {
+        if (!chrome.runtime?.id) return;
+    } catch (e) {
+        return;
+    }
+    computeTitleIdf();
+    createButtonContainer();
+
+    // Schedule a public-data refresh after submitting, including SPA problem pages.
+    document.addEventListener('click', event => {
+        const control = event.target.closest('button, [role="button"], input[type="submit"]');
+        if (!control || control.closest('#dsa-helper-container')) return;
+        const label = `${control.textContent || ''} ${control.getAttribute('aria-label') || ''} ${control.value || ''}`;
+        if (!/\bsubmit\b/i.test(label)) return;
+        chrome.runtime.sendMessage({ action: 'tracker:submission', platform: getCurrentPlatform() }).catch(() => {});
+    }, true);
 
     document.addEventListener('click', (e) => {
         if (buttonContainer && !buttonContainer.contains(e.target) &&
@@ -1927,17 +1932,11 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
         sendResponse({ success: true });
     }
     if (request.action === 'toggle') {
-        visibilityEnabled = !visibilityEnabled;
-        if (typeof localStorage !== 'undefined') {
-            localStorage.setItem('dsa-helper-visibility-enabled', visibilityEnabled);
-        }
-        if (!visibilityEnabled) {
-            removeTitleButton();
-            hidePopup();
-        } else {
-            injectTitleButton();
-        }
-        sendResponse({ success: true, visible: visibilityEnabled });
+        const enabled = !visibilityEnabled;
+        chrome.storage.local.set({ 'dsa-helper-visibility-enabled': enabled }).then(() => {
+            sendResponse({ success: true, visible: enabled });
+        }).catch(() => sendResponse({ success: false, visible: visibilityEnabled }));
+        return true;
     }
     if (request.action === 'setSimilarityThreshold') {
         SIMILARITY_THRESHOLD = parseFloat(request.value);

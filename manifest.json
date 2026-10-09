@@ -1,10 +1,22 @@
 {
   "manifest_version": 3,
   "name": "crossDSA",
-  "version": "2.0",
-  "description": "Find similar DSA problems across LeetCode, GeeksforGeeks, Codeforces, and CodeChef",
+  "version": "2.1.0",
+  "description": "Find related DSA problems, track coding activity, and manage practice in your crossDSA dashboard.",
   "permissions": [
-    "storage"
+    "storage",
+    "alarms"
+  ],
+  "optional_permissions": ["scripting"],
+  "optional_host_permissions": [
+    "https://leetcode.com/*",
+    "https://codeforces.com/*",
+    "https://www.codechef.com/*",
+    "https://authapi.geeksforgeeks.org/*",
+    "https://practiceapi.geeksforgeeks.org/*",
+    "https://www.naukri.com/*",
+    "https://takeuforward.org/*",
+    "https://backend-go.takeuforward.org/*"
   ],
   "icons": {
     "16": "icons/cDSA-16.png",
@@ -13,6 +25,10 @@
     "128": "icons/cDSA-128.png"
   },
   "content_scripts": [
+    {
+      "matches": ["https://leetcode.com/*"],
+      "js": ["tracker/leetcode-session.js", "tracker/leetcode-browser.js"]
+    },
     {
       "matches": [
         "https://takeuforward.org/practice/dsa*",
@@ -28,7 +44,8 @@
     }
   ],
   "background": {
-    "service_worker": "background.js"
+    "service_worker": "background.js",
+    "type": "module"
   },
   "action": {
     "default_popup": "popup.html",

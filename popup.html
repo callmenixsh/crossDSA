@@ -1059,6 +1059,36 @@
         .random-meta { color: #8c949c; }
         .random-arrow { color: #5eead4; }
       }
+      .overview-card{box-sizing:border-box;display:grid;grid-template-columns:40px auto 1fr auto;align-items:center;gap:8px;width:calc(100% - 16px);margin:8px 8px 0;padding:12px;background:#1e2227;color:#f3f4f6;border:1px solid #30363d;border-radius:11px;font:inherit;text-align:left;cursor:pointer}
+      .overview-card:hover{border-color:#4c6258}.overview-card:focus-visible,#refreshOverview:focus-visible{outline:2px solid #48df98;outline-offset:2px}
+      .overview-ring{--progress:0%;width:40px;height:40px;border-radius:50%;background:conic-gradient(#48df98 var(--progress),#343c43 0);position:relative}.overview-ring:after{content:'';position:absolute;inset:4px;border-radius:50%;background:#1e2227}
+      .overview-today,.overview-stat{display:flex;flex-direction:column;gap:3px;min-width:0}.overview-today>strong{font-size:24px;line-height:1;font-weight:650}.overview-today>span,.overview-stat>span{font-size:8px;letter-spacing:.35px;color:#b0bac6;white-space:nowrap}.overview-stat{text-align:right}.overview-stat>strong{display:flex;align-items:center;justify-content:flex-end;gap:4px;font-size:14px;line-height:1.2;font-weight:650;font-variant-numeric:tabular-nums}.overview-today>strong{font-variant-numeric:tabular-nums}
+      .overview-status{display:flex;gap:8px;align-items:flex-start;margin:5px 12px 0;font-size:10px;color:#80868b;line-height:1.4}.overview-status>span{flex:1;min-width:0}#refreshOverview{padding:0;border:0;background:none;color:#0f766e;font:inherit;cursor:pointer}#refreshOverview:disabled{opacity:.5;cursor:wait}@media(prefers-color-scheme:dark){.overview-status{color:#8c949c}#refreshOverview{color:#5eead4}}
+      .header{padding:10px 12px 8px}
+      .section,.visibility-row{margin:8px 8px 0;padding:8px 10px}
+      .section-title,.setting-heading{margin-bottom:8px}
+      .overview-card{padding:9px 10px}
+      .overview-status{margin:4px 10px 0}
+      .random-result{margin-top:6px;padding:7px 8px;gap:8px}
+      .footer-note{padding:8px 12px}
+      .search-settings .search-control-row {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding-bottom: 9px;
+        border-bottom: 1px solid #dfe1e5;
+        margin-bottom: 9px;
+      }
+      .search-settings .match-settings { margin-top: 10px; }
+      .search-settings.search-disabled { filter: grayscale(1); }
+      .search-settings.search-disabled .visibility-title,
+      .search-settings.search-disabled .platform-grid,
+      .search-settings.search-disabled .match-settings { opacity: .45; }
+      .search-settings.search-disabled .platform-chip,
+      .search-settings.search-disabled .slider { cursor: not-allowed; }
+      @media (prefers-color-scheme: dark) {
+        .search-settings .search-control-row { border-color: #303438; }
+      }
     </style>
   </head>
   <body>
@@ -1067,38 +1097,23 @@
       <h1>crossDSA</h1>
     </div>
 
-    <div class="visibility-row search-control-row">
-      <span class="visibility-title">Search button</span>
-      <button class="toggle-btn enabled" id="toggleBtn" type="button" aria-pressed="true" title="Show or hide the search button">
-        <span class="toggle-state">On</span>
-        <span class="toggle-track" aria-hidden="true"><span class="toggle-thumb"></span></span>
-      </button>
-    </div>
+    <button id="openDashboard" type="button" class="overview-card" aria-label="Open your DSA dashboard">
+      <span class="overview-ring" id="overviewRing" aria-hidden="true"></span>
+      <span class="overview-today"><strong id="overviewToday">&mdash;</strong><span id="overviewGoal">OF 2 TODAY</span></span>
+      <span class="overview-stat"><strong id="overviewTotal">&mdash;</strong><span>SOLVED OVERALL</span></span>
+      <span class="overview-stat"><strong><svg width="12" height="14" viewBox="0 0 16 20" fill="none" stroke="currentColor" stroke-width="1.3" aria-hidden="true"><path d="M9 1c1 5-3 5-1 9 2-1 3-3 3-4 3 4 4 6 3 9-1 5-10 5-12 0-1-4 1-6 3-9 0 3 1 4 2 4C5 6 7 4 9 1Z"/></svg><span id="overviewStreak">&mdash;</span></strong><span id="overviewStreakLabel">STREAK - LEETCODE</span></span>
+    </button>
+    <div class="overview-status"><span id="overviewStatus" role="status">Connect a platform.</span><button id="refreshOverview" type="button" aria-label="Refresh activity">Refresh</button></div>
 
-    <div class="section">
-      <div class="setting-label setting-heading">
-        <span id="thresholdLabel">Match strictness</span>
-        <span class="similarity-value" id="similarityValue">0.4</span>
+    <div class="section search-settings" role="group" aria-labelledby="searchSettingsLabel">
+      <div class="search-control-row">
+        <span class="visibility-title" id="searchSettingsLabel">Search</span>
+        <button class="toggle-btn enabled" id="toggleBtn" type="button" aria-pressed="true" title="Show or hide the search button">
+          <span class="toggle-state">On</span>
+          <span class="toggle-track" aria-hidden="true"><span class="toggle-thumb"></span></span>
+        </button>
       </div>
-      <input
-        type="range"
-        min="0.1"
-        max="1.0"
-        step="0.1"
-        value="0.4"
-        id="similaritySlider"
-        class="slider"
-        aria-labelledby="thresholdLabel"
-      />
-      <div class="slider-endpoints" aria-hidden="true">
-        <span id="thresholdMinLabel">Broad</span>
-        <span id="thresholdMaxLabel">Exact</span>
-      </div>
-    </div>
-
-    <div class="section">
-      <div class="section-title">Search on</div>
-      <div class="platform-grid" id="platformGrid">
+      <div class="platform-grid" id="platformGrid" role="group" aria-label="Search platforms">
         <label class="platform-chip" data-platform="leetcode" title="LeetCode" aria-label="Search LeetCode">
           <input type="checkbox" class="platform-check" />
           <span class="chip-check">
@@ -1135,6 +1150,26 @@
           <span class="chip-name">C360</span>
         </label>
       </div>
+      <div class="match-settings">
+        <div class="setting-label setting-heading">
+          <span id="thresholdLabel">Match strictness</span>
+          <span class="similarity-value" id="similarityValue">0.4</span>
+        </div>
+        <input
+          type="range"
+          min="0.1"
+          max="1.0"
+          step="0.1"
+          value="0.4"
+          id="similaritySlider"
+          class="slider"
+          aria-labelledby="thresholdLabel"
+        />
+        <div class="slider-endpoints" aria-hidden="true">
+          <span id="thresholdMinLabel">Broad</span>
+          <span id="thresholdMaxLabel">Exact</span>
+        </div>
+      </div>
     </div>
 
     <div class="section random-section">
@@ -1152,12 +1187,12 @@
     </div>
 
     <div class="footer-note">
-      <span><strong id="problemCount">—</strong> problems indexed</span>
+      <span><strong id="problemCount">—</strong> questions</span>
       <a href="#" id="resetLink">Reset</a>
     </div>
 
     <span class="sr-only" id="statusMessage" aria-live="polite"></span>
 
-    <script src="popup.js"></script>
+    <script type="module" src="popup.js"></script>
   </body>
 </html>
