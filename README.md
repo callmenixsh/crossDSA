@@ -14,6 +14,7 @@ Backs onto a local index of ~27,000 problems pulled from all five platforms, so 
 - Built-in YouTube search that uses the right key for each platform (contest ID + index for Codeforces, problem code for CodeChef, etc.).
 - Remembers the floating button's last position separately for each site.
 - Dark-mode friendly.
+- The extension icon badge shows today's distinct accepted-problem count, using the dashboard timezone. It updates with tracked activity and resets at local midnight, even with automatic sync disabled.
 
 ## Supported platforms
 

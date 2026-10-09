@@ -1,8 +1,10 @@
 import { registerContests } from './tracker/contest-service.mjs';
 import { registerTracker } from './tracker/service.mjs';
+import { registerBadge } from './tracker/badge.mjs';
 
 registerTracker();
 registerContests();
+registerBadge();
 
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
     const action = request?.action;
