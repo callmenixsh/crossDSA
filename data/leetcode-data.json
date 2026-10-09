@@ -59836,5 +59836,53 @@
     "constraints": "",
     "is_sql": true,
     "source": "leetcode"
+  },
+  {
+    "id": "4070",
+    "title": "Minimum Rotations to Dial a Number I",
+    "url": "https://leetcode.com/problems/minimum-rotations-to-dial-a-number-i",
+    "difficulty": "Easy",
+    "isPremium": false,
+    "topics": [],
+    "description": "You are given a string s of length 10 consisting of digits. The dial contains the digits 0 through 9 in order and is circular , so 0 and 9 are adjacent. The pointer initially points to 0. To dial each digit of s in order , rotate the pointer until it points to that digit. Each rotation moves the pointer to an adjacent digit, and you may rotate in either direction. Dialing a digit that the pointer already points to requires no rotations. Return the minimum total number of rotations needed to dial every digit of s .",
+    "constraints": "• s.length == 10 \n• s consists only of digits '0' to '9'",
+    "is_sql": false,
+    "source": "leetcode"
+  },
+  {
+    "id": "4071",
+    "title": "Minimum Rotations to Dial a Number II",
+    "url": "https://leetcode.com/problems/minimum-rotations-to-dial-a-number-ii",
+    "difficulty": "Medium",
+    "isPremium": false,
+    "topics": [],
+    "description": "You are given an integer n and a string s of length n consisting of digits. The dial contains the digits 0 through 9 in order and is circular , so 0 and 9 are adjacent. The pointer initially points to 0. To dial each digit of s in order , rotate the pointer until it points to that digit. Each rotation moves the pointer to an adjacent digit, and you may rotate in either direction. Dialing a digit that the pointer already points to requires no rotations. Before dialing, you may perform the following operation at most once : • Choose an index k such that 0 <= k < n and reverse the suffix s[k..n - 1] . Return the minimum total number of rotations needed to dial the string after optimally choosing whether to perform the operation and which suffix to reverse.",
+    "constraints": "• 1 <= n == s.length <= 10 5 ​​​​​​​ \n• s consists only of digits '0' to '9'",
+    "is_sql": false,
+    "source": "leetcode"
+  },
+  {
+    "id": "4072",
+    "title": "Maximum Alternating Subarray Sum With One Deletion",
+    "url": "https://leetcode.com/problems/maximum-alternating-subarray-sum-with-one-deletion",
+    "difficulty": "Medium",
+    "isPremium": false,
+    "topics": [],
+    "description": "You are given an integer array nums . You may delete at most one element from nums , then choose a subarray of the resulting array. Return the maximum possible alternating sum of the chosen subarray. The alternating sum of an array is the sum of its elements at even indices minus the sum of its elements at odd indices. The chosen subarray is reindexed starting from 0 before calculating its alternating sum.",
+    "constraints": "• 1 <= nums.length <= 10 5 \n• -10 5 <= nums[i] <= 10 5",
+    "is_sql": false,
+    "source": "leetcode"
+  },
+  {
+    "id": "4073",
+    "title": "Count Good Strings",
+    "url": "https://leetcode.com/problems/count-good-strings",
+    "difficulty": "Hard",
+    "isPremium": false,
+    "topics": [],
+    "description": "You are given an integer n . A string is considered good if it consists only of the characters 'a' and 'b' , and one of the following holds: • It contains exactly one distinct character, and its length is odd . • It can be written as s = s1 + s2 , where s1 and s2 are non-empty good strings, and the last character of s1 is different from the first character of s2 . Return the number of good strings of length n , modulo 10 9 + 7 . Here, + denotes string concatenation.",
+    "constraints": "• 1 <= n <= 10 15",
+    "is_sql": false,
+    "source": "leetcode"
   }
 ]

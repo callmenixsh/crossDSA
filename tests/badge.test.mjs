@@ -53,6 +53,18 @@ test('badge resets at local midnight with auto sync disabled and reschedules on 
   assert.equal(h.alarms.get('crossdsa-badge-midnight').when, Date.parse('2026-10-10T00:00:00Z'));
 });
 
+test('AtCoder imported accepts update the badge once per task and disconnect removes them', async () => {
+  const h = harness(), timestamp = Date.parse('2026-10-09T18:00:00Z');
+  h.state.accounts.atcoder = { snapshot: { recent: [
+    { id: 'atcoder:1', key: 'atcoder:dp_a', timestamp },
+    { id: 'atcoder:2', key: 'atcoder:dp_a', timestamp },
+    { id: 'atcoder:3', key: 'atcoder:dp_b', timestamp },
+  ] } };
+  await h.refresh(); assert.equal(h.badges.at(-1), '2');
+  delete h.state.accounts.atcoder;
+  await h.refresh(); assert.equal(h.badges.at(-1), '0');
+});
+
 test('badge midnight scheduling respects short and long daylight-saving days', () => {
   for (const [now, expected] of [
     ['2026-03-08T05:00:00Z', '2026-03-09T04:00:00Z'],

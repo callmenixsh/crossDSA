@@ -1,10 +1,16 @@
+import { QUESTION_PLATFORMS } from './core.mjs';
+
+export function libraryPlatformEnabled(platform, accounts = {}) {
+  return Boolean(accounts[platform] || QUESTION_PLATFORMS[platform]?.libraryOnly);
+}
+
 const difficultyOrder = { Basic: 0, Easy: 1, Medium: 2, Moderate: 2, Hard: 3, Difficult: 3, Ninja: 4, Expert: 4, Unknown: 5 };
 
 export function filterLibrary(library, { accounts = {}, workspace = {}, solved = new Set(), query = '', platform = 'all', difficulty = 'all', topics = [], status = 'all', access = 'all', sort = 'default' } = {}) {
   const normalize = value => String(value).toLowerCase().replace(/[^\p{L}\p{N}]+/gu, ' ').trim();
   const search = normalize(query), terms = search.split(/\s+/).filter(Boolean);
   const matches = library.filter(p => {
-    if (!accounts[p.platform] || platform !== 'all' && p.platform !== platform || difficulty !== 'all' && p.difficulty !== difficulty) return false;
+    if (!libraryPlatformEnabled(p.platform, accounts) || platform !== 'all' && p.platform !== platform || difficulty !== 'all' && p.difficulty !== difficulty) return false;
     if (topics.length && !topics.some(topic => p.topics.includes(topic))) return false;
     if (status === 'solved' && !solved.has(p.key) || status === 'unsolved' && solved.has(p.key) || status === 'starred' && !workspace[p.key]?.listIds?.includes('saved')) return false;
     if (access === 'free' && p.isPremium || access === 'premium' && !p.isPremium) return false;

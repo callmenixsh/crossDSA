@@ -1,10 +1,10 @@
 import { mountContestStrip } from './tracker/contest-ui.mjs';
 import { CONTEST_ORIGINS } from './tracker/contests.mjs';
 import { ratingSeries } from './tracker/ratings.mjs';
-import { filterLibrary } from './tracker/library.mjs';
+import { filterLibrary, libraryPlatformEnabled } from './tracker/library.mjs';
 import { mountCompanies } from './tracker/company-ui.mjs';
 import { splitCode360Tags } from './tracker/code360-companies.mjs';
-import { STORAGE_KEY, PLATFORMS, emptyState, normalizeState, cleanHandle, problemKey, dateKey, shiftDay, dailyActivity, streaks, acceptedToday, practiceOverview, safeProblemUrl, doneQuestions, questionIsDone } from './tracker/core.mjs';
+import { STORAGE_KEY, PLATFORMS, QUESTION_PLATFORMS, emptyState, normalizeState, cleanHandle, problemKey, dateKey, shiftDay, dailyActivity, streaks, acceptedToday, practiceOverview, safeProblemUrl, doneQuestions, questionIsDone } from './tracker/core.mjs';
 
 const $ = id => document.getElementById(id);
 let state = emptyState(), library = [], filtered = [], page = 0, activeProblem = null, indexReady = false;
@@ -106,10 +106,10 @@ function updateProgressPlatforms() {
   select.disabled = connected.length < 2;
 }
 function updateQuestionPlatforms() {
-  const connected = Object.keys(PLATFORMS).filter(id => state.accounts[id]);
+  const connected = Object.keys(QUESTION_PLATFORMS).filter(id => libraryPlatformEnabled(id, state.accounts));
   for (const id of ['questionPlatform', 'donePlatform']) {
     const select = $(id), selected = select.value;
-    select.replaceChildren(option('all', connected.length ? 'All connected' : 'No platforms connected'), ...connected.map(id => option(id, PLATFORMS[id].name)));
+    select.replaceChildren(option('all', 'All available'), ...connected.map(id => option(id, QUESTION_PLATFORMS[id].name)));
     select.value = connected.includes(selected) ? selected : 'all';
     select.disabled = !connected.length;
   }
@@ -258,6 +258,8 @@ function renderPlatforms() {
       }
       if (account.error) card.append(el('p', 'platform-error', account.error));
       if (snapshot?.activityWarning) card.append(el('p', 'platform-error', snapshot.activityWarning));
+      if (id === 'atcoder' && Number.isFinite(snapshot?.highestRating)) card.append(el('p', 'rating-caption', `Highest Algorithm rating: ${format(snapshot.highestRating)}`));
+      if (snapshot?.ratingWarning) card.append(el('p', 'platform-error', snapshot.ratingWarning));
       if (id === 'leetcode' && snapshot) {
         const freshness = el('p', 'rating-caption', `Profile: ${timeAgo(account.profileSyncedAt || account.syncedAt)} · Activity: ${account.activitySyncedAt ? timeAgo(account.activitySyncedAt) : 'Not synced yet'}`);
         card.append(freshness);
@@ -307,10 +309,10 @@ function renderDone() {
     copy.append(link(r.title, r.url));
     if (r.pending) copy.append(el('div', 'rating-caption', 'Accepted in browser · verification pending'));
     if (r.source === 'manual') copy.append(el('div', 'rating-caption', 'Marked done'));
-    appendQuestionRow(row, r, copy, el('span', '', PLATFORMS[r.platform].name), el('time', '', r.day || displayDate(r.timestamp)));
+    appendQuestionRow(row, r, copy, el('span', '', QUESTION_PLATFORMS[r.platform].name), el('time', '', r.day || displayDate(r.timestamp)));
     fragment.append(row);
   }
-  if (!records.length) fragment.append(empty(total ? 'No matching done questions.' : 'No tracked solves yet. Connect a platform and sync.'));
+  if (!records.length) fragment.append(empty(total ? 'No matching done questions.' : 'No done questions yet. Mark a library question done, or connect a platform and sync.'));
   $('doneList').replaceChildren(fragment);
   $('doneMeta').textContent = `${format(total)} tracked questions · ${format(records.length)} matching`;
   $('donePageLabel').textContent = `${donePage + 1} / ${pages}`;
@@ -318,7 +320,7 @@ function renderDone() {
   $('doneNext').disabled = donePage >= pages - 1;
 }
 function updateLibraryCount() {
-  const total = library.filter(p => state.accounts[p.platform]).length;
+  const total = library.filter(p => libraryPlatformEnabled(p.platform, state.accounts)).length;
   $('libraryCount').textContent = format(total);
   return total;
 }
@@ -327,7 +329,7 @@ function getFilteredQuestions(topics = [...selectedTopics]) {
 }
 function renderQuestionFilters() {
   const focusedTopic = document.activeElement?.dataset.topic;
-  const scope = library.filter(p => state.accounts[p.platform] && ($('questionPlatform').value === 'all' || p.platform === $('questionPlatform').value));
+  const scope = library.filter(p => libraryPlatformEnabled(p.platform, state.accounts) && ($('questionPlatform').value === 'all' || p.platform === $('questionPlatform').value));
   const counts = new Map();
   for (const p of scope) counts.set(p.difficulty, (counts.get(p.difficulty) || 0) + 1);
   const select = $('questionDifficulty'), current = select.value;
@@ -368,6 +370,11 @@ function createLibraryRow(p, { open = false, frequency = false, onTopic = topic 
   const tags = el('div', 'question-tags');
   if (questionIsDone(state.accounts, state.workspace, p.key)) tags.append(el('span', 'tag solved-tag', 'Solved'));
   if (p.isPremium) tags.append(el('span', 'tag', 'Premium'));
+  if (p.platform === 'atcoder' && Number.isFinite(p.estimatedDifficulty)) {
+    const estimate = el('span', 'tag', `Estimated difficulty: ${p.estimatedDifficulty}`);
+    estimate.title = 'Community estimate from AtCoder Problems; not an official rating or a cross-platform difficulty.';
+    tags.append(estimate);
+  }
   for (const topic of p.topics) {
     const tag = button(topic, 'tag topic-tag', () => onTopic(topic)); tags.append(tag);
   }
@@ -380,7 +387,7 @@ function createLibraryRow(p, { open = false, frequency = false, onTopic = topic 
   details.append(el('p', 'question-statement', p.description || 'A question statement is not available in the local index. Open the problem to read it on the platform.'));
   if (p.constraints) details.append(el('h3', '', 'Constraints / input'), el('p', 'question-statement', p.constraints));
   details.append(link('Open problem ↗', p.url, 'text-link')); copy.append(details);
-  appendQuestionRow(row, p, copy, frequency && Number.isFinite(p.frequency) ? el('span', 'muted company-frequency', `${p.frequency}%`) : el('span', 'muted', PLATFORMS[p.platform].short), el('span', `difficulty ${p.difficulty.toLowerCase()}`, p.difficulty)); return row;
+  appendQuestionRow(row, p, copy, frequency && Number.isFinite(p.frequency) ? el('span', 'muted company-frequency', `${p.frequency}%`) : el('span', 'muted', QUESTION_PLATFORMS[p.platform].short), el('span', `difficulty ${p.difficulty.toLowerCase()}`, p.difficulty)); return row;
 }
 function renderQuestions() {
   if (!indexReady) { $('questionList').replaceChildren(el('div', 'loading-note', 'Loading the local question index…')); return; }
@@ -391,7 +398,7 @@ function renderQuestions() {
   for (const p of filtered.slice(page * PAGE_SIZE, (page + 1) * PAGE_SIZE)) {
     fragment.append(createLibraryRow(p, { open: openQuestions.has(p.key) }));
   }
-  if (!filtered.length) fragment.append(empty(Object.keys(state.accounts).length ? 'No matching questions. Try removing a filter or clearing your search.' : 'Connect a platform to browse its questions.'));
+  if (!filtered.length) fragment.append(empty('No matching questions. Try removing a filter or clearing your search.'));
   $('questionList').replaceChildren(fragment);
   const total = updateLibraryCount();
   $('questionMeta').textContent = `${format(filtered.length)} of ${format(total)} questions · Showing ${filtered.length ? format(page * PAGE_SIZE + 1) : 0}–${format(Math.min((page + 1) * PAGE_SIZE, filtered.length))}`;
@@ -417,7 +424,7 @@ function renderWorkspace() {
     const tags = el('div', 'question-tags');
     for (const id of p.listIds) tags.append(el('span', 'tag', state.lists[id].name));
     copy.append(tags);
-    appendQuestionRow(row, p, copy, el('span', 'muted', PLATFORMS[p.platform].name), el('span', 'difficulty', p.difficulty)); fragment.append(row);
+    appendQuestionRow(row, p, copy, el('span', 'muted', QUESTION_PLATFORMS[p.platform].name), el('span', 'difficulty', p.difficulty)); fragment.append(row);
   }
   if (!entries.length) fragment.append(empty('No saved questions.'));
   $('workspaceList').replaceChildren(fragment);
@@ -427,7 +434,7 @@ function defaultPractice(p) {
 }
 function editProblem(problem) {
   activeProblem = { ...defaultPractice(problem), ...state.workspace[problem.key || problemKey(problem.platform, problem.url)] };
-  $('practicePlatform').textContent = PLATFORMS[activeProblem.platform].name;
+  $('practicePlatform').textContent = QUESTION_PLATFORMS[activeProblem.platform].name;
   $('practiceTitle').textContent = activeProblem.title; $('practiceLink').href = activeProblem.url;
   listDraft = new Set(activeProblem.listIds.filter(id => id !== 'saved'));
   $('listSearch').value = ''; $('inlineListName').value = ''; $('listPickerStatus').textContent = '';
@@ -474,7 +481,7 @@ function setupConnections() {
     const form = el('form', 'connection-form'), label = el('label', '', p.name); label.htmlFor = `handle-${id}`;
     const controls = el('div', 'connection-inputs'), input = el('input'); input.id = `handle-${id}`; input.required = true; input.maxLength = 300; input.placeholder = id === 'code360' ? 'Public profile ID or profile URL' : 'Username or public profile URL'; input.autocomplete = 'off'; input.spellcheck = false;
     const connect = el('button', 'button', 'Connect / refresh'); connect.id = `connect-${id}`; connect.type = 'submit'; const disconnect = button('Disconnect', 'button ghost', () => disconnectPlatform(id)); disconnect.id = `disconnect-${id}`; disconnect.hidden = true; disconnect.setAttribute('aria-label', `Disconnect ${p.name} account`); controls.append(input, connect, disconnect); form.append(label, controls);
-    const note = el('div', 'connection-description', id === 'tuf' ? 'Keep a TUF tab open to sync.' : id === 'leetcode' ? 'Sign in on LeetCode for private activity.' : id === 'code360' ? 'Totals only; no dated activity.' : '');
+    const note = el('div', 'connection-description', id === 'atcoder' ? 'Public profile and Algorithm ratings from AtCoder; submission history via AtCoder Problems may be delayed.' : id === 'tuf' ? 'Keep a TUF tab open to sync.' : id === 'leetcode' ? 'Sign in on LeetCode for private activity.' : id === 'code360' ? 'Totals only; no dated activity.' : '');
     if (id === 'tuf') note.append(document.createTextNode(' '), link('Open TakeUForward ↗', 'https://takeuforward.org/', 'text-link'));
     const result = el('div', 'connection-result'); result.id = `connection-result-${id}`; result.setAttribute('role', 'status'); if (note.childNodes.length) form.append(note); form.append(result);
     form.addEventListener('submit', async event => {
@@ -507,14 +514,14 @@ async function syncAccounts(platform) {
 }
 function option(value, text = value) { const o = el('option', '', text); o.value = value; return o; }
 async function loadLibrary() {
-  const sources = ['leetcode', 'geeksforgeeks', 'codeforces', 'codechef', 'code360'], failures = [];
+  const sources = ['leetcode', 'geeksforgeeks', 'codeforces', 'codechef', 'code360', 'atcoder'], failures = [];
   const datasets = await Promise.all(sources.map(async platform => {
     try {
       const response = await fetch(chrome.runtime.getURL(`data/${platform}-data.json`));
       if (!response.ok) throw new Error();
       const records = await response.json();
-      return records.filter(p => p.title && safeProblemUrl(p.url, platform)).map(p => ({ key: problemKey(platform, p.url), platform, id: p.id, title: p.title, url: p.url, description: typeof p.description === 'string' ? p.description : '', constraints: typeof p.constraints === 'string' ? p.constraints : '', isPremium: Boolean(p.isPremium), difficulty: p.difficulty || 'Unknown', ...(platform === 'code360' ? splitCode360Tags(p) : { topics: Array.isArray(p.topics) ? [...new Set(p.topics.filter(v => typeof v === 'string'))] : [] }) }));
-    } catch { failures.push(PLATFORMS[platform].name); return []; }
+      return records.filter(p => p.title && safeProblemUrl(p.url, platform)).map(p => ({ key: problemKey(platform, p.url), platform, id: p.id, estimatedDifficulty: Number.isFinite(p.estimatedDifficulty) ? p.estimatedDifficulty : null, title: p.title, url: p.url, description: typeof p.description === 'string' ? p.description : '', constraints: typeof p.constraints === 'string' ? p.constraints : '', isPremium: Boolean(p.isPremium), difficulty: p.difficulty || 'Unknown', ...(platform === 'code360' ? splitCode360Tags(p) : { topics: Array.isArray(p.topics) ? [...new Set(p.topics.filter(v => typeof v === 'string'))] : [] }) }));
+    } catch { failures.push(QUESTION_PLATFORMS[platform].name); return []; }
   }));
   library = datasets.flat(); indexReady = true;
   companyPage.setLibrary(library);

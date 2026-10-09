@@ -2,12 +2,12 @@
 
 Chrome extension that finds equivalent or closely matching DSA problems across different platforms. If you're solving a problem on Codeforces and want to find the same problem on LeetCode, GeeksforGeeks, CodeChef, or Code 360, this saves you the manual hunt.
 
-Backs onto a local index of ~27,000 problems pulled from all five platforms, so matching works locally and fast.
+Backs onto a bundled local index across six platforms, so matching works locally and fast.
 
 ## What it does
 
 - Adds a draggable floating match button on every supported problem page.
-- Matches against LeetCode, GeeksforGeeks, Codeforces, CodeChef, and Code 360.
+- Matches against LeetCode, GeeksforGeeks, Codeforces, CodeChef, Code 360, and AtCoder.
 - Compares titles *and* descriptions, not just keywords — tokenizes, strips stopwords, stems, and weighs rare words higher, so "find the shortest path in a grid" actually finds shortest-path-grid problems instead of everything containing the word "grid".
 - Ranks equivalent and closely matching results with a confidence percentage.
 - Groups results by platform with tabs, and shows difficulty and topic tags on each one.
@@ -29,12 +29,20 @@ There's a difference worth spelling out: platforms the extension **has data for*
 | Codeforces | codeforces.com/problemset/problem/* | Problem statement DOM |
 | CodeChef | codechef.com/problems/* | Public API, DOM fallback |
 | Code 360 | naukri.com/code360/problems/* | Public API, DOM fallback |
+| AtCoder | atcoder.jp/contests/*/tasks/* | English statement sections |
+
+AtCoder supports matching, the question library, random practice, manual Done, Starred, custom lists and account tracking. Connect a public handle or profile URL in **Connect platforms** to import Algorithm rating, highest rating, rank, rating history and accepted submissions into the dashboard, heatmap, Done Questions and daily accepted count/badge. AtCoder contest reminders are not integrated. The initial bundled index contains **3,040 tasks and 176 English statements**, from closed ABC/ARC/AGC and educational algorithm contests; heuristic contests are excluded. English statements are cached incrementally, so remaining entries have metadata only. Titles can be ambiguous, and matching results are suggestions rather than verified equivalents. Problem IDs remain stable across contest rehosts.
+
+AtCoder metadata and numeric difficulty estimates come from the community-maintained [AtCoder Problems datasets](https://github.com/kenkoooo/AtCoderProblems/blob/master/doc/api.md); statements come from official task pages. Numeric estimates are displayed separately and are not converted into Easy/Medium/Hard labels. Company associations are not inferred from contest sponsors or similar titles.
+
+AtCoder profiles and Algorithm rating history come from the official website; submissions come from the unofficial [AtCoder Problems API](https://github.com/kenkoooo/AtCoderProblems/blob/main/doc/api.md) and may be delayed. Site access to AtCoder and kenkoooo.com is requested only when connecting. Sync checks recent activity first and backfills older history, with up to five pages each per sync and more than one second between submission requests. Incomplete imports are labeled as lower bounds; sync again to continue. Cursors include the last timestamp to avoid skipping submissions at page boundaries. Accepted counts deduplicate by task ID even across contest rehosts; repeat accepts still appear as activity. Unique solved task IDs survive the local 15,000 accepted-record limit. Unrated accounts can connect without fabricating a rating. Failed refreshes preserve cached data. No AtCoder password or session access is needed.
+
 
 ### Runs on, but not indexed yet
 
 | Platform | Site | Note |
 | --- | --- | --- |
-| TakeUForward | takeuforward.org/practice/dsa/{problem} | The button works on individual DSA problem pages and you can search for a TUF problem's equivalent among the five indexed platforms — but TUF problems aren't scraped yet, so no platform will ever suggest a *TUF* problem as a match. |
+| TakeUForward | takeuforward.org/practice/dsa/{problem} | The button works on individual DSA problem pages and you can search for a TUF problem's equivalent among the six indexed platforms — but TUF problems aren't scraped yet, so no platform will ever suggest a *TUF* problem as a match. |
 
 To bring TakeUForward into the full set, a `tuf_scraper.py` plus a `tuf-data.json` (and registering it in `manifest.json` + `content.js`) is what's missing.
 
@@ -50,10 +58,10 @@ To bring TakeUForward into the full set, a `tuf_scraper.py` plus a `tuf-data.jso
 - Click the overview card (today's goal, total solves and LeetCode activity streak) in the extension popup to open the full-page workspace. After updating an unpacked installation, reload crossDSA at `chrome://extensions/` and reopen its popup/dashboard.
 - Use **Connect platforms** to enter public handles or profile links. Chrome requests site access only for the selected platform. Connections identify a profile; they do not verify ownership. Passwords and platform tokens are not collected. LeetCode session reads stay in its browser tab; only accepted question metadata is imported after matching the signed-in username.
 - The dashboard combines activity calendars, available recent accepted problems, solved totals, difficulty breakdowns, badges and contest ratings where providers expose them. Refresh manually or enable refresh every 30 minutes while Chrome is running.
-- Search the local question library by text, platform, difficulty or topic. Create named lists in **My lists** and add a question to several lists. Existing bookmarks appear in **Starred**.
+- Search the local question library by text, platform, difficulty or topic. AtCoder is available without connecting an account; other sources follow connected platforms. Create named lists in **My lists** and add a question to several lists. Existing bookmarks appear in **Starred**.
 - **Companies** groups locally indexed LeetCode and Code360 questions by company, with company search, platform filters, editorial categories, LeetCode time windows, source frequency sorting, difficulty/topic/progress/access filters and shared Done/Star/list actions. Browsing companies does not require a connected account. Counts include only questions matched to the local index. Metadata comes from [snehasishroy/leetcode-companywise-interview-questions](https://github.com/snehasishroy/leetcode-companywise-interview-questions), snapshot **12 July 2026**, pinned to revision `e095c259cfd036e3ddb6886e84d7075c2faac477`; time windows refer to that snapshot, and frequency is the source score. `python scrapers/import_leetcode_companies.py` regenerates `data/leetcode-companies.json` from the pinned CSVs. The normal LeetCode scraper collects statements and topic tags, not company tags; company metadata stays separate. Categories and display aliases can be adjusted in `tracker/companies.mjs` and the importer respectively. Code360 company tags come from the saved local index; aliases are normalized and legacy company tags are separated from practice topics by `tracker/code360-companies.mjs`. New Code360 scrapes save `companies` separately. Code360 has no frequency scores or dated windows: selecting a dated window switches to LeetCode, and combined frequency sorting places Code360 questions after scored LeetCode questions, ordered by title. Questions are counted separately per platform.
 - **Done Questions** shows tracked questions once per platform/problem, with latest-solve dates, title search, platform/date filters, sorting, pagination and list actions. Overview keeps the newest 12 unique questions and links to the full page. Imported question counts can differ from profile solved totals.
-- Dashboard platform filters show connected accounts only; the question library browses those platforms. Every dashboard question row starts with a Done checkbox and ends with a star and Add to list controls. Stars toggle the separate **Starred** default list. Add to list manages custom lists only, with search, selection counts and inline list creation; saving custom lists preserves Starred membership. Manual Done status persists across views and refreshes, can override imported done status, and never creates submissions or changes accepted activity/profile totals.
+- Progress filters show connected accounts only; question and Done filters additionally include AtCoder. Every dashboard question row starts with a Done checkbox and ends with a star and Add to list controls. Stars toggle the separate **Starred** default list. Add to list manages custom lists only, with search, selection counts and inline list creation; saving custom lists preserves Starred membership. Manual Done status persists across views and refreshes, can override imported done status, and never creates submissions or changes accepted activity/profile totals.
 - Successful LeetCode submissions update local history and today's goal as soon as the signed-in tab's submission feed reports Accepted (checked about every 2 seconds for up to 90 seconds after Submit). The signed-in username must match the connected account. Records show pending verification until a later profile sync imports the same submission ID; delayed or failed verification preserves them. Profile solved totals remain provider-reported. Other platforms continue using sync-based tracking. Existing LeetCode tabs automatically regain both tracking helpers after extension updates when scripting access is granted.
 - Set a daily accepted-problem goal and timezone in **Settings**. Export local handles, activity, lists and settings as JSON for a backup.
 
@@ -80,6 +88,7 @@ Upcoming LeetCode and Codeforces contests appear in the dashboard header and pop
 
 ```powershell
 node --test --test-isolation=none tests/*.test.mjs
+python -B -m unittest discover -s tests -p '*_test.py'
 node tests/live-platforms.mjs # optional read-only requests to public sample accounts; Windows curl required
 ```
 
@@ -111,12 +120,14 @@ data/                      # scraped problem data, injected into pages
   codeforces-data.json
   codechef-data.json
   code360-data.json
+  atcoder-data.json
 scrapers/
   leetcode_scraper.py      # pulls LeetCode data -> data/leetcode-data.json
   geeksforgeeks_scraper.py # pulls GfG data -> data/geeksforgeeks-data.json
   codeforces_scraper.py    # pulls Codeforces data -> data/codeforces-data.json
   codechef_scraper.py      # pulls CodeChef data -> data/codechef-data.json
   code360_scraper.py       # pulls Code 360 data -> data/code360-data.json
+  atcoder_scraper.py       # AtCoder metadata + incremental English statements
 requirements.txt           # python deps for the scrapers
 scrape.py                  # runs one or all scrapers back to back
 ```
@@ -130,6 +141,7 @@ python scrapers/geeksforgeeks_scraper.py   # -> data/geeksforgeeks-data.json
 python scrapers/codeforces_scraper.py      # -> data/codeforces-data.json
 python scrapers/codechef_scraper.py        # -> data/codechef-data.json
 python scrapers/code360_scraper.py         # -> data/code360-data.json
+python scrapers/atcoder_scraper.py --limit 150 # refresh metadata, fetch up to 150 missing English statements
 ```
 
 Or just run them all at once:
@@ -137,10 +149,12 @@ Or just run them all at once:
 ```bash
 python scrape.py                     # prompts to pick, defaults to all
 python scrape.py codechef leetcode   # run by name
-python scrape.py codechef --limit 20 # scraper args pass through (codechef/code360)
+python scrape.py codechef --limit 20 # scraper args pass through (codechef/code360/atcoder)
 ```
 
 Each scraper skips problem IDs already present in its output file, so re-running just tops up what's missing. Partial runs don't lose work — it checkpoints every 50 problems.
+
+The AtCoder importer refreshes all eligible task metadata and preserves previously cached statements. It checkpoints every 25 statement attempts and saves atomically. Use `--metadata-only` to refresh metadata without statement requests, `--limit N` to bound missing-statement requests, or `--retry-unavailable` to recheck tasks previously missing English translations. Without a limit it attempts all missing English statements. Requests are spaced more than one second apart; a full statement import can take a long time. Existing platform selections are preserved after upgrading: enable **AC** in the popup to include AtCoder in matching and random practice if you previously saved a selection.
 
 The CodeChef scraper takes a couple of args useful for a quick test:
 

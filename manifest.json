@@ -11,6 +11,8 @@
   "optional_host_permissions": [
     "https://leetcode.com/*",
     "https://codeforces.com/*",
+    "https://atcoder.jp/*",
+    "https://kenkoooo.com/*",
     "https://www.codechef.com/*",
     "https://authapi.geeksforgeeks.org/*",
     "https://practiceapi.geeksforgeeks.org/*",
@@ -39,7 +41,8 @@
         "https://codeforces.com/contest/*/problem/*",
         "https://codeforces.com/gym/*/problem/*",
         "https://www.codechef.com/problems/*",
-        "https://www.naukri.com/code360/problems/*"
+        "https://www.naukri.com/code360/problems/*",
+        "https://atcoder.jp/contests/*/tasks/*"
       ],
       "js": ["content.js"],
       "css": ["styles.css"]
@@ -55,14 +58,15 @@
   },
   "web_accessible_resources": [
     {
-      "resources": ["data/leetcode-data.json", "data/geeksforgeeks-data.json", "data/codeforces-data.json", "data/codechef-data.json", "data/code360-data.json"],
+      "resources": ["data/leetcode-data.json", "data/geeksforgeeks-data.json", "data/codeforces-data.json", "data/codechef-data.json", "data/code360-data.json", "data/atcoder-data.json"],
       "matches": [
         "https://takeuforward.org/*",
         "https://leetcode.com/*",
         "https://www.geeksforgeeks.org/*",
         "https://codeforces.com/*",
         "https://www.codechef.com/*",
-        "https://www.naukri.com/*"
+        "https://www.naukri.com/*",
+        "https://atcoder.jp/*"
       ]
     }
   ]

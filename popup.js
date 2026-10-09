@@ -1,7 +1,7 @@
 import { mountContestStrip } from './tracker/contest-ui.mjs';
 import { STORAGE_KEY, normalizeState, practiceOverview } from './tracker/core.mjs';
 
-const DEFAULT_PLATFORMS = ["leetcode", "geeksforgeeks", "codeforces", "codechef", "code360"];
+const DEFAULT_PLATFORMS = ["leetcode", "geeksforgeeks", "codeforces", "codechef", "code360", "atcoder"];
 const SEARCH_ENABLED_KEY = 'dsa-helper-visibility-enabled';
 const PLATFORM_NAMES = {
   leetcode: "LeetCode",
@@ -9,6 +9,7 @@ const PLATFORM_NAMES = {
   codeforces: "Codeforces",
   codechef: "CodeChef",
   code360: "Code 360",
+  atcoder: "AtCoder",
 };
 
 function showStatus(message, type, duration = 2000) {
@@ -121,6 +122,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     codeforces: "data/codeforces-data.json",
     codechef: "data/codechef-data.json",
     code360: "data/code360-data.json",
+    atcoder: "data/atcoder-data.json",
   };
 
   // ---- Load total index size ------------------------------------------------

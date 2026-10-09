@@ -7,6 +7,7 @@ import { resolve, sep, join } from 'node:path';
 import { tmpdir } from 'node:os';
 
 const root = resolve(import.meta.dirname, '..');
+const estimatedTask = JSON.parse(await readFile(join(root, 'data/atcoder-data.json'), 'utf8')).find(p => Number.isFinite(p.estimatedDifficulty));
 const server = createServer(async (req, res) => {
   const path = resolve(root, '.' + new URL(req.url, 'http://localhost').pathname);
   if (!path.startsWith(root + sep)) { res.writeHead(403).end(); return; }
@@ -109,8 +110,22 @@ try {
       assert.ok(await evaluate('document.documentElement.scrollWidth<=innerWidth'), 'Open topic picker fits mobile');
     }
   }
+  await evaluate("document.getElementById('resetQuestions').click();document.getElementById('questionPlatform').value='atcoder';document.getElementById('questionPlatform').dispatchEvent(new Event('change'));document.getElementById('questionSearch').value='dp_a';document.getElementById('questionSearch').dispatchEvent(new Event('input'));document.getElementById('topicPicker').open=false");
+  await until("document.querySelector('.question-row')?.dataset.key==='atcoder:dp_a' && document.querySelector('.question-title').textContent==='Frog 1'");
+  assert.match(await evaluate("document.querySelector('.question-details').textContent"), /frog/i);
+  assert.doesNotMatch(await evaluate("document.querySelector('#questionList .question-tags').textContent"), /Estimated difficulty/, 'Tasks without an estimate do not invent one');
+  await evaluate("document.querySelector('#questionList .question-star').click()");
+  await until("document.querySelector('#questionList .question-star').getAttribute('aria-pressed')==='true'");
+  await evaluate("document.querySelector('#questionList .question-done input').click()");
+  await until("document.querySelector('#questionList .question-tags').textContent.includes('Solved')");
+  await evaluate("location.hash='done'");
+  await until("document.querySelector('#doneList .recent-row')?.textContent.includes('Frog 1')");
+  assert.match(await evaluate("document.getElementById('doneList').textContent"), /AtCoder/);
+  await evaluate(`location.hash='questions';document.getElementById('questionSearch').value=${JSON.stringify(estimatedTask.id)};document.getElementById('questionSearch').dispatchEvent(new Event('input'))`);
+  await until(`document.querySelector('.question-row')?.dataset.key===${JSON.stringify('atcoder:' + estimatedTask.id)}`);
+  assert.match(await evaluate("document.querySelector('#questionList .question-tags').textContent"), /Estimated difficulty/);
   assert.deepEqual(errors, []);
-  console.log('PASS: statements, expansion, state updates, status, topic combinations, keyboard focus, search and responsive layout. RPC is mocked.');
+  console.log('PASS: statements, expansion, state updates, status, topic combinations, keyboard focus, search, responsive layout and AtCoder browse/star/done. RPC is mocked.');
 } finally {
   socket?.close(); server.closeAllConnections(); await new Promise(resolve => server.close(resolve));
 }

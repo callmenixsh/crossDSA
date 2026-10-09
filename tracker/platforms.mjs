@@ -1,3 +1,4 @@
+import { atcoder } from './atcoder.mjs';
 import { problemKey } from './core.mjs';
 
 const num = value => Number.isFinite(Number(value)) ? Math.max(0, Number(value)) : 0;
@@ -170,4 +171,4 @@ async function tuf(handle, ctx) {
     topics: (progress.topicAnalysis || []).map(v => ({ topic: v.topic, count: num(v.solved) })), coverage, partial: true, activityKind: 'provider contributions' };
 }
 
-export const collectors = { leetcode, codeforces, codechef, geeksforgeeks, code360, tuf };
+export const collectors = { leetcode, codeforces, codechef, geeksforgeeks, code360, tuf, atcoder };

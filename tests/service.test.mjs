@@ -27,6 +27,51 @@ async function harness(fetcher = async () => { throw new Error('Offline'); }) {
 }
 const settings = { dailyGoal: 3, timeZone: 'Asia/Kolkata', autoSync: false };
 const entry = { key: 'leetcode:two-sum', platform: 'leetcode', title: 'Two Sum', url: 'https://leetcode.com/problems/two-sum/', topics: ['Array'], difficulty: 'Easy', listIds: ['saved'] };
+
+test('AtCoder connects, imports activity and ratings, preserves cached accepts and disconnects', async () => {
+  let activityOffline = false;
+  const timestamp = Math.floor(Date.now() / 1000);
+  const h = await harness(async url => {
+    if (url.includes('data/atcoder-data.json')) return { ok: true, json: async () => [{ id: 'dp_a', title: 'Frog 1' }] };
+    if (url.includes('/history/json')) return { ok: true, json: async () => [{ IsRated: true, NewRating: 1200, ContestName: 'ABC', EndTime: new Date().toISOString() }] };
+    if (url.includes('kenkoooo.com')) {
+      if (activityOffline) throw new Error('Offline');
+      return { ok: true, json: async () => [{ id: 123, epoch_second: timestamp, user_id: 'sample', problem_id: 'dp_a', contest_id: 'dp', result: 'AC' }] };
+    }
+    return { ok: true, text: async () => '<title>sample - AtCoder</title><th>Rating</th><td>1200</td><th>Rank</th><td>50th</td>' };
+  });
+  let result = await h.send('connect', { platform: 'atcoder', handle: 'https://atcoder.jp/users/sample' });
+  assert.equal(result.ok, true);
+  let account = result.state.accounts.atcoder;
+  assert.equal(account.status, 'ready'); assert.equal(account.snapshot.totalSolved, 1);
+  assert.equal(account.snapshot.rating, 1200); assert.equal(account.snapshot.rank, 50);
+  assert.equal(account.snapshot.recent[0].title, 'Frog 1');
+  activityOffline = true;
+  result = await h.send('sync', { platform: 'atcoder' });
+  assert.equal(result.state.accounts.atcoder.snapshot.recent.length, 1);
+  assert.match(result.state.accounts.atcoder.snapshot.activityWarning, /Offline/);
+  h.setAllowed(false);
+  await h.send('sync', { platform: 'atcoder' });
+  account = h.storage[STORAGE_KEY].accounts.atcoder;
+  assert.equal(account.status, 'error'); assert.equal(account.snapshot.totalSolved, 1);
+  assert.equal((await h.send('disconnect', { platform: 'atcoder' })).ok, true);
+  assert.equal(h.storage[STORAGE_KEY].accounts.atcoder, undefined);
+  assert.equal(h.storage[STORAGE_KEY].disconnectedAccounts.atcoder.snapshot.recent.length, 1);
+});
+
+test('AtCoder supports Done, Starred and custom lists before connecting an account', async () => {
+  const h = await harness();
+  const question = { ...entry, key: 'atcoder:dp_a', platform: 'atcoder', title: 'Frog 1', url: 'https://atcoder.jp/contests/dp/tasks/dp_a', topics: [], listIds: [] };
+  assert.equal((await h.send('question-state', { entry: question, patch: { done: true } })).ok, true);
+  assert.equal((await h.send('question-state', { entry: question, patch: { starred: true } })).ok, true);
+  await h.send('list:create', { name: 'DP practice' });
+  const state = h.storage[STORAGE_KEY], list = Object.values(state.lists).find(p => p.name === 'DP practice');
+  assert.equal((await h.send('workspace', { entry: { ...question, listIds: [list.id] }, customListsOnly: true })).ok, true);
+  const saved = h.storage[STORAGE_KEY].workspace[question.key];
+  assert.equal(saved.done, true);
+  assert.deepEqual(saved.listIds, [list.id, 'saved']);
+  assert.deepEqual(h.storage[STORAGE_KEY].accounts, {});
+});
 const response = value => ({ ok: true, json: async () => value });
 
 test('startup migrates the activity refresh alarm from hourly to every 30 minutes', async () => {

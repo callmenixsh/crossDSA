@@ -15,7 +15,7 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
         sendResponse({ success: false, error: 'Extension settings access required.' });
         return;
     }
-    const platforms = ['leetcode', 'geeksforgeeks', 'codeforces', 'codechef', 'code360'];
+    const platforms = ['leetcode', 'geeksforgeeks', 'codeforces', 'codechef', 'code360', 'atcoder'];
     const threshold = value => {
         const number = typeof value === 'string' && value.trim() ? Number(value) : value;
         return typeof number === 'number' && Number.isFinite(number) && number >= 0.1 && number <= 1 ? number : null;

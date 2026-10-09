@@ -1,11 +1,12 @@
 // Run against a separate Edge/Chrome test profile with remote debugging on 9333.
 // Never point this script at your everyday browser profile: it seeds test storage.
 import assert from 'node:assert/strict';
-import { mkdir, writeFile } from 'node:fs/promises';
+import { mkdir, writeFile, readFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 
 const root = process.env.CROSSDSA_CDP || 'http://127.0.0.1:9333';
+const atcoderCount = JSON.parse(await readFile(new URL('../data/atcoder-data.json', import.meta.url), 'utf8')).length;
 class CDP {
   constructor(url) {
     this.id = 0; this.pending = new Map(); this.events = [];
@@ -57,7 +58,7 @@ try {
   await client.send('Emulation.setDeviceMetricsOverride', { width: 1440, height: 1100, deviceScaleFactor: 1, mobile: false });
   await client.send('Page.navigate', { url: `chrome-extension://${extensionId}/dashboard.html` });
   await until(client, "document.getElementById('libraryCount') && document.getElementById('libraryCount').textContent !== '…'");
-  assert.equal(await client.evaluate("document.getElementById('libraryCount').textContent"), '0', 'No connected platforms means no browsable questions');
+  assert.equal(Number((await client.evaluate("document.getElementById('libraryCount').textContent")).replaceAll(',', '')), atcoderCount, 'AtCoder library is available without an account');
   assert.equal(await client.evaluate("document.querySelectorAll('.platform-card').length"), 0);
   assert.equal(await client.evaluate("document.querySelectorAll('#ratingPlot .chart-grid').length"), 5, 'No connected platforms keeps the chart grid');
   assert.equal(await client.evaluate("document.querySelector('#ratingPlot .empty-state') === null"), true);
@@ -69,16 +70,29 @@ try {
     const path = join(directory, filename); await writeFile(path, Buffer.from(data, 'base64')); console.log(`Screenshot: ${path}`);
   };
   await screenshot('overview-empty.png');
+  await client.evaluate("location.hash = 'questions'");
+  await until(client, "!document.getElementById('view-questions').hidden");
+  await client.evaluate("document.getElementById('questionPlatform').value='atcoder';document.getElementById('questionPlatform').dispatchEvent(new Event('change'));document.getElementById('questionSearch').value='dp_a';document.getElementById('questionSearch').dispatchEvent(new Event('input'))");
+  await until(client, "document.querySelector('.question-row')?.dataset.key === 'atcoder:dp_a' && document.querySelector('.question-title').textContent === 'Frog 1'");
+  assert.match(await client.evaluate("document.querySelector('.question-details').textContent"), /frog/i);
+  await client.evaluate("document.querySelector('.question-done input').click()");
+  await until(client, "document.querySelector('.question-tags').textContent.includes('Solved')");
+  await client.evaluate("location.hash='done'");
+  await until(client, "document.querySelector('#doneList .recent-row')?.textContent.includes('Frog 1')");
+  assert.match(await client.evaluate("document.getElementById('doneList').textContent"), /AtCoder/);
+  await client.evaluate("document.querySelector('#doneList .question-done input').click()");
+  await until(client, "document.querySelectorAll('#doneList .recent-row').length === 0");
+  await client.evaluate("location.hash='questions';document.getElementById('resetQuestions').click()");
   await client.evaluate(`(async () => {
     const { 'crossdsa-tracker-v1': state } = await chrome.storage.local.get('crossdsa-tracker-v1');
     state.settings.autoSync = false;
     state.accounts.leetcode = {handle:'browser-test',generation:'test',status:'ready',syncedAt:Date.now(),snapshot:{totalSolved:0,recent:[]}};
     await chrome.storage.local.set({'crossdsa-tracker-v1':state});
   })()`);
-  await until(client, "document.getElementById('questionPlatform').options.length === 2");
+  await until(client, "document.getElementById('questionPlatform').options.length === 3");
   assert.ok(Number((await client.evaluate("document.getElementById('libraryCount').textContent")).replaceAll(',', '')) > 0, 'Sidebar count updates when a platform connects');
-  assert.deepEqual(await client.evaluate("[...document.getElementById('questionPlatform').options].map(o => o.value)"), ['all', 'leetcode']);
-  assert.deepEqual(await client.evaluate("[...document.getElementById('donePlatform').options].map(o => o.value)"), ['all', 'leetcode']);
+  assert.deepEqual(await client.evaluate("[...document.getElementById('questionPlatform').options].map(o => o.value)"), ['all', 'leetcode', 'atcoder']);
+  assert.deepEqual(await client.evaluate("[...document.getElementById('donePlatform').options].map(o => o.value)"), ['all', 'leetcode', 'atcoder']);
   // UI actions exercise actual extension messages, background validation and storage.
   await client.evaluate("location.hash = 'questions'");
   await until(client, "!document.getElementById('view-questions').hidden");

@@ -3,7 +3,8 @@ const PROBLEM_DATA_FILES = [
     'data/geeksforgeeks-data.json',
     'data/codeforces-data.json',
     'data/codechef-data.json',
-    'data/code360-data.json'
+    'data/code360-data.json',
+    'data/atcoder-data.json'
 ];
 
 const FILE_SOURCES = {
@@ -11,10 +12,11 @@ const FILE_SOURCES = {
     'data/geeksforgeeks-data.json': 'geeksforgeeks',
     'data/codeforces-data.json': 'codeforces',
     'data/codechef-data.json': 'codechef',
-    'data/code360-data.json': 'code360'
+    'data/code360-data.json': 'code360',
+    'data/atcoder-data.json': 'atcoder'
 };
 
-const DEFAULT_PLATFORMS = ['leetcode', 'geeksforgeeks', 'codeforces', 'codechef', 'code360'];
+const DEFAULT_PLATFORMS = ['leetcode', 'geeksforgeeks', 'codeforces', 'codechef', 'code360', 'atcoder'];
 
 let preferredPlatforms = DEFAULT_PLATFORMS.slice();
 let problemsData = [];
@@ -693,6 +695,10 @@ async function findRelatedProblems(pageText, pageTitle, excludedUrls = new Set()
 }
 
 function getProblemTitle() {
+    if (getCurrentPlatform() === 'atcoder') {
+        const heading = document.querySelector('#main-container .h2');
+        if (heading) return heading.textContent.replace(/\s*Editorial\s*$/i, '').trim();
+    }
     // Try multiple possible selectors to accommodate new UI frames
     const selectors = [
         '.text-2xl.font-bold.text-new_primary.dark\\:text-new_dark_primary',
@@ -786,6 +792,7 @@ function getCurrentPlatform() {
     if (host.endsWith('geeksforgeeks.org')) return 'geeksforgeeks';
     if (host.endsWith('codeforces.com')) return 'codeforces';
     if (host.endsWith('codechef.com')) return 'codechef';
+    if (host === 'atcoder.jp') return 'atcoder';
     if (host.endsWith('naukri.com') && window.location.pathname.includes('/code360/')) return 'code360';
     return null;
 }
@@ -798,6 +805,7 @@ function isSupportedProblemPage() {
         case 'geeksforgeeks': return /^\/problems\/[^/]+(?:\/.*)?$/i.test(path);
         case 'codeforces': return /^\/problemset\/problem\/\d+\/[a-z0-9]+$/i.test(path) || /^\/(?:contest|gym)\/\d+\/problem\/[a-z0-9]+$/i.test(path);
         case 'codechef': return /^\/problems\/[^/]+$/i.test(path);
+        case 'atcoder': return /^\/contests\/[a-zA-Z0-9_-]+\/tasks\/[a-zA-Z0-9_-]+$/.test(path);
         case 'code360': return /^\/code360\/problems\/[^/]+(?:\/.*)?$/i.test(path);
         default: return false;
     }
@@ -809,7 +817,8 @@ const PLATFORM_DISPLAY_NAMES = {
     'geeksforgeeks': 'GeeksforGeeks',
     'codeforces': 'Codeforces',
     'codechef': 'CodeChef',
-    'code360': 'Code 360'
+    'code360': 'Code 360',
+    'atcoder': 'AtCoder'
 };
 
 function platformDisplayName(source) {
@@ -983,6 +992,19 @@ async function getCode360Content() {
     return content.trim();
 }
 
+function getAtCoderContent() {
+    const root = document.querySelector('#task-statement .lang-en') || document.querySelector('#task-statement');
+    if (!root) return '';
+    const sections = [...root.querySelectorAll('section')].filter(section =>
+        /^(?:Problem Statement|Constraints|Input|Output)$/i.test(section.querySelector('h3')?.textContent.trim() || ''));
+    // Some older English-only tasks have no section wrappers.
+    if (!sections.length) {
+        const heading = [...root.querySelectorAll('h3')].some(h => /^Problem Statement$/i.test(h.textContent.trim()));
+        return heading ? root.textContent.replace(/\s+/g, ' ').trim() : '';
+    }
+    return sections.map(section => section.textContent.replace(/\s+/g, ' ').trim()).join(' ');
+}
+
 async function getProblemContent() {
     const platform = getCurrentPlatform();
     switch (platform) {
@@ -998,6 +1020,8 @@ async function getProblemContent() {
             return await getCodeChefContent();
         case 'code360':
             return await getCode360Content();
+        case 'atcoder':
+            return getAtCoderContent();
         default:
             return getTUFProblemContent();
     }
@@ -1130,6 +1154,10 @@ function showLoadingScreen(titleButton) {
     container.style.display = 'block';
 }
 
+function escapeHtml(value) {
+    return String(value).replace(/[&<>"']/g, char => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[char]);
+}
+
 function createLeetCodeButton(problem) {
     const button = document.createElement('button');
     button.className = 'dsa-helper-btn';
@@ -1156,7 +1184,7 @@ function createLeetCodeButton(problem) {
     
     button.innerHTML = `
     <div class="btn-content">
-      <div class="btn-title">${problem.title} ${sqlBadge}</div>
+      <div class="btn-title">${escapeHtml(problem.title)} ${sqlBadge}</div>
       <div class="btn-meta">
         <span class="difficulty ${(problem.difficulty || 'unknown').toLowerCase()}">${problem.difficulty || 'Unknown'}</span>
         ${scoreBadges}
@@ -1187,7 +1215,11 @@ function buildYoutubeQuery() {
         .replace(/\s+/g, ' ')
         .trim();
 
-    // Codeforces: the problem index + contest ID is the most reliable search key.
+    if (platform === 'atcoder') {
+        const match = window.location.pathname.match(/^\/contests\/([a-zA-Z0-9_-]+)\/tasks\/([a-zA-Z0-9_-]+)/);
+        if (match) return `AtCoder ${match[1]} ${match[2]} ${baseTitle} solution`;
+    }
+    // Codeforces: contest ID + problem index is the most reliable search key.
     // e.g. /contest/1878/problem/D or /problemset/problem/1878/D
     if (platform === 'codeforces') {
         const cfMatch = window.location.pathname.match(/^\/(?:contest|problemset\/problem|gym)\/(\d+)\/(?:problem\/)?([A-Z0-9]+)/i);

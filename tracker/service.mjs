@@ -1,4 +1,4 @@
-import { STORAGE_KEY, PLATFORMS, normalizeState, cleanHandle, mergeSnapshot, safeProblemUrl, problemKey } from './core.mjs';
+import { STORAGE_KEY, PLATFORMS, QUESTION_PLATFORMS, normalizeState, cleanHandle, mergeSnapshot, safeProblemUrl, problemKey } from './core.mjs';
 import { collectors } from './platforms.mjs';
 import { CONTEST_ORIGINS } from './contests.mjs';
 
@@ -7,6 +7,15 @@ let writes = Promise.resolve();
 const syncing = new Map();
 const LEETCODE_HELPERS = ['tracker/leetcode-session.js', 'tracker/leetcode-browser.js'];
 const LEETCODE_RECOVERY_ALARM = 'crossdsa-leetcode-recovery';
+let atcoderTitles;
+async function getAtcoderTitles() {
+  atcoderTitles ||= fetch(chrome.runtime.getURL('data/atcoder-data.json')).then(async response => {
+    if (!response.ok) throw new Error('Local AtCoder index unavailable.');
+    const rows = await response.json();
+    return new Map(rows.map(p => [p.id, p.title]));
+  }).catch(() => { atcoderTitles = undefined; return new Map(); });
+  return atcoderTitles;
+}
 
 async function attachLeetcodeHelpers(tabId) {
   if (!chrome.scripting?.executeScript || !await chrome.permissions.contains({ permissions: ['scripting'] })) return false;
@@ -122,7 +131,7 @@ async function performSync(platform) {
   });
   try {
     if (!await chrome.permissions.contains({ origins: PLATFORMS[platform].origins })) throw new Error('Site access is missing. Use Connect platforms to grant access again.');
-    const snapshot = await collectors[platform](handle, { json: request, text: (url, options) => request(url, options, true), siteJson, ownRecent: leetcodeRecent, previous: account.snapshot });
+    const snapshot = await collectors[platform](handle, { json: request, text: (url, options) => request(url, options, true), siteJson, ownRecent: leetcodeRecent, previous: account.snapshot, ...(platform === 'atcoder' ? { problemTitles: await getAtcoderTitles() } : {}) });
     snapshot.recent = (snapshot.recent || []).filter(r => r.id && r.key && Number.isFinite(r.timestamp) && r.timestamp > 0 && safeProblemUrl(r.url, platform));
     await updateState(state => {
       account = state.accounts[platform];
@@ -266,7 +275,7 @@ export function registerTracker() {
         }
         case 'tracker:question-state': {
           const entry = message.entry, patch = message.patch;
-          if (!entry || !PLATFORMS[entry.platform] || !safeProblemUrl(entry.url, entry.platform) || entry.key !== problemKey(entry.platform, entry.url) || typeof entry.title !== 'string' || !patch || Object.keys(patch).length !== 1 || !['starred', 'done'].includes(Object.keys(patch)[0]) || typeof Object.values(patch)[0] !== 'boolean') throw new Error('Invalid question state.');
+          if (!entry || !QUESTION_PLATFORMS[entry.platform] || !safeProblemUrl(entry.url, entry.platform) || entry.key !== problemKey(entry.platform, entry.url) || typeof entry.title !== 'string' || !patch || Object.keys(patch).length !== 1 || !['starred', 'done'].includes(Object.keys(patch)[0]) || typeof Object.values(patch)[0] !== 'boolean') throw new Error('Invalid question state.');
           return updateState(state => {
             const previous = state.workspace[entry.key] || {};
             const next = { ...previous, key: entry.key, platform: entry.platform, title: entry.title.slice(0, 300), url: entry.url, topics: previous.topics || (Array.isArray(entry.topics) ? entry.topics.filter(v => typeof v === 'string').slice(0, 30) : []), difficulty: previous.difficulty || String(entry.difficulty || '').slice(0, 50), listIds: [...(previous.listIds || [])], updatedAt: Date.now() };
@@ -283,7 +292,7 @@ export function registerTracker() {
         }
         case 'tracker:workspace': {
           const entry = message.entry;
-          if (!entry || !PLATFORMS[entry.platform] || !safeProblemUrl(entry.url, entry.platform) || typeof entry.key !== 'string' || entry.key.length > 500 || entry.key !== problemKey(entry.platform, entry.url)) throw new Error('Invalid problem.');
+          if (!entry || !QUESTION_PLATFORMS[entry.platform] || !safeProblemUrl(entry.url, entry.platform) || typeof entry.key !== 'string' || entry.key.length > 500 || entry.key !== problemKey(entry.platform, entry.url)) throw new Error('Invalid problem.');
           if (!Array.isArray(entry.topics) || !Array.isArray(entry.listIds) || entry.listIds.some(id => typeof id !== 'string')) throw new Error('Invalid list membership.');
           if (message.customListsOnly && entry.listIds.includes('saved')) throw new Error('Use the star to change Starred membership.');
           return updateState(state => {

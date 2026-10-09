@@ -62,10 +62,50 @@ test('problem route checks hide controls on non-problem pages and support Codefo
     ['codeforces.com', '/contests', false],
     ['takeuforward.org', '/practice/dsa/two-sum', true],
     ['takeuforward.org', '/practice/dsa', false],
+    ['atcoder.jp', '/contests/dp/tasks/dp_a', true],
+    ['atcoder.jp', '/contests/abc001/tasks/abc001_a/', true],
+    ['atcoder.jp', '/contests/dp/tasks', false],
+    ['atcoder.jp', '/users/sample', false],
   ]) {
     Object.assign(context.window.location, { hostname, pathname });
     assert.equal(context.isSupportedProblemPage(), expected, `${hostname}${pathname}`);
   }
+});
+
+test('AtCoder extracts English sections and uses a task-specific YouTube search', () => {
+  const context = matcher();
+  Object.assign(context.window.location, { hostname: 'atcoder.jp', pathname: '/contests/dp/tasks/dp_a' });
+  const sections = ['Problem Statement', 'Constraints', 'Input', 'Output', 'Sample Input 1'].map(label => ({
+    querySelector: () => ({ textContent: label }), textContent: label + ' English text',
+  }));
+  context.document = { querySelector: selector => selector === '#task-statement .lang-en' ? { querySelectorAll: () => sections } :
+    selector === '#main-container .h2' ? { textContent: 'A - Frog 1 Editorial' } : null };
+  assert.equal(context.getCurrentPlatform(), 'atcoder');
+  assert.match(context.getAtCoderContent(), /Problem Statement English text/);
+  assert.doesNotMatch(context.getAtCoderContent(), /Sample Input/);
+  assert.match(context.buildYoutubeQuery(), /AtCoder dp dp_a A - Frog 1 solution/);
+  context.document.querySelector = () => null;
+  assert.equal(context.getAtCoderContent(), '');
+});
+
+test('AtCoder participates in matching while excluding the current platform', async () => {
+  const context = matcher();
+  vm.runInContext(`problemsData = [
+    { title: 'Frog Jump', description: 'Minimum cost jumping stones with heights', source: 'atcoder' },
+    { title: 'Frog Jump', description: 'Minimum cost jumping stones with heights', source: 'geeksforgeeks' }
+  ]; computeTitleIdf();`, context);
+  assert.ok((await context.findMatchingProblems('Minimum cost jumping stones with heights', 'Frog Jump')).some(p => p.source === 'atcoder'));
+  Object.assign(context.window.location, { hostname: 'atcoder.jp', pathname: '/contests/dp/tasks/dp_a' });
+  assert.deepEqual(Array.from(await context.findMatchingProblems('Minimum cost jumping stones with heights', 'Frog Jump'), p => p.source), ['geeksforgeeks']);
+});
+
+test('matching result titles preserve AtCoder mathematical markup as text', () => {
+  const context = matcher();
+  let button;
+  context.document = { createElement: () => (button = { classList: { add() {} }, addEventListener() {} }) };
+  context.createLeetCodeButton({ title: '<Inversion>', difficulty: 'Unknown', topics: [], combinedScore: 0.8 });
+  assert.ok(button.innerHTML.includes('&lt;Inversion&gt;'));
+  assert.ok(!button.innerHTML.includes('<Inversion>'));
 });
 
 test('cancelled matching stops at its next frame instead of scanning the remaining index', async () => {

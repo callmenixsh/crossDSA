@@ -5,7 +5,13 @@ export const PLATFORMS = {
   codechef: { name: 'CodeChef', short: 'CC', color: '#d7ad8b', origins: ['https://www.codechef.com/*'], profile: h => `https://www.codechef.com/users/${encodeURIComponent(h)}` },
   geeksforgeeks: { name: 'GeeksforGeeks', short: 'GfG', color: '#70cf9b', origins: ['https://authapi.geeksforgeeks.org/*', 'https://practiceapi.geeksforgeeks.org/*'], profile: h => `https://www.geeksforgeeks.org/profile/${encodeURIComponent(h)}` },
   code360: { name: 'Code 360', short: '360', color: '#ff9972', origins: ['https://www.naukri.com/*'], profile: h => `https://www.naukri.com/code360/profile/${encodeURIComponent(h)}` },
+  atcoder: { name: 'AtCoder', short: 'AC', color: '#d4d4d4', origins: ['https://atcoder.jp/*', 'https://kenkoooo.com/*'], profile: h => `https://atcoder.jp/users/${encodeURIComponent(h)}` },
   tuf: { name: 'TakeUForward', short: 'TUF', color: '#f28291', origins: ['https://takeuforward.org/*', 'https://backend-go.takeuforward.org/*'], profile: h => `https://takeuforward.org/profile/${encodeURIComponent(h)}` },
+};
+// Question sources can be available before account tracking is implemented.
+export const QUESTION_PLATFORMS = {
+  ...PLATFORMS,
+  atcoder: { ...PLATFORMS.atcoder, libraryOnly: true },
 };
 
 export function emptyState() {
@@ -35,6 +41,7 @@ export function cleanHandle(platform, input) {
     value = decodeURIComponent(parts.at(-1));
   }
   value = value.replace(/^@/, '');
+  if (platform === 'atcoder' && !/^[a-zA-Z0-9_]{1,32}$/.test(value)) throw new Error('Enter a valid AtCoder handle (letters, numbers and underscores).');
   if (!/^[a-zA-Z0-9_.-]{1,100}$/.test(value)) throw new Error('Enter a valid handle (letters, numbers, dots, underscores or hyphens).');
   return value;
 }
@@ -44,6 +51,10 @@ export function problemKey(platform, url) {
     const path = new URL(url).pathname.replace(/\/+$/, '');
     if (platform === 'leetcode') return `leetcode:${path.split('/problems/')[1]?.split('/')[0] || path}`;
     if (platform === 'codechef') return `codechef:${path.split('/').at(-1)}`;
+    if (platform === 'atcoder') {
+      const match = path.match(/^\/contests\/[a-zA-Z0-9_-]+\/tasks\/([a-zA-Z0-9_-]+)$/);
+      if (match) return `atcoder:${match[1]}`;
+    }
     if (platform === 'codeforces') {
       const m = path.match(/\/(?:problemset\/problem|contest|gym)\/(\d+)\/(?:problem\/)?([a-z0-9]+)/i);
       if (m) return `codeforces:${m[1]}:${m[2].toUpperCase()}`;
@@ -72,6 +83,7 @@ export function mergeSnapshot(previous, incoming, now = Date.now()) {
   for (const item of incoming.recent || []) records.set(item.id, item);
   const recent = [...records.values()].sort((a, b) => b.timestamp - a.timestamp).slice(0, 15000);
   const clipped = records.size > recent.length;
+  if (clipped && incoming.atcoderSync) incoming = { ...incoming, localHistoryTruncated: true };
   // GFG exposes a current coding score, so build an honest history from syncs.
   // Keep the latest observation per UTC day, bounded to 180 observed days.
   const scoreHistory = new Map((previous?.scoreHistory || []).map(point => [dateKey(point.timestamp, 'UTC'), point]));
@@ -136,7 +148,7 @@ export function doneQuestions(accounts, { query = '', platform = 'all', from = '
   const unique = new Map();
   const recent = Object.values(accounts).flatMap(a => a.snapshot?.recent || []).sort((a, b) => b.timestamp - a.timestamp);
   for (const record of recent) if (workspace[record.key]?.done !== false && !unique.has(record.key)) unique.set(record.key, record);
-  for (const entry of Object.values(workspace)) if (entry.done && accounts[entry.platform] && !unique.has(entry.key)) {
+  for (const entry of Object.values(workspace)) if (entry.done && (accounts[entry.platform] || QUESTION_PLATFORMS[entry.platform]?.libraryOnly) && !unique.has(entry.key)) {
     unique.set(entry.key, { ...entry, timestamp: entry.doneAt || entry.updatedAt, source: 'manual' });
   }
   const terms = query.trim().toLowerCase().split(/\s+/).filter(Boolean);
@@ -151,7 +163,8 @@ export function doneQuestions(accounts, { query = '', platform = 'all', from = '
 export function safeProblemUrl(url, platform) {
   try {
     const parsed = new URL(url);
-    const hosts = { leetcode: 'leetcode.com', codeforces: 'codeforces.com', codechef: 'www.codechef.com', geeksforgeeks: 'www.geeksforgeeks.org', code360: 'www.naukri.com', tuf: 'takeuforward.org' };
+    const hosts = { leetcode: 'leetcode.com', codeforces: 'codeforces.com', codechef: 'www.codechef.com', geeksforgeeks: 'www.geeksforgeeks.org', code360: 'www.naukri.com', tuf: 'takeuforward.org', atcoder: 'atcoder.jp' };
+    if (platform === 'atcoder' && (parsed.username || parsed.password || parsed.port || !/^\/contests\/[a-zA-Z0-9_-]+\/tasks\/[a-zA-Z0-9_-]+\/?$/.test(parsed.pathname))) return null;
     return parsed.protocol === 'https:' && parsed.hostname === hosts[platform] ? parsed.href : null;
   } catch { return null; }
 }
