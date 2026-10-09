@@ -78,7 +78,7 @@ The dashboard uses plain HTML/CSS/JavaScript and the existing bundled index; no 
 Upcoming LeetCode and Codeforces contests appear in the dashboard header and popup, with countdowns, local start-time tooltips, and links to the official contest. In **Settings → Contest notifications**, show or hide contests in the popup and independently enable desktop reminders 1 hour and 10 minutes before each contest. Saving enabled settings requests LeetCode and Codeforces access; individual sources can also be enabled from the Contests page; desktop notification permission is requested only when reminders are enabled. No platform account connection is required. Schedules refresh every 30 minutes while Chrome is running. LeetCode uses its full published contest listing and Codeforces uses its official contest API. Only announced future contests are shown; recent confirmed history is retained for 90 days. Each source has its own cache and freshness checks, so an unavailable source does not block the other. Unavailable refreshes show saved times; stale schedules and overdue reminders are suppressed for desktop alerts. Hiding contests in the popup keeps the dashboard schedule and desktop reminders available. Disabling desktop reminders cancels reminder alarms. The Contests sidebar page shows a month calendar (an agenda on mobile), with All, LeetCode, and Codeforces filters and source status indicators; the popup has a Dashboard link beside Refresh. `tracker/contests.mjs`, `tracker/contest-service.mjs`, `tracker/contest-ui.mjs`, and `tracker/contest-calendar.mjs` own this feature.
 
 ```powershell
-node --test --test-isolation=none tests/tracker.test.mjs tests/service.test.mjs tests/leetcode-session.test.mjs tests/leetcode-browser.test.mjs tests/done.test.mjs tests/ratings.test.mjs
+node --test --test-isolation=none tests/*.test.mjs
 node tests/live-platforms.mjs # optional read-only requests to public sample accounts; Windows curl required
 ```
 
@@ -117,7 +117,7 @@ scrapers/
   codechef_scraper.py      # pulls CodeChef data -> data/codechef-data.json
   code360_scraper.py       # pulls Code 360 data -> data/code360-data.json
 requirements.txt           # python deps for the scrapers
-run_scrapers.py            # runs one or all scrapers back to back
+scrape.py                  # runs one or all scrapers back to back
 ```
 
 ### Refreshing the data
@@ -134,9 +134,9 @@ python scrapers/code360_scraper.py         # -> data/code360-data.json
 Or just run them all at once:
 
 ```bash
-python run_scrapers.py                     # prompts to pick, defaults to all
-python run_scrapers.py codechef leetcode   # run by name
-python run_scrapers.py codechef --limit 20 # scraper args pass through (codechef/code360)
+python scrape.py                     # prompts to pick, defaults to all
+python scrape.py codechef leetcode   # run by name
+python scrape.py codechef --limit 20 # scraper args pass through (codechef/code360)
 ```
 
 Each scraper skips problem IDs already present in its output file, so re-running just tops up what's missing. Partial runs don't lose work — it checkpoints every 50 problems.

@@ -11,16 +11,6 @@ const PLATFORM_NAMES = {
   code360: "Code 360",
 };
 
-async function sendMessageToActiveTab(message) {
-  const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
-  try {
-    return await chrome.tabs.sendMessage(tab.id, message);
-  } catch (e) {
-    showStatus("Inactive, try refreshing the page", "error");
-    throw e;
-  }
-}
-
 function showStatus(message, type, duration = 2000) {
   const statusMessage = document.getElementById("statusMessage");
   if (!statusMessage) return;
@@ -173,25 +163,14 @@ document.addEventListener("DOMContentLoaded", async () => {
   }
 
   async function persistPlatforms() {
+    await chrome.storage.local.set({ "dsa-preferred-platforms": selectedPlatforms });
     renderChips();
     if (currentRandomProblem && !selectedPlatforms.includes(currentRandomProblem.source)) {
       currentRandomProblem = null;
       randomResult.hidden = true;
       randomPickBtn.textContent = "Pick one";
     }
-    try {
-      await chrome.storage.local.set({ "dsa-preferred-platforms": selectedPlatforms });
-    } catch (e) {
-    }
-    try {
-      await chrome.runtime.sendMessage({ action: "setPreferredPlatforms", platforms: selectedPlatforms });
-      try {
-        await sendMessageToActiveTab({ action: "setPreferredPlatforms", platforms: selectedPlatforms });
-      } catch (e) {
-      }
-      showStatus("Platforms updated!", "success");
-    } catch (e) {
-    }
+    showStatus("Platforms updated!", "success");
   }
 
   chips.forEach((chip) => {
@@ -204,26 +183,26 @@ document.addEventListener("DOMContentLoaded", async () => {
         showStatus("Keep at least one platform", "error", 2500);
         return;
       }
+      const previous = selectedPlatforms.slice();
       if (willBeSelected) {
         selectedPlatforms.push(platform);
       } else {
         selectedPlatforms = selectedPlatforms.filter((p) => p !== platform);
       }
-      await persistPlatforms();
+      try {
+        await persistPlatforms();
+      } catch (error) {
+        selectedPlatforms = previous;
+        renderChips();
+        showStatus("Could not save platforms", "error");
+      }
     });
   });
 
   // ---- Match threshold ------------------------------------------------------
   async function setThreshold(value) {
+    await chrome.storage.local.set({ "dsa-helper-similarity-threshold": value });
     matchThreshold = value;
-    try {
-      await chrome.runtime.sendMessage({ action: "setSimilarityThreshold", value });
-      try {
-        await sendMessageToActiveTab({ action: "setSimilarityThreshold", value });
-      } catch (e) {
-      }
-    } catch (e) {
-    }
   }
 
   similaritySlider.addEventListener("input", (e) => {
@@ -233,8 +212,14 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   similaritySlider.addEventListener("change", async (e) => {
     const value = parseFloat(e.target.value);
-    await setThreshold(value);
-    showStatus("Threshold updated!", "success");
+    try {
+      await setThreshold(value);
+      showStatus("Threshold updated!", "success");
+    } catch (error) {
+      similaritySlider.value = String(matchThreshold);
+      similarityValue.textContent = String(matchThreshold);
+      showStatus("Could not save threshold", "error");
+    }
   });
 
   randomPickBtn.addEventListener("click", () => {
@@ -287,28 +272,20 @@ document.addEventListener("DOMContentLoaded", async () => {
   // ---- Reset settings -------------------------------------------------------
   resetLink.addEventListener("click", async (e) => {
     e.preventDefault();
-    selectedPlatforms = [...DEFAULT_PLATFORMS];
-    renderChips();
     try {
-      await chrome.runtime.sendMessage({ action: "setPreferredPlatforms", platforms: selectedPlatforms });
-      try {
-        await sendMessageToActiveTab({ action: "setPreferredPlatforms", platforms: selectedPlatforms });
-      } catch (err) {
-      }
-    } catch (err) {
+      await chrome.storage.local.set({
+        "dsa-preferred-platforms": [...DEFAULT_PLATFORMS],
+        "dsa-helper-similarity-threshold": 0.4,
+      });
+      selectedPlatforms = [...DEFAULT_PLATFORMS];
+      matchThreshold = 0.4;
+      renderChips();
+      similaritySlider.value = String(matchThreshold);
+      similarityValue.textContent = String(matchThreshold);
+      showStatus("Settings reset", "success");
+    } catch (error) {
+      showStatus("Could not reset settings", "error");
     }
-    matchThreshold = 0.4;
-    try {
-      await chrome.runtime.sendMessage({ action: "setSimilarityThreshold", value: matchThreshold });
-      try {
-        await sendMessageToActiveTab({ action: "setSimilarityThreshold", value: matchThreshold });
-      } catch (err) {
-      }
-    } catch (err) {
-    }
-    similaritySlider.value = String(matchThreshold);
-    similarityValue.textContent = String(matchThreshold);
-    showStatus("Settings reset", "success");
   });
 
   // ---- Load persisted state ------------------------------------------------

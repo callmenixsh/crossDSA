@@ -446,25 +446,16 @@ function difficultySimilarity(a, b) {
 }
 
 let SIMILARITY_THRESHOLD = 0.4;
-if (typeof localStorage !== 'undefined') {
-    const stored = localStorage.getItem('dsa-helper-similarity-threshold');
-    if (stored) SIMILARITY_THRESHOLD = parseFloat(stored);
-}
-// Also check chrome.storage for consistency with popup
-try {
-    chrome.storage.local.get(['dsa-helper-similarity-threshold'], (result) => {
-        if (result['dsa-helper-similarity-threshold']) {
-            SIMILARITY_THRESHOLD = parseFloat(result['dsa-helper-similarity-threshold']);
-        }
-    });
-} catch (e) {
+function normalizeThreshold(value) {
+    const number = typeof value === 'string' && value.trim() ? Number(value) : value;
+    return typeof number === 'number' && Number.isFinite(number) && number >= 0.1 && number <= 1 ? number : 0.4;
 }
 
 function waitForNextFrame() {
     return new Promise(resolve => requestAnimationFrame(resolve));
 }
 
-async function findMatchingProblems(pageText, pageTitle) {
+async function findMatchingProblems(pageText, pageTitle, requestId = searchRequestId) {
     console.log('Finding matches for:', pageText.substring(0, 100) + '...');
 
     const pageTokens = tokenize(pageText);
@@ -476,7 +467,7 @@ async function findMatchingProblems(pageText, pageTitle) {
     const pageTitleTokens = tokenize(pageTitle);
     const pageTitleUniq = pageTitleTokens.length ? new Set(pageTitleTokens) : pageUniq;
     const pageTitleBgrams = pageTitleTokens.length ? toBigrams(pageTitleTokens) : pageBgrams;
-    const minThreshold = Math.max(0.2, SIMILARITY_THRESHOLD);
+    const minThreshold = SIMILARITY_THRESHOLD;
 
     const currentPlatform = getCurrentPlatform();
     const currentSource = (currentPlatform === 'tuf' || currentPlatform === null) ? null : currentPlatform;
@@ -489,6 +480,7 @@ async function findMatchingProblems(pageText, pageTitle) {
         // scrolling, and the rest of the page remain responsive.
         if (performance.now() - lastYield >= 12) {
             await waitForNextFrame();
+            if (requestId !== searchRequestId) return [];
             lastYield = performance.now();
         }
 
@@ -543,21 +535,21 @@ async function findMatchingProblems(pageText, pageTitle) {
     await waitForNextFrame();
     matches.sort((a, b) => b.combinedScore - a.combinedScore);
 
-    // Deduplicate: drop near-identical titles
+    // Preserve equivalents on different platforms when deduplicating titles.
     const uniqueMatches = [];
     const seenTitles = [];
     for (const match of matches) {
         const titleToks = tokenize(match.title);
         let isRedundant = false;
         for (const seen of seenTitles) {
-            if (titleIsDuplicate(titleToks, seen)) {
+            if (seen.source === match.source && titleIsDuplicate(titleToks, seen.tokens)) {
                 isRedundant = true;
                 break;
             }
         }
         if (!isRedundant) {
             uniqueMatches.push(match);
-            seenTitles.push(titleToks);
+            seenTitles.push({ source: match.source, tokens: titleToks });
         }
         if (uniqueMatches.length >= 30) break;
     }
@@ -799,11 +791,16 @@ function getCurrentPlatform() {
 }
 
 function isSupportedProblemPage() {
-    if (getCurrentPlatform() !== 'tuf') return true;
-
     const path = window.location.pathname.replace(/\/+$/, '');
-    return /^\/practice\/dsa\/[^/]+$/i.test(path) ||
-        /^\/plus\/dsa\/problems\/[^/]+$/i.test(path);
+    switch (getCurrentPlatform()) {
+        case 'tuf': return /^\/practice\/dsa\/[^/]+$/i.test(path) || /^\/plus\/dsa\/problems\/[^/]+$/i.test(path);
+        case 'leetcode': return /^\/problems\/[^/]+(?:\/.*)?$/i.test(path);
+        case 'geeksforgeeks': return /^\/problems\/[^/]+(?:\/.*)?$/i.test(path);
+        case 'codeforces': return /^\/problemset\/problem\/\d+\/[a-z0-9]+$/i.test(path) || /^\/(?:contest|gym)\/\d+\/problem\/[a-z0-9]+$/i.test(path);
+        case 'codechef': return /^\/problems\/[^/]+$/i.test(path);
+        case 'code360': return /^\/code360\/problems\/[^/]+(?:\/.*)?$/i.test(path);
+        default: return false;
+    }
 }
 
 const PLATFORM_DISPLAY_NAMES = {
@@ -1071,6 +1068,7 @@ function closeSearchResults() {
     // Invalidate any in-flight search so its eventual result cannot reopen a
     // panel that the user has already dismissed.
     searchRequestId += 1;
+    isSearching = false;
     if (buttonContainer) {
         buttonContainer.style.display = 'none';
         buttonContainer.innerHTML = '';
@@ -1572,9 +1570,10 @@ function createTitleButton() {
             // the local-index scan begin.
             await waitForNextFrame();
             const content = await getProblemContent();
+            if (requestId !== searchRequestId) return;
             if (content) {
                 const pageTitle = getPageTitle();
-                const results = await findMatchingProblems(content, pageTitle);
+                const results = await findMatchingProblems(content, pageTitle, requestId);
                 if (requestId !== searchRequestId) return;
                 updateUI(results);
                 
@@ -1582,12 +1581,14 @@ function createTitleButton() {
                 if (buttonContainer) {
                     buttonContainer.style.display = 'block';
                 }
+            } else {
+                updateUI([]);
             }
         } catch (error) {
             console.error('Search error:', error);
             if (requestId === searchRequestId) updateUI([]);
         } finally {
-            isSearching = false;
+            if (requestId === searchRequestId) isSearching = false;
             titleButton.style.opacity = '1';
         }
     });
@@ -1759,6 +1760,7 @@ function handleUrlChange() {
         currentUrl = newUrl;
         
         closeSearchResults();
+        injectTitleButton();
         
         setTimeout(() => {
             injectTitleButton();
@@ -1780,22 +1782,23 @@ function debounce(func, wait) {
 
 async function init() {
     let visibilityRevision = 0;
+    let platformsRevision = 0;
+    let thresholdRevision = 0;
     // React to setting changes (platform toggles, threshold, visibility) from the
     // popup/background immediately, instead of waiting for the next page load.
     const handleStorageChange = (changes, area) => {
         if (area !== 'local') return;
 
         if (changes['dsa-preferred-platforms']) {
+            platformsRevision += 1;
             const stored = changes['dsa-preferred-platforms'].newValue;
-            if (Array.isArray(stored)) {
-                const valid = stored.filter(p => DEFAULT_PLATFORMS.includes(p));
-                if (valid.length) preferredPlatforms = valid;
-            }
+            const valid = Array.isArray(stored) ? stored.filter(p => DEFAULT_PLATFORMS.includes(p)) : [];
+            preferredPlatforms = valid.length ? valid : DEFAULT_PLATFORMS.slice();
         }
 
         if (changes['dsa-helper-similarity-threshold']) {
-            const value = parseFloat(changes['dsa-helper-similarity-threshold'].newValue);
-            if (!Number.isNaN(value)) SIMILARITY_THRESHOLD = value;
+            thresholdRevision += 1;
+            SIMILARITY_THRESHOLD = normalizeThreshold(changes['dsa-helper-similarity-threshold'].newValue);
         }
 
 
@@ -1818,13 +1821,18 @@ async function init() {
 
     try {
         const revision = visibilityRevision;
+        const initialPlatformsRevision = platformsRevision;
+        const initialThresholdRevision = thresholdRevision;
         const result = await chrome.storage.local.get([
-            'dsa-preferred-platforms', 'dsa-helper-visibility-enabled'
+            'dsa-preferred-platforms', 'dsa-helper-visibility-enabled', 'dsa-helper-similarity-threshold'
         ]);
         if (revision === visibilityRevision) visibilityEnabled = result['dsa-helper-visibility-enabled'] !== false;
-        const stored = Array.isArray(result['dsa-preferred-platforms']) ? result['dsa-preferred-platforms'] : [];
-        const valid = stored.filter(p => DEFAULT_PLATFORMS.includes(p));
-        if (valid.length) preferredPlatforms = valid;
+        if (initialPlatformsRevision === platformsRevision) {
+            const stored = Array.isArray(result['dsa-preferred-platforms']) ? result['dsa-preferred-platforms'] : [];
+            const valid = stored.filter(p => DEFAULT_PLATFORMS.includes(p));
+            preferredPlatforms = valid.length ? valid : DEFAULT_PLATFORMS.slice();
+        }
+        if (initialThresholdRevision === thresholdRevision) SIMILARITY_THRESHOLD = normalizeThreshold(result['dsa-helper-similarity-threshold']);
     } catch (e) {
     }
     await loadProblemsData();
@@ -1857,7 +1865,7 @@ async function init() {
     });
 
     document.addEventListener('keydown', (e) => {
-        if (e.key !== 'Tab') {
+        if (e.key === 'Escape') {
             closeSearchResults();
         }
     });
@@ -1896,6 +1904,9 @@ async function init() {
     }, 1000);
 
     const observer = new MutationObserver((mutations) => {
+        // Page scripts run in another world, so their history calls can bypass
+        // our wrappers. SPA renders still trigger this observer.
+        handleUrlChange();
         let significantChange = false;
         mutations.forEach(mutation => {
             if (mutation.type === 'childList' && mutation.addedNodes.length > 0) {
@@ -1939,10 +1950,7 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
         return true;
     }
     if (request.action === 'setSimilarityThreshold') {
-        SIMILARITY_THRESHOLD = parseFloat(request.value);
-        if (typeof localStorage !== 'undefined') {
-            localStorage.setItem('dsa-helper-similarity-threshold', SIMILARITY_THRESHOLD);
-        }
+        SIMILARITY_THRESHOLD = normalizeThreshold(request.value);
         sendResponse({ success: true });
     }
     if (request.action === 'getSimilarityThreshold') {

@@ -36,6 +36,8 @@
         "https://leetcode.com/problems/*",
         "https://www.geeksforgeeks.org/problems/*",
         "https://codeforces.com/problemset/problem/*",
+        "https://codeforces.com/contest/*/problem/*",
+        "https://codeforces.com/gym/*/problem/*",
         "https://www.codechef.com/problems/*",
         "https://www.naukri.com/code360/problems/*"
       ],
