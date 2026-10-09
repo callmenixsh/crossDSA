@@ -7,7 +7,7 @@
     "storage",
     "alarms"
   ],
-  "optional_permissions": ["scripting"],
+  "optional_permissions": ["scripting", "notifications"],
   "optional_host_permissions": [
     "https://leetcode.com/*",
     "https://codeforces.com/*",

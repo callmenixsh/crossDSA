@@ -1090,6 +1090,7 @@
         .search-settings .search-control-row { border-color: #303438; }
       }
     </style>
+  <link rel="stylesheet" href="tracker/contests.css">
   </head>
   <body>
     <div class="header">
@@ -1104,6 +1105,8 @@
       <span class="overview-stat"><strong><svg width="12" height="14" viewBox="0 0 16 20" fill="none" stroke="currentColor" stroke-width="1.3" aria-hidden="true"><path d="M9 1c1 5-3 5-1 9 2-1 3-3 3-4 3 4 4 6 3 9-1 5-10 5-12 0-1-4 1-6 3-9 0 3 1 4 2 4C5 6 7 4 9 1Z"/></svg><span id="overviewStreak">&mdash;</span></strong><span id="overviewStreakLabel">STREAK - LEETCODE</span></span>
     </button>
     <div class="overview-status"><span id="overviewStatus" role="status">Connect a platform.</span><button id="refreshOverview" type="button" aria-label="Refresh activity">Refresh</button></div>
+
+    <div id="contestStrip" class="contest-strip" aria-label="Upcoming contests" hidden></div>
 
     <div class="section search-settings" role="group" aria-labelledby="searchSettingsLabel">
       <div class="search-control-row">

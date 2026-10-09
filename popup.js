@@ -1,3 +1,4 @@
+import { mountContestStrip } from './tracker/contest-ui.mjs';
 import { STORAGE_KEY, normalizeState, practiceOverview } from './tracker/core.mjs';
 
 const DEFAULT_PLATFORMS = ["leetcode", "geeksforgeeks", "codeforces", "codechef", "code360"];
@@ -51,6 +52,7 @@ function updateToggleUI(isEnabled) {
 }
 
 document.addEventListener("DOMContentLoaded", async () => {
+  mountContestStrip(document.getElementById('contestStrip')).catch(console.error);
   let trackerState = normalizeState();
   const refresh = document.getElementById('refreshOverview');
   function renderOverview() {

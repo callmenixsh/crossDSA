@@ -206,11 +206,16 @@ export function registerTracker() {
           else await Promise.all(Object.keys(state.accounts).map(syncPlatform));
           return readState();
         }
+        case 'tracker:contest-settings': {
+          if (typeof message.contestsEnabled !== 'boolean' || typeof message.contestReminders !== 'boolean') throw new Error('Invalid contest settings.');
+          if (message.contestsEnabled && !await chrome.permissions.contains({ origins: ['https://leetcode.com/*'], ...(message.contestReminders ? { permissions: ['notifications'] } : {}) })) throw new Error('Allow contest access in Settings first.');
+          return updateState(state => { state.settings = { ...state.settings, contestsEnabled: message.contestsEnabled, contestReminders: message.contestsEnabled && message.contestReminders }; });
+        }
         case 'tracker:settings': {
           const settings = message.settings || {};
           if (!Number.isInteger(settings.dailyGoal) || settings.dailyGoal < 1 || settings.dailyGoal > 50) throw new Error('Daily goal must be between 1 and 50.');
           try { new Intl.DateTimeFormat('en', { timeZone: settings.timeZone }).format(); } catch { throw new Error('Enter a valid timezone, such as Asia/Kolkata.'); }
-          return updateState(state => { state.settings = { dailyGoal: settings.dailyGoal, timeZone: settings.timeZone, autoSync: Boolean(settings.autoSync) }; });
+          return updateState(state => { state.settings = { ...state.settings, dailyGoal: settings.dailyGoal, timeZone: settings.timeZone, autoSync: Boolean(settings.autoSync) }; });
         }
         case 'tracker:question-state': {
           const entry = message.entry, patch = message.patch;

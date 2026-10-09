@@ -1,0 +1,30 @@
+.company-toolbar{display:flex;align-items:center;flex-wrap:wrap;gap:12px;margin-bottom:18px}
+.company-toolbar>input{width:min(300px,100%)}
+.company-categories{display:flex;flex-wrap:wrap;gap:6px}
+.company-category{border:1px solid var(--border);border-radius:20px;padding:7px 12px;background:var(--panel,#191f23);color:var(--muted);font:inherit;font-size:11px;cursor:pointer}
+.company-category[aria-pressed=true]{background:var(--text);color:var(--bg);border-color:var(--text)}
+.company-source-row{display:flex;flex-wrap:wrap;align-items:center;gap:10px 16px;font-size:10px;padding:12px 0 18px;line-height:1.6}
+.company-source-row label{display:flex;align-items:center;gap:8px;white-space:nowrap}
+.company-source-row select{padding:7px 10px;font-size:11px}
+.company-source-row>span{flex-basis:100%}
+.company-group{margin-bottom:25px}
+.company-group h2{font-size:13px;display:flex;align-items:baseline;gap:9px;margin-bottom:12px}
+.company-group h2>span{font-size:10px;font-weight:400}
+.company-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}
+.company-card{display:block;min-width:0;border:1px solid var(--border);border-radius:12px;padding:16px;background:var(--panel,#191f23);color:var(--text);text-decoration:none}
+.company-card:hover,.company-card:focus-visible{border-color:var(--accent);background:#20282c}
+.company-card-heading{display:flex;align-items:center;gap:11px;min-width:0}
+.company-card-heading>div{min-width:0;flex:1}
+.company-card-heading strong{display:block;font-size:12px;overflow-wrap:anywhere;line-height:1.4}
+.company-card-heading small{display:block;font-size:10px;margin-top:3px}
+.company-mark{display:grid;place-items:center;flex:0 0 34px;height:34px;border-radius:8px;background:#e2ebe8;color:#203e36;font-size:13px;font-weight:700}
+.company-chevron{font-size:21px;color:var(--muted)}
+.company-breakdown{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;border-top:1px solid var(--border);margin-top:13px;padding-top:11px}
+.company-breakdown span,.company-breakdown strong{display:block;font-size:10px;text-align:left}
+.company-breakdown strong{margin-top:5px;font-size:11px;font-weight:500}
+.company-detail-heading{margin-top:16px;margin-bottom:20px}
+.company-frequency{font-variant-numeric:tabular-nums;font-size:10px}
+#companyQuestionList .question-tags .company-frequency-tag{display:inline-block}
+@media(max-width:1250px){.company-grid{grid-template-columns:repeat(3,minmax(0,1fr))}}
+@media(max-width:1000px){.company-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:520px){.company-grid{grid-template-columns:1fr}.company-card{padding:14px}.company-toolbar>input{width:100%}.company-categories{gap:5px}.company-category{padding:6px 10px;font-size:10px}.company-source-row{font-size:9px}}

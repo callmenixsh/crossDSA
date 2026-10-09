@@ -142,6 +142,18 @@ test('invalid settings or workspace links do not overwrite stored data', async (
   assert.equal((await h.send('workspace', { entry: { ...entry, url: 'javascript:alert(1)' } })).ok, false);
 });
 
+test('contest preferences persist independently of activity settings and validate permissions', async () => {
+  const h = await harness();
+  assert.equal((await h.send('contest-settings', { contestsEnabled: true, contestReminders: true })).ok, true);
+  await h.send('settings', { settings });
+  assert.equal(h.storage[STORAGE_KEY].settings.contestReminders, true);
+  h.setAllowed(false);
+  assert.equal((await h.send('contest-settings', { contestsEnabled: true, contestReminders: true })).ok, false);
+  assert.equal((await h.send('contest-settings', { contestsEnabled: false, contestReminders: true })).ok, true);
+  assert.equal(h.storage[STORAGE_KEY].settings.contestReminders, false);
+  assert.equal(h.storage[STORAGE_KEY].settings.dailyGoal, 3);
+});
+
 test('failed sync preserves the previous snapshot and last successful update', async () => {
   const h = await harness();
   const initial = emptyState(); initial.accounts.leetcode = { handle: 'sample', generation: 'original', status: 'ready', syncedAt: 123, snapshot: { totalSolved: 42, recent: [] } };

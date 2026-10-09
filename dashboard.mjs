@@ -1,5 +1,7 @@
+import { mountContestStrip } from './tracker/contest-ui.mjs';
 import { ratingSeries } from './tracker/ratings.mjs';
 import { filterLibrary } from './tracker/library.mjs';
+import { mountCompanies } from './tracker/company-ui.mjs';
 import { STORAGE_KEY, PLATFORMS, emptyState, normalizeState, cleanHandle, problemKey, dateKey, shiftDay, dailyActivity, streaks, acceptedToday, practiceOverview, safeProblemUrl, doneQuestions, questionIsDone } from './tracker/core.mjs';
 
 const $ = id => document.getElementById(id);
@@ -45,14 +47,15 @@ async function rpc(action, payload = {}) {
   return state;
 }
 function route() {
-  const view = location.hash.slice(1) || 'overview';
-  const known = ['overview', 'questions', 'done', 'workspace', 'settings'].includes(view) ? view : 'overview';
+  const view = location.hash.slice(1).split('/')[0] || 'overview';
+  const known = ['overview', 'questions', 'companies', 'done', 'workspace', 'settings'].includes(view) ? view : 'overview';
   for (const node of document.querySelectorAll('.view')) node.hidden = node.id !== `view-${known}`;
   for (const node of document.querySelectorAll('[data-view]')) { node.classList.toggle('active', node.dataset.view === known); if (node.dataset.view === known) node.setAttribute('aria-current', 'page'); else node.removeAttribute('aria-current'); }
-  $('breadcrumb').textContent = { overview: 'Overview', questions: 'Question library', done: 'Done Questions', workspace: 'My lists', settings: 'Settings' }[known];
+  $('breadcrumb').textContent = { overview: 'Overview', questions: 'Question library', companies: 'Companies', done: 'Done Questions', workspace: 'My lists', settings: 'Settings' }[known];
   if (known === 'done') renderDone();
   if (known === 'workspace') renderWorkspace();
   if (known === 'questions') renderQuestions();
+  if (known === 'companies') companyPage.render();
 }
 function render() {
   if (indexReady) updateLibraryCount();
@@ -79,9 +82,15 @@ function render() {
   $('syncAll').textContent = busy ? `↻ Syncing ${busy}…` : '↻ Sync activity';
   updateProgressPlatforms(); updateQuestionPlatforms(); renderHeatmap(); renderRatings(); renderPlatforms(); renderRecent(); renderDone(); renderWorkspace();
   if (!$('view-questions').hidden) renderQuestions();
+  companyPage.render();
   // Do not overwrite settings the user is editing while sync updates arrive.
   if (!$('settingsForm').contains(document.activeElement)) {
     $('dailyGoal').value = state.settings.dailyGoal; $('timeZone').value = state.settings.timeZone; $('autoSync').checked = state.settings.autoSync;
+  }
+  if (!$('contestSettingsForm').contains(document.activeElement)) {
+    $('contestsEnabled').checked = state.settings.contestsEnabled;
+    $('contestReminders').checked = state.settings.contestReminders;
+    $('contestReminders').disabled = !state.settings.contestsEnabled;
   }
   updateConnectionResults();
 }
@@ -243,9 +252,6 @@ function renderPlatforms() {
         const breakdown = el('div', 'breakdown');
         for (const [level, count] of Object.entries(snapshot.breakdown || {})) if (level !== 'All') breakdown.append(el('span', '', `${level} ${format(count)}`));
         if (breakdown.childNodes.length) card.append(breakdown);
-        const badges = el('div', 'badges');
-        for (const name of (snapshot.badges || []).slice(0, 6)) badges.append(el('span', '', name));
-        if (badges.childNodes.length) card.append(badges);
         if (snapshot.providerStreak) card.append(el('p', 'rating-caption', `Platform streak: ${snapshot.providerStreak.current} days · best ${snapshot.providerStreak.longest}`));
       }
       if (account.error) card.append(el('p', 'platform-error', account.error));
@@ -347,29 +353,33 @@ function renderQuestionFilters() {
   $('activeQuestionFilters').replaceChildren(chips);
 }
 function solvedKeys() { return new Set(doneQuestions(state.accounts, { workspace: state.workspace }).records.map(r => r.key)); }
+function createLibraryRow(p, { open = false, frequency = false, onTopic = topic => { selectedTopics.add(topic); page = 0; renderQuestions(); } } = {}) {
+  const row = el('div', 'question-row'), copy = el('div', 'question-copy'); row.dataset.key = p.key;
+  const heading = el('div', 'question-heading');
+  if (p.id) heading.append(el('span', 'question-id', `#${p.id}`));
+  heading.append(link(p.title, p.url, 'question-title')); copy.append(heading);
+  const tags = el('div', 'question-tags');
+  if (questionIsDone(state.accounts, state.workspace, p.key)) tags.append(el('span', 'tag solved-tag', 'Solved'));
+  if (p.isPremium) tags.append(el('span', 'tag', 'Premium'));
+  for (const topic of p.topics) {
+    const tag = button(topic, 'tag topic-tag', () => onTopic(topic)); tags.append(tag);
+  }
+  copy.append(tags);
+  if (frequency) tags.append(el('span', 'tag company-frequency-tag', `Frequency ${p.frequency}%`));
+  const details = el('details', 'question-details'); details.open = open; details.append(el('summary', '', 'Read question'));
+  details.append(el('p', 'question-statement', p.description || 'A question statement is not available in the local index. Open the problem to read it on the platform.'));
+  if (p.constraints) details.append(el('h3', '', 'Constraints / input'), el('p', 'question-statement', p.constraints));
+  details.append(link('Open problem ↗', p.url, 'text-link')); copy.append(details);
+  appendQuestionRow(row, p, copy, frequency ? el('span', 'muted company-frequency', `${p.frequency}%`) : el('span', 'muted', PLATFORMS[p.platform].short), el('span', `difficulty ${p.difficulty.toLowerCase()}`, p.difficulty)); return row;
+}
 function renderQuestions() {
   if (!indexReady) { $('questionList').replaceChildren(el('div', 'loading-note', 'Loading the local question index…')); return; }
   const openQuestions = new Set([...$('questionList').querySelectorAll('.question-row:has(.question-details[open])')].map(row => row.dataset.key));
   renderQuestionFilters();
   filtered = getFilteredQuestions(); page = Math.min(page, Math.max(0, Math.ceil(filtered.length / PAGE_SIZE) - 1));
-  const knownSolved = solvedKeys(), fragment = document.createDocumentFragment();
+  const fragment = document.createDocumentFragment();
   for (const p of filtered.slice(page * PAGE_SIZE, (page + 1) * PAGE_SIZE)) {
-    const row = el('div', 'question-row'), copy = el('div', 'question-copy'); row.dataset.key = p.key;
-    const heading = el('div', 'question-heading');
-    if (p.id) heading.append(el('span', 'question-id', `#${p.id}`));
-    heading.append(link(p.title, p.url, 'question-title')); copy.append(heading);
-    const tags = el('div', 'question-tags');
-    if (knownSolved.has(p.key)) tags.append(el('span', 'tag solved-tag', 'Solved'));
-    if (p.isPremium) tags.append(el('span', 'tag', 'Premium'));
-    for (const topic of p.topics) {
-      const tag = button(topic, 'tag topic-tag', () => { selectedTopics.add(topic); page = 0; renderQuestions(); }); tags.append(tag);
-    }
-    copy.append(tags);
-    const details = el('details', 'question-details'); details.open = openQuestions.has(p.key); details.append(el('summary', '', 'Read question'));
-    details.append(el('p', 'question-statement', p.description || 'A question statement is not available in the local index. Open the problem to read it on the platform.'));
-    if (p.constraints) details.append(el('h3', '', 'Constraints / input'), el('p', 'question-statement', p.constraints));
-    details.append(link('Open problem ↗', p.url, 'text-link')); copy.append(details);
-    appendQuestionRow(row, p, copy, el('span', 'muted', PLATFORMS[p.platform].short), el('span', `difficulty ${p.difficulty.toLowerCase()}`, p.difficulty)); fragment.append(row);
+    fragment.append(createLibraryRow(p, { open: openQuestions.has(p.key) }));
   }
   if (!filtered.length) fragment.append(empty(Object.keys(state.accounts).length ? 'No matching questions. Try removing a filter or clearing your search.' : 'Connect a platform to browse its questions.'));
   $('questionList').replaceChildren(fragment);
@@ -497,11 +507,27 @@ async function loadLibrary() {
     } catch { failures.push(PLATFORMS[platform].name); return []; }
   }));
   library = datasets.flat(); indexReady = true;
+  companyPage.setLibrary(library);
   renderQuestions();
   if (failures.length) toast(`Some local indexes could not load: ${failures.join(', ')}. Reload the extension.`, true);
 }
 
 async function init() {
+  mountContestStrip($('contestStrip')).catch(console.error);
+  $('contestsEnabled').addEventListener('change', () => {
+    $('contestReminders').disabled = !$('contestsEnabled').checked;
+    if (!$('contestsEnabled').checked) $('contestReminders').checked = false;
+  });
+  $('contestSettingsForm').addEventListener('submit', async event => {
+    event.preventDefault();
+    const submit = event.submitter; submit.disabled = true;
+    const enabled = $('contestsEnabled').checked, reminders = enabled && $('contestReminders').checked;
+    try {
+      if (enabled && !await chrome.permissions.request({ origins: ['https://leetcode.com/*'], ...(reminders ? { permissions: ['notifications'] } : {}) })) throw new Error('Permission declined. Contest settings were not changed.');
+      await rpc('contest-settings', { contestsEnabled: enabled, contestReminders: reminders });
+      render(); toast('Contest settings saved.');
+    } catch (error) { toast(error.message, true); } finally { submit.disabled = false; }
+  });
   setupConnections();
   for (const id of ['doneSearch', 'donePlatform', 'doneFrom', 'doneTo', 'doneSort']) $(id).addEventListener(id === 'doneSearch' ? 'input' : 'change', () => { donePage = 0; renderDone(); });
   $('donePrevious').addEventListener('click', () => { donePage--; renderDone(); });
@@ -587,4 +613,5 @@ async function init() {
   // Rollover refreshes today's goal even when the dashboard stays open overnight.
   setInterval(() => { render(); refreshStaleActivity(); }, 60000);
 }
+const companyPage = mountCompanies($('view-companies'), { getState: () => state, solvedKeys, createRow: createLibraryRow });
 init().catch(error => toast(error.message, true));

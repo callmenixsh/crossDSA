@@ -7,6 +7,8 @@
   <title>Your workspace · crossDSA</title>
   <link rel="icon" href="icons/cDSA-32.png">
   <link rel="stylesheet" href="dashboard.css">
+  <link rel="stylesheet" href="tracker/contests.css">
+  <link rel="stylesheet" href="tracker/companies.css">
 </head>
 <body>
   <aside class="sidebar">
@@ -14,13 +16,14 @@
     <nav aria-label="Dashboard">
       <a href="#overview" class="nav-item" data-view="overview"><span aria-hidden="true">◫</span> Overview</a>
       <a href="#questions" class="nav-item" data-view="questions"><span aria-hidden="true">⌘</span> Question library <span class="nav-count" id="libraryCount">…</span></a>
+      <a href="#companies" class="nav-item" data-view="companies"><span aria-hidden="true">▦</span> Companies</a>
       <a href="#done" class="nav-item" data-view="done"><span aria-hidden="true">✓</span> Done Questions</a>
       <a href="#workspace" class="nav-item" data-view="workspace"><span aria-hidden="true">▣</span> My lists <span class="nav-count" id="savedCount">0</span></a>
       <a href="#settings" class="nav-item" data-view="settings"><span aria-hidden="true">⚙</span> Settings</a>
     </nav>
   </aside>
   <main>
-    <header class="topbar"><div class="breadcrumbs">Workspace <span>/</span> <strong id="breadcrumb">Overview</strong></div><div class="topbar-right"><span id="todayLabel"></span><button class="button ghost" id="connectTop">＋ Connect platforms</button></div></header>
+    <header class="topbar"><div class="breadcrumbs">Workspace <span>/</span> <strong id="breadcrumb">Overview</strong></div><div class="topbar-right"><div id="contestStrip" class="contest-strip" aria-label="Upcoming contests" hidden></div><span id="todayLabel"></span><button class="button ghost" id="connectTop">＋ Connect platforms</button></div></header>
     <div class="page">
       <section id="view-overview" class="view">
         <div class="page-heading"><div><h1>Overview</h1></div><div class="sync-controls"><button class="button" id="syncAll">↻ Sync activity</button><p id="syncSummary" class="small muted" role="status" hidden></p></div></div>
@@ -67,13 +70,41 @@
           <div class="pagination"><button class="button ghost" id="previousPage">← Previous</button><span id="pageLabel"></span><button class="button ghost" id="nextPage">Next →</button></div>
         </div>
       </section>
+      <section id="view-companies" class="view" hidden>
+        <div id="companyLoadStatus" class="loading-note" role="status"><span id="companyLoadText">Loading company questions…</span> <button id="companyRetry" class="button ghost" hidden>Try again</button></div>
+        <div id="companyContent" hidden>
+          <div id="companyDirectory">
+            <div class="page-heading"><div><h1>Company-wise questions</h1><p id="companySummary" class="muted"></p></div></div>
+            <div class="company-toolbar"><input id="companySearch" type="search" placeholder="Search companies…" aria-label="Search companies"><div id="companyCategories" class="company-categories" aria-label="Company categories"></div><select id="companyCategory" aria-label="Company category" hidden></select></div>
+          </div>
+          <div class="company-source-row"><label id="companyWindowLabel">Time window <select id="companyWindow" aria-label="Company question time window"></select></label><a id="companySource" class="text-link" target="_blank" rel="noopener noreferrer">Community dataset</a><span id="companySnapshot" class="muted"></span></div>
+          <div id="companyGrid"></div>
+          <div id="companyDetail" hidden>
+            <a href="#companies" class="text-link">← All companies</a>
+            <div class="page-heading company-detail-heading"><div><h1 id="companyTitle"></h1><p id="companyDetailSummary" class="muted"></p></div></div>
+            <p id="companyMissing" class="empty-state" hidden>This company is not available in the local dataset.</p>
+            <div id="companyDetailBody" class="panel library-panel">
+              <div class="library-search"><input id="companyQuestionSearch" type="search" placeholder="Search titles, IDs or topics…" aria-label="Search company questions"><button id="companyClear" class="button ghost">Clear filters</button></div>
+              <div class="filters library-filters">
+                <label>Difficulty<select id="companyDifficulty"><option value="all">Any difficulty</option><option>Easy</option><option>Medium</option><option>Hard</option></select></label>
+                <label>Progress<select id="companyProgress"><option value="all">All questions</option><option value="unsolved">Unsolved</option><option value="solved">Solved</option><option value="starred">Starred</option></select></label>
+                <label>Topic<select id="companyTopic"><option value="all">All topics</option></select></label>
+                <label>Access<select id="companyAccess"><option value="all">Free &amp; premium</option><option value="free">Free only</option><option value="premium">Premium only</option></select></label>
+                <label>Sort<select id="companySort"><option value="frequency">Most asked first</option><option value="title">Title A–Z</option><option value="easy">Difficulty: easy first</option><option value="hard">Difficulty: hard first</option></select></label>
+              </div>
+              <div id="companyQuestionMeta" class="list-meta" role="status"></div><div id="companyQuestionList"></div>
+              <div class="pagination"><button id="companyPrevious" class="button ghost">← Previous</button><span id="companyPageLabel"></span><button id="companyNext" class="button ghost">Next →</button></div>
+            </div>
+          </div>
+        </div>
+      </section>
       <section id="view-workspace" class="view" hidden>
         <div class="page-heading"><div><h1>My lists</h1></div><a href="#questions" class="button">＋ Find questions</a></div>
         <form id="createListForm" class="filters"><input id="newListName" placeholder="New list name" aria-label="New list name" maxlength="80" required><button class="button primary" type="submit">Create list</button></form><div id="workspaceSummary" class="workspace-summary"></div><div class="panel library-panel"><div class="filters"><input type="search" id="workspaceSearch" placeholder="Search your saved practice…" aria-label="Search saved practice"><select id="workspaceFilter" aria-label="Filter by list"><option value="all">All lists</option></select></div><div id="workspaceList"></div></div>
       </section>
       <section id="view-settings" class="view" hidden>
         <div class="page-heading"><div><h1>Settings</h1></div></div>
-        <div class="settings-grid"><form id="settingsForm" class="panel"><h2>Goals &amp; activity</h2><label class="field">Daily goal<input id="dailyGoal" type="number" min="1" max="50" required></label><label class="field">Timezone<input id="timeZone" required placeholder="Asia/Kolkata"></label><label class="check-field"><input id="autoSync" type="checkbox"> Auto-refresh activity</label><button class="button primary" type="submit">Save settings</button></form><article class="panel"><h2>Your data</h2><p>Stored in this browser.</p><button class="button" id="exportData">↓ Export my data</button></article></div>
+        <div class="settings-grid"><form id="contestSettingsForm" class="panel"><h2>Contest notifications</h2><label class="check-field"><input id="contestsEnabled" type="checkbox"> Show upcoming contests</label><label class="check-field"><input id="contestReminders" type="checkbox"> Desktop reminders</label><p class="small muted">LeetCode weekly and biweekly contests. Reminders arrive 1 hour and 10 minutes before, while Chrome is running.</p><button class="button primary" type="submit">Save contest settings</button></form><form id="settingsForm" class="panel"><h2>Goals &amp; activity</h2><label class="field">Daily goal<input id="dailyGoal" type="number" min="1" max="50" required></label><label class="field">Timezone<input id="timeZone" required placeholder="Asia/Kolkata"></label><label class="check-field"><input id="autoSync" type="checkbox"> Auto-refresh activity</label><button class="button primary" type="submit">Save settings</button></form><article class="panel"><h2>Your data</h2><p>Stored in this browser.</p><button class="button" id="exportData">↓ Export my data</button></article></div>
       </section>
     </div>
   </main>

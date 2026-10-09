@@ -9,7 +9,7 @@ export const PLATFORMS = {
 };
 
 export function emptyState() {
-  return { version: 1, accounts: {}, disconnectedAccounts: {}, workspace: {}, lists: { saved: { id: 'saved', name: 'Starred' } }, settings: { dailyGoal: 2, timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC', autoSync: true } };
+  return { version: 1, accounts: {}, disconnectedAccounts: {}, workspace: {}, lists: { saved: { id: 'saved', name: 'Starred' } }, settings: { dailyGoal: 2, timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC', autoSync: true, contestsEnabled: true, contestReminders: false } };
 }
 
 export function normalizeState(value) {

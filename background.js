@@ -1,6 +1,8 @@
+import { registerContests } from './tracker/contest-service.mjs';
 import { registerTracker } from './tracker/service.mjs';
 
 registerTracker();
+registerContests();
 
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
     if (request.action === 'getSimilarityThreshold') {
