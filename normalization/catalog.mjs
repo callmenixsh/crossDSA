@@ -1,6 +1,6 @@
 import { createHash } from 'node:crypto';
 import { problemKey, safeProblemUrl } from '../tracker/core.mjs';
-import { canonicalCompanyId, splitCode360Tags } from '../tracker/code360-companies.mjs';
+import { canonicalCompanyId, splitCode360Tags } from '../tracker/companies/code360-companies.mjs';
 
 export const SCHEMA_VERSION = 1;
 export const NORMALIZER_VERSION = 2;

@@ -30,15 +30,15 @@
   "content_scripts": [
     {
       "matches": ["https://takeuforward.org/*"],
-      "js": ["tracker/tuf-session.js"]
+      "js": ["tracker/platforms/tuf-session.js"]
     },
     {
       "matches": ["https://www.naukri.com/code360/*"],
-      "js": ["tracker/code360-history.js"]
+      "js": ["tracker/platforms/code360-history-bridge.js"]
     },
     {
       "matches": ["https://www.naukri.com/code360/*"],
-      "js": ["tracker/code360-session.js"],
+      "js": ["tracker/platforms/code360-session.js"],
       "world": "MAIN",
       "run_at": "document_start"
     },
@@ -53,11 +53,11 @@
         "https://www.naukri.com/code360/*",
         "https://atcoder.jp/contests/*/tasks/*"
       ],
-      "js": ["tracker/solved-browser.js"]
+      "js": ["tracker/platforms/solved-browser.js"]
     },
     {
       "matches": ["https://leetcode.com/*"],
-      "js": ["tracker/leetcode-session.js", "tracker/leetcode-browser.js"]
+      "js": ["tracker/platforms/leetcode-session.js", "tracker/platforms/leetcode-browser.js"]
     },
     {
       "matches": [
@@ -73,7 +73,7 @@
         "https://atcoder.jp/contests/*/tasks/*"
       ],
       "js": ["content.js"],
-      "css": ["styles.css"]
+      "css": ["content.css"]
     }
   ],
   "background": {

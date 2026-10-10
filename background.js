@@ -1,5 +1,5 @@
-import { registerContests } from './tracker/contest-service.mjs';
-import { registerTracker } from './tracker/service.mjs';
+import { registerContests } from './tracker/contests/contest-service.mjs';
+import { registerTracker } from './tracker/tracker-service.mjs';
 import { registerBadge } from './tracker/badge.mjs';
 
 registerTracker();

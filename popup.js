@@ -1,6 +1,6 @@
-import { mountContestStrip } from './tracker/contest-ui.mjs';
+import { mountContestStrip } from './tracker/contests/contest-ui.mjs';
 import { STORAGE_KEY, PLATFORMS, normalizeState, practiceOverview, orderedPlatformIds } from './tracker/core.mjs';
-import { appendTodayIncrease, solvedToday, appendTufActivityToday } from './tracker/count-ui.mjs';
+import { appendTodayIncrease, solvedToday, appendTufActivityToday } from './tracker/ui/daily-count-ui.mjs';
 import { DAILY_PAGES, dailyProblem, dailySolved, dailyDay, savedDailyStatus } from './tracker/daily.mjs';
 
 const DEFAULT_PLATFORMS = ["leetcode", "geeksforgeeks", "codeforces", "codechef", "code360", "atcoder"];

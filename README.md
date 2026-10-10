@@ -1,200 +1,209 @@
 # crossDSA
 
-Chrome extension that finds equivalent or closely matching DSA problems across different platforms. If you're solving a problem on Codeforces and want to find the same problem on LeetCode, GeeksforGeeks, CodeChef, or Code 360, this saves you the manual hunt.
+crossDSA is a Chrome extension for managing DSA practice across coding platforms. It brings account activity, a searchable question library, company preparation, saved lists, daily goals and upcoming contests into one dashboard, with problem matching available directly on supported problem pages.
 
-Backs onto a bundled local index across six platforms, so matching works locally and fast.
+The question library and matching engine use a bundled local index across six platforms. Account tracking, daily-problem checks and contest schedules fetch data from the relevant providers.
 
-## What it does
+## Features
 
-- Adds a draggable floating match button on every supported problem page.
-- Matches against LeetCode, GeeksforGeeks, Codeforces, CodeChef, Code 360, and AtCoder.
-- Compares titles *and* descriptions, not just keywords — tokenizes, strips stopwords, stems, and weighs rare words higher, so "find the shortest path in a grid" actually finds shortest-path-grid problems instead of everything containing the word "grid".
-- Ranks equivalent and closely matching results, highlighting confirmed catalog copies.
-- Groups results by platform with tabs, and shows difficulty and topic tags on each one.
-- Built-in YouTube search that uses the right key for each platform (contest ID + index for Codeforces, problem code for CodeChef, etc.).
-- Remembers the floating button's last position separately for each site.
-- Dark-mode friendly.
-- The extension icon badge shows today's distinct accepted-problem count, using the dashboard timezone. It updates with tracked activity and resets at local midnight, even with automatic sync disabled.
+- **Practice dashboard:** view solved totals, activity calendars, recent accepted questions, difficulty breakdowns, available badges and rating history across connected accounts.
+- **Question library:** search by title, native ID and topic; filter by platform, difficulty, access and progress; open questions on their original platforms.
+- **Company preparation:** browse indexed LeetCode and Code360 questions by company, with categories, progress filters and source-backed LeetCode frequency and time windows.
+- **Starred and custom lists:** save questions, organize them into multiple lists and see automatically detected solve status.
+- **Done Questions:** browse detected or imported solves, filter by platform and date, and import older history or lists of solved problem URLs.
+- **Daily practice:** set a daily goal and timezone, open supported problems of the day, and see today's distinct accepted-problem count on the extension badge.
+- **Contest calendar:** browse upcoming contests from connected platforms and optionally receive desktop reminders 1 hour and 10 minutes before they start.
+- **Problem matching:** find confirmed equivalents and related suggestions using titles and statements, with platform tabs, difficulty and topic tags, and platform-aware YouTube search.
+- **Local data controls:** export a backup, restore saved data or delete local account activity, lists and settings.
 
-## Supported platforms
+## Platform coverage
 
-There's a difference worth spelling out: platforms the extension **has data for** (you can find equivalent or closely matching problems in the index), versus platforms it **just runs on**.
+Indexed questions are available for matching, the library and random practice. Account tracking depends on what each provider exposes.
 
-### Indexed — full matching available
+| Platform | Local question index | Account activity | Upcoming contests |
+| --- | --- | --- | --- |
+| LeetCode | Yes | Profile, calendar, accepted questions, badges and contest ratings | Yes |
+| Codeforces | Yes | Accepted submissions, solved count and rating history | Yes |
+| CodeChef | Yes | Profile solved total, current rating and available accepted feed | Yes |
+| GeeksforGeeks | Yes | Solved totals, difficulty, coding score, institute rank and available solved records | Yes |
+| Code360 | Yes | Public solved totals and signed-in solved coding history | Yes |
+| AtCoder | Yes | Algorithm ratings, rank and accepted submissions | Yes |
+| TakeUForward | No | Public TUF totals and TUF-only activity calendar | No |
 
-| Platform | Site | How it reads the problem |
-| --- | --- | --- |
-| LeetCode | leetcode.com/problems/* | DOM + title link |
-| GeeksforGeeks | geeksforgeeks.org/problems/* | `__NEXT_DATA__` JSON |
-| Codeforces | codeforces.com/problemset/problem/* | Problem statement DOM |
-| CodeChef | codechef.com/problems/* | Public API, DOM fallback |
-| Code 360 | naukri.com/code360/problems/* | Public API, DOM fallback |
-| AtCoder | atcoder.jp/contests/*/tasks/* | English statement sections |
+TakeUForward problem pages can search for matches among the six indexed platforms, but TUF questions are not bundled as match destinations. TUF is excluded from Done Questions and individual solved-history imports. Its signed-in DSA problem-of-the-day check is available separately.
 
-AtCoder supports matching, the question library, random practice, automatic Done, Starred, custom lists and account tracking. Connect a public handle or profile URL in **Connect platforms** to import Algorithm rating, highest rating, rank, rating history and accepted submissions into the dashboard, heatmap, Done Questions and daily accepted count/badge. Upcoming AtCoder contests and optional desktop reminders are available for connected accounts. The initial bundled index contains **3,040 tasks and 176 English statements**, from closed ABC/ARC/AGC and educational algorithm contests; heuristic contests are excluded. English statements are cached incrementally, so remaining entries have metadata only. Titles can be ambiguous, and matching results are suggestions rather than verified equivalents. Problem IDs remain stable across contest rehosts.
+Some indexed questions have metadata without a cached statement. Matching suggestions are not proof of equivalence. Reviewed catalog groups retain each platform's original title, URL, difficulty and any known contract differences.
 
-AtCoder metadata and numeric difficulty estimates come from the community-maintained [AtCoder Problems datasets](https://github.com/kenkoooo/AtCoderProblems/blob/master/doc/api.md); statements come from official task pages. Numeric estimates are displayed separately and are not converted into Easy/Medium/Hard labels. Company associations are not inferred from contest sponsors or similar titles.
+## Install and get started
 
-AtCoder profiles and Algorithm rating history come from the official website; submissions come from the unofficial [AtCoder Problems API](https://github.com/kenkoooo/AtCoderProblems/blob/main/doc/api.md) and may be delayed. Site access to AtCoder and kenkoooo.com is requested only when connecting. Sync checks recent activity first and backfills older history, with up to five pages each per sync and more than one second between submission requests. Incomplete imports are labeled as lower bounds; sync again to continue. Cursors include the last timestamp to avoid skipping submissions at page boundaries. Accepted counts deduplicate by task ID even across contest rehosts; repeat accepts still appear as activity. Unique solved task IDs survive the local 15,000 accepted-record limit. Unrated accounts can connect without fabricating a rating. Failed refreshes preserve cached data. No AtCoder password or session access is needed.
+1. Clone or download this repository.
+2. Open `chrome://extensions/` and enable **Developer mode**.
+3. Choose **Load unpacked** and select the repository root containing `manifest.json`.
+4. Open the extension popup and click its overview card to enter the dashboard.
+5. In **Connect platforms**, enter public handles or profile URLs and grant access for the platforms you want to track.
+6. Search the library, create a practice list or open a supported problem page to use the floating match button.
 
+The extension runs from the checked-out files; no npm install or build step is required. Python is needed only for scraping and Node.js for offline catalog tools and checks.
 
-### Runs on, but not indexed yet
+After updating an unpacked installation, reload the extension and reopen its popup/dashboard. Reload existing platform tabs so their content scripts use the current version.
 
-| Platform | Site | Note |
-| --- | --- | --- |
-| TakeUForward | takeuforward.org/practice/dsa/{problem} | The button works on individual DSA problem pages and you can search for a TUF problem's equivalent among the six indexed platforms — but TUF problems aren't scraped yet, so no platform will ever suggest a *TUF* problem as a match. |
+## Using the workspace
 
-To bring TakeUForward into the full set, a `tuf_scraper.py` plus a `tuf-data.json` (and registering it in `manifest.json` + `content.js`) is what's missing.
+### Activity and daily goals
 
-## Install
+The overview combines available provider totals, calendars, ratings and recent solves. Refresh manually or enable automatic refresh every 30 minutes while Chrome is running. Failed refreshes preserve the last successful data and report the error.
 
-1. Clone/download this repo.
-2. Open `chrome://extensions/`, flip on **Developer mode**.
-3. Click **Load unpacked** and pick the project folder.
-4. Open any supported problem page, click the search button, done.
+Set your daily goal and timezone in **Settings**. Daily accepted counts deduplicate by platform/problem, including repeat practice of a previously solved problem. Calendar activity can include repeat submissions and may differ from distinct solved counts. The badge resets at local midnight even when automatic sync is disabled.
 
-## Usage
+TUF contributes its saved TUF-only calendar activity to daily practice progress once; this may include repeat activity. Its POTD verification does not add separate goal credit or create a Done record.
 
-- Click the overview card (today's goal, total solves and LeetCode activity streak) in the extension popup to open the full-page workspace. After updating an unpacked installation, reload crossDSA at `chrome://extensions/` and reopen its popup/dashboard.
-- Use **Connect platforms** to enter public handles or profile links. Chrome requests site access only for the selected platform. Connections identify a profile; they do not verify ownership. Passwords and platform tokens are not collected. LeetCode session reads stay in its browser tab; only accepted question metadata is imported after matching the signed-in username.
-- The dashboard combines activity calendars, available recent accepted problems, solved totals, difficulty breakdowns, badges and contest ratings where providers expose them. Refresh manually or enable refresh every 30 minutes while Chrome is running.
-- The popup's Code360 POTD marker is automatic: opening or refreshing the popup checks today's coding challenges in a Code360 tab signed in as the connected account. Completing any one coding difficulty shows POTD ✓. MCQs and older challenges do not qualify. The manual Code360 toggle is removed; if status cannot be checked, the button tooltip explains why. Reload the extension and Code360 tabs after updating.
-- TakeUForward is excluded from Done Questions, its platform filter and solved-history imports. Profile totals and the TUF-only activity calendar remain available. Its popup POTD marker is automatic: keep a TakeUForward tab signed in as the connected account, then open or refresh the popup. The authenticated daily API must report today's DSA POTD as solved; attempts, SQL POTDs and older challenges do not qualify. This check does not need a local question dataset or create a Done record. Reload the extension and TakeUForward tabs after updating.
-- Verified Code360 and TUF POTD status is saved per connected account and provider day (India time), retaining up to 366 daily records. A verified completion stays checked when the site tab closes or a refresh fails, including after popup or browser restarts; a new day starts unchecked until verified. TUF's daily arrow uses its saved provider calendar as of the last profile sync and may include repeat activity. It contributes once to the combined daily arrow and goal progress in the popup and dashboard; POTD verification is not added separately. It does not create Done records. Cached or unavailable LeetCode history retains the normal saved daily count without a trailing plus sign.
-- Search the local question library by text, platform, difficulty or topic. Available platforms follow connected accounts. Create named lists in **My lists** and add a question to several lists. Existing bookmarks appear in **Starred**.
-- **Companies** groups locally indexed LeetCode and Code360 questions by company, with company search, platform filters, editorial categories, LeetCode time windows, source frequency sorting, difficulty/topic/progress/access filters and shared Done/Star/list actions. Browsing companies does not require a connected account. Counts include only questions matched to the local index. Metadata comes from [snehasishroy/leetcode-companywise-interview-questions](https://github.com/snehasishroy/leetcode-companywise-interview-questions), snapshot **12 July 2026**, pinned to revision `e095c259cfd036e3ddb6886e84d7075c2faac477`; time windows refer to that snapshot, and frequency is the source score. `python scrapers/import_leetcode_companies.py` regenerates `data/leetcode-companies.json` from the pinned CSVs. The normal LeetCode scraper collects statements and topic tags, not company tags; company metadata stays separate. Categories and display aliases can be adjusted in `tracker/companies.mjs` and the importer respectively. Code360 company tags come from the saved local index; aliases are normalized and legacy company tags are separated from practice topics by `tracker/code360-companies.mjs`. New Code360 scrapes save `companies` separately. Code360 has no frequency scores or dated windows: selecting a dated window switches to LeetCode, and combined frequency sorting places Code360 questions after scored LeetCode questions, ordered by title. Questions are counted separately per platform.
-- **Done Questions** shows tracked questions once per platform/problem, with latest-solve dates, title search, platform/date filters, sorting, pagination and list actions. Overview keeps the newest 12 unique questions and links to the full page. Imported question counts can differ from profile solved totals.
-- Progress, question and Done filters follow connected accounts. Solved questions show a Solved tag and row color; cards retain the star and Add to list controls. Stars toggle the separate **Starred** default list. Add to list manages custom lists only, with search, selection counts and inline list creation; saving custom lists preserves Starred membership. Solved status updates from detected solves or imported history. A normalized question is Done when any verified linked platform version is solved; each Solve on check remains specific to its platform. Saved lists use the same automatic status. An unmarked question means no solve has been detected yet. Legacy manual Done marks no longer affect progress.
-- Successful LeetCode submissions update local history and today's goal as soon as the signed-in tab's submission feed reports Accepted (checked about every 2 seconds for up to 90 seconds after Submit). The signed-in username must match the connected account. Records show pending verification until a later profile sync imports the same submission ID; delayed or failed verification preserves them. Profile solved totals remain provider-reported. Other platforms use provider syncs for dated activity and account-matched page observations for additional Done marking. Existing LeetCode tabs automatically regain both tracking helpers after extension updates when scripting access is granted.
-- **Done Questions ? Import past solves** scans available history in resumable batches for LeetCode, Codeforces, CodeChef, GeeksforGeeks, AtCoder and Code360. With automatic sync enabled, a successful profile sync queues an initial history scan. LeetCode and Code360 need an open tab signed in as the connected account. Code360 reads the paginated All solved coding problems list, verifies the account before and after each page, and skips inaccessible problem links. Normal profile refreshes also read the newest solved page when a matching signed-in tab is available. Exact timestamps add dated solved activity; missing or ambiguous dates mark Done only. This list is not a complete attempt or repeat-submission log; MCQs and the mixed profile heatmap are excluded. Scans run while Chrome is open, checkpoint after each batch/page, and expose progress, Pause and Resume. Failed scans retain saved records and the last cursor. Repeating a scan deduplicates existing records. ?Available history imported? means the source was exhausted, not that the provider exposes every historical attempt.
-- The same dialog accepts pasted HTTPS problem URLs, CSV (`url`, optional `title` and `platform`) or a JSON array of URLs/question objects. Preview shows new, duplicate and unresolved rows before importing. Imports belong to the connected account and are rejected if that account changes after preview. Imported URLs need not be in the local catalog. Solve dates remain unknown; imports do not add submissions, heatmap activity, daily-goal credit or profile totals. Imported solved identities update Done automatically without a separate local marking step.
-- Solved identities now persist separately from the 15,000-record activity limit. GFG solved questions without dates are retained for Done marking. On supported problem pages, crossDSA checks existing provider history and conservatively observes visible, explicit Solved/Accepted status when the navigation identifies the connected account. Missing or ambiguous account/status indicators are skipped; the observer never marks Done from a Submit click. Page observations have no inferred submission dates. API-based tracking remains the source of dated activity. Site layout changes may require an adapter update; Code360 also supports signed-in historical imports; bulk URL imports remain available for supported Done Questions platforms.
-- Set a daily accepted-problem goal and timezone in **Settings**. Export local handles, activity, lists and settings as JSON for a backup. **Import my data** restores a crossDSA JSON backup, replacing the current saved data after confirmation; restored history scans are paused until resumed. **Delete my data** removes connected and disconnected accounts, activity, stars and custom lists, and resets settings after confirmation. These controls affect data saved in this browser.
+LeetCode and GFG daily links use provider metadata. Code360 and TUF POTD completion checks require a tab signed in as the connected account. Code360 accepts completion of any current coding difficulty, excluding MCQs; TUF requires today's DSA POTD to be reported as solved, excluding SQL and attempts. Verified Code360/TUF completion is saved per account and provider day in India time and remains available when the tab closes or a refresh fails.
 
-### Activity coverage
+### Questions, companies and lists
 
-| Platform | Imported data | Limits |
-| --- | --- | --- |
-| LeetCode | Solved totals/difficulty, rank, badges, contest rating/history, calendar, recent accepts | Public accepts are capped at 20 per sync. An open LeetCode tab signed in with the matching handle adds accepted metadata from up to 100 recent submissions when public history is unavailable. Up to three calendar years are fetched. Older accepted records are retained locally. Calendar activity is not necessarily a new unique solve. |
-| Codeforces | Accepted submissions, unique solved count, tags, rating history | Regular refresh scans up to 10,000 submissions and stops at known history. Resumable background imports continue older history in pages of 1,000. Incomplete histories show a lower-bound solved count. |
-| CodeChef | Profile solved total/current rating and dated accepted submissions | Refresh reads the newest 10 feed pages. Resumable background imports continue through available older pages; provider feed limits may still omit old activity. Feed dates are interpreted as IST; accepts in the same minute may merge if no submission ID is public. |
-| GeeksforGeeks | Solved totals/difficulty, coding score, institute rank, dated solved records | These records are not a complete attempt/repeat-solve log. Provider dates are retained without inventing a timezone. Missing dated records are flagged. |
-| Code 360 | Public solved total/difficulty; signed-in solved coding history | Open Code360 signed in as the connected account for resumable history imports. Exact dated solves contribute to calendar activity and daily goals; undated records mark Done only. Inaccessible links are skipped. The solved list does not establish a full submission log. MCQs and mixed heatmap counts are excluded. |
-| TakeUForward | Public TUF solved totals/difficulty and TUF-only activity calendar | Syncs from the public profile or API in the background, without an open TUF tab. Profile heatmaps that combine other connected platforms are excluded to avoid double-counting. The extension declares request-header permission; its header rule applies only to crossDSA?s public TUF profile GETs on the granted host. Reload the extension after updating to apply the manifest change. Sync has a 45-second deadline and requests TUF-filtered heatmaps for the current and previous two years in parallel; unavailable years retain cached dates. TakeUForward is excluded from Done Questions and individual solve imports; POTD completion is checked separately through its signed-in daily API. |
+Library and Done filters follow connected accounts. Use **Starred** for quick saves or **My lists** to organize questions into several custom lists. Custom-list edits preserve Starred membership.
 
-The activity streak is calculated from imported activity, including repeat submissions where a provider counts them. Missing history is not proof of inactivity. Daily goals count distinct problems with an accepted or dated solved record today (including repeat practice of older problems), not raw calendar contributions. Problems count separately on each platform; fuzzy matching does not merge solved identities.
+Confirmed equivalent questions appear once in the library and company lists, with **Solve on** links to their platform versions. Original titles remain searchable. A grouped question is Done when any verified linked version is solved; each platform link retains its own solve status. Underlying saved and solved identities remain platform-specific.
 
-Data stays in `chrome.storage.local` in the current browser profile. Failed refreshes retain the last successful snapshot and show the error. Accounts are replaced separately when a handle changes, while saved lists stay intact. Cached accepted history is capped at 15,000 records per platform. Automatic refresh runs every 30 minutes and after submission clicks (30 seconds and 2 minutes). The dashboard and popup also refresh activity when it is at least 30 minutes old. It requires a running browser and public data may lag. LeetCode accounts without public accepted history need an open signed-in LeetCode tab. Opening or returning to LeetCode automatically retries unavailable or stale activity with a one-minute cooldown; navigation during that cooldown schedules a deferred retry. This obeys the automatic sync setting. Both helpers are restored even with automatic sync disabled, so new accepted submissions can still be observed. Scripting access is granted through Connect platforms. LeetCode cards show separate profile, calendar and activity update times under Sync details and an Open LeetCode action when activity needs attention; failed activity reads preserve the last activity update time and saved accepts. Opening the popup refreshes stale activity, and its Refresh button requests an update immediately.
+**Companies** is available without connecting an account. It supports company search, editorial categories, platform filters, difficulty/topic/progress/access filters and shared Star/list actions. Counts include only questions matched to the local index. LeetCode time windows refer to the bundled source snapshot, and frequency is the source's score. Code360 tags have no frequency scores or dated windows; selecting a dated window switches to LeetCode.
 
-### Dashboard development and checks
+### Detecting and importing solves
 
-The dashboard uses plain HTML/CSS/JavaScript and the existing bundled index; no build or npm dependencies are required. `tracker/core.mjs` owns counting/identity rules, `tracker/platforms.mjs` normalizes providers, and `tracker/service.mjs` handles permissions, serialized storage updates and refreshes in the MV3 background worker.
+**Done Questions** shows each tracked platform/problem once, with its latest known solve date, search, filters, sorting and list actions. Profile solved totals can differ from imported question counts. Solve status comes from detected or imported history; legacy manual Done marks do not affect progress.
 
-Upcoming contests for connected LeetCode, Codeforces, CodeChef, AtCoder, GeeksforGeeks and Code 360 accounts appear in the dashboard and popup, with countdowns, local start-time tooltips and official links. In **Settings ? Contest notifications**, show or hide contests in the popup and independently enable desktop reminders 1 hour and 10 minutes before each contest. Sources need a connected account and site access; the Contests page can request missing access. Desktop notification permission is requested only when reminders are enabled. Schedules refresh every 30 minutes while Chrome is running. Each source has its own cache and freshness checks, so an unavailable source does not block the others. Only announced future contests are shown; recent confirmed history is retained for 90 days. Unavailable refreshes show saved times; stale schedules and overdue reminders are suppressed for desktop alerts. Hiding contests in the popup keeps the dashboard schedule and desktop reminders available. Disabling desktop reminders cancels reminder alarms. The Contests page shows a month calendar (an agenda on mobile), with filters for connected sources and source status indicators. `tracker/contests.mjs`, `tracker/contest-service.mjs`, `tracker/contest-ui.mjs` and `tracker/contest-calendar.mjs` own this feature.
+On LeetCode, a successful submission is added when the signed-in tab's submission feed reports Accepted and the username matches the connected account. On other supported problem pages, account-matched observations of explicit Solved/Accepted status can add a Done identity. A Submit click or sample run does not establish a solve. Page observations do not invent activity dates.
 
-```powershell
-node --test --test-isolation=none tests/*.test.mjs
-python -B -m unittest discover -s tests -p '*_test.py'
-node tests/live-platforms.mjs # optional read-only requests to public sample accounts; Windows curl required
-```
+Use **Done Questions > Import past solves** for either of these workflows:
 
-`tests/browser-smoke.mjs` exercises the real extension UI, background messages and storage through Chrome DevTools on port 9333. **Use a separate disposable browser profile**, load this unpacked extension, and open an `about:blank` tab before running it. It seeds synthetic activity into that test profile and writes screenshots to the system temporary directory. If the service worker is sleeping, set `CROSSDSA_EXTENSION_ID` to the unpacked extension's ID. Never target your everyday browser profile.
+- **Scan provider history:** import available older solves in resumable batches. LeetCode and Code360 require a matching signed-in tab. Scans retain saved records and cursors after failures, expose Pause/Resume controls and deduplicate repeated imports. Exhausting the available source does not establish that the provider exposes every historical attempt.
+- **Import solved URLs:** paste HTTPS problem URLs, CSV with a `url` column and optional `title`/`platform`, or a JSON array of URLs/question objects. Preview new, duplicate and unresolved rows first. The account must remain unchanged between preview and import. URLs need not be in the local catalog. These records mark Done without adding submission dates, calendar activity, daily credit or profile totals.
 
-### Problem matching controls
+Closing a LeetCode tab preserves cached accepted questions and Done status. Provider history scans can wait for a matching tab and resume at their saved cursor; manually paused scans remain paused. Solved identities persist separately from the 15,000-record activity cap per platform.
 
-- Use **Match** to look for equivalent or closely matching problems on the enabled platforms. Drag the button anywhere on-screen; its position is remembered for that site.
-- Drag the results panel by its header to move it out of the way while you work.
-- Tabs at the top of the panel switch between platforms.
-- Each result shows difficulty, match %, and tags — click to open in a new tab.
-- The panel header has a YouTube button that pre-builds the search query for the current problem.
-- The compact popup controls button visibility, match strictness, and enabled platforms.
-- Use **Random practice** to pick a problem from the currently enabled platforms and open it directly from the popup.
+### Contests and matching
+
+The **Contests** page provides a month calendar, an agenda on mobile, connected-platform filters and source status. In **Settings > Contest notifications**, control popup visibility and desktop reminders independently. Reminders require notification permission and a running browser. Failed schedule refreshes retain cached contests; stale schedules are suppressed for desktop reminders.
+
+On supported problem pages, use the draggable **Match** button to search the bundled index. The panel groups results by platform and links to original problems and YouTube searches. Use the popup to control button visibility, matching strictness and enabled platforms, or choose **Random practice**.
+
+## Data coverage and privacy
+
+Connected handles identify profiles; they do not verify ownership. crossDSA does not ask for platform passwords or collect session tokens. Signed-in LeetCode and Code360 reads stay in their site tabs and import account-matched question metadata. TUF's signed-in daily check returns completion metadata.
+
+User handles, imported activity, lists and settings are saved in `chrome.storage.local` in the current browser profile. Matching and library browsing use bundled data; provider syncs, daily checks, scrapers and contest refreshes make network requests. Optional site access is requested when connecting a platform, scripting access enables supported tab helpers, and notifications are requested for desktop reminders. The declared request-header permission supports a rule restricted to extension-initiated public TUF profile GETs on the granted host.
+
+| Platform | Coverage limits |
+| --- | --- |
+| LeetCode | Public recent accepts are capped at 20 per sync. A matching signed-in tab provides additional accepted metadata and older-history imports. Calendar activity is not necessarily a new unique solve. |
+| Codeforces | Regular refresh scans up to 10,000 submissions; resumable imports continue older history in pages of 1,000. Incomplete solved totals are lower bounds. |
+| CodeChef | Refresh reads the newest 10 feed pages; older imports remain limited by the provider's available feed. Dates are interpreted as India time. |
+| GeeksforGeeks | Solved records are not a complete attempt or repeat-solve log. Undated solved identities are retained without inventing activity dates. |
+| Code360 | The signed-in All solved coding list supplies historical identities. Exact dates contribute to activity; undated records mark Done only. Inaccessible links, MCQs and mixed profile heatmap counts are excluded. |
+| AtCoder | Official profiles provide Algorithm ratings; the community AtCoder Problems API supplies submissions and may lag. Older history is backfilled incrementally. Task IDs deduplicate solves across contest rehosts; some bundled tasks lack English statements. |
+| TakeUForward | Background sync reads public TUF totals and TUF-filtered calendars. Combined external-platform heatmaps are excluded to avoid double-counting. No individual Done import is available. |
+
+Missing imported history is not proof of inactivity. Provider totals, calendar contributions and imported unique questions describe different things. Confirmed catalog grouping changes how questions are presented; fuzzy suggestions do not merge solved identities.
+
+In **Settings**, export local data as JSON. **Import my data** replaces the current saved data after confirmation and restores history scans in a paused state. **Delete my data** removes connected and disconnected accounts, activity, stars and custom lists and resets settings in this browser.
 
 ## Development
 
-### Layout
+### Project layout
 
 ```
-content.js                 # matching engine + UI (content script)
-popup.html / popup.js      # popup: settings, platform toggles, stats
-background.js              # service worker, routes storage between popup and content script
-styles.css                 # panel + button + popup styles
 manifest.json              # MV3 manifest
-data/                      # scraped problem data, injected into pages
-  leetcode-data.json
-  geeksforgeeks-data.json
-  codeforces-data.json
-  codechef-data.json
-  code360-data.json
-  atcoder-data.json
-scrapers/
-  leetcode_scraper.py      # pulls LeetCode data -> data/leetcode-data.json
-  geeksforgeeks_scraper.py # pulls GfG data -> data/geeksforgeeks-data.json
-  codeforces_scraper.py    # pulls Codeforces data -> data/codeforces-data.json
-  codechef_scraper.py      # pulls CodeChef data -> data/codechef-data.json
-  code360_scraper.py       # pulls Code 360 data -> data/code360-data.json
-  atcoder_scraper.py       # AtCoder metadata + incremental English statements
-requirements.txt           # python deps for the scrapers
-scrape.py                  # runs one or all scrapers back to back
+background.js              # background worker and feature registration
+content.js / content.css   # problem-page matching engine, panel and button
+popup.html / popup.js      # popup settings and practice overview
+dashboard.*                # full-page practice dashboard
+tracker/
+  core.mjs                 # shared counting, identity and state rules
+  tracker-service.mjs      # permissions, storage, account sync and messages
+  platforms/               # collectors, browser watchers and session bridges
+  contests/                # contest logic, background service, calendar and UI
+  companies/               # company indexes, tag normalization and UI
+  imports/                 # solved-history and manual solved imports
+  ui/                      # shared daily-count display helpers and CSS
+  *.mjs                    # library, catalog, ratings, daily status, badge, backup
+data/
+  *-data.json              # scraped platform snapshots
+  leetcode-companies.json  # separately sourced company metadata
+  normalized/              # catalog outputs and persistent identity registry
+normalization/             # offline catalog build, search, audit and decisions
+  reviews/                 # LeetCode audit ledger and review batch records
+scrapers/                  # Python scrapers, importers and statement recovery
+tests/
+  unit/                    # automated Node and Python tests
+  browser/                 # browser UI checks using disposable test profiles
+  live/                    # optional checks against public platform endpoints
+icons/                     # extension icons
+requirements.txt           # Python dependencies for the scrapers
+scrape.py                  # scraper workflow entry point
 ```
 
-### Refreshing the data
+### Checks
 
-```bash
-pip install -r requirements.txt
-python scrapers/leetcode_scraper.py        # -> data/leetcode-data.json
-python scrapers/geeksforgeeks_scraper.py   # -> data/geeksforgeeks-data.json
-python scrapers/codeforces_scraper.py      # -> data/codeforces-data.json
-python scrapers/codechef_scraper.py        # -> data/codechef-data.json
-python scrapers/code360_scraper.py         # -> data/code360-data.json
-python scrapers/atcoder_scraper.py --limit 150 # refresh metadata, fetch up to 150 missing English statements
+Run from the repository root with Node.js 22 or newer and Python scraper dependencies installed:
+
+```sh
+node --test --test-isolation=none tests/unit/*.test.mjs
+python -B -m unittest discover -s tests/unit -p '*_test.py'
+node normalization/build.mjs --check
+node normalization/audit.mjs
 ```
 
-Or just run them all at once:
+`tests/browser/` contains browser UI checks. `tests/browser/browser-smoke.mjs` exercises the loaded extension through Chrome DevTools on port 9333; other scripts state their browser setup in their opening comments. Use a separate disposable browser profile: these checks seed test data. Screenshots are written to the system temporary directory.
 
-```bash
-python scrape.py                     # prompts to pick, defaults to all
-python scrape.py codechef leetcode   # run by name
-python scrape.py codechef --limit 20 # scraper args pass through (codechef/code360/atcoder)
+The optional live check makes read-only requests against public sample accounts and requires Windows `curl.exe`:
+
+```sh
+node tests/live/live-platforms.mjs
 ```
 
-Each scraper skips problem IDs already present in its output file, so re-running just tops up what's missing. Partial runs don't lose work — it checkpoints every 50 problems.
+### Refreshing source data
 
-The AtCoder importer refreshes all eligible task metadata and preserves previously cached statements. It checkpoints every 25 statement attempts and saves atomically. Use `--metadata-only` to refresh metadata without statement requests, `--limit N` to bound missing-statement requests, or `--retry-unavailable` to recheck tasks previously missing English translations. Without a limit it attempts all missing English statements. Requests are spaced more than one second apart; a full statement import can take a long time. Existing platform selections are preserved after upgrading: enable **AC** in the popup to include AtCoder in matching and random practice if you previously saved a selection.
+Install the Python dependencies, then run selected scrapers:
 
-The CodeChef scraper takes a couple of args useful for a quick test:
-
-```bash
-python scrapers/codechef_scraper.py --limit 20     # first 20 rated problems only
-python scrapers/codechef_scraper.py --pages 5      # first 5 list pages only
+```sh
+python -m pip install -r requirements.txt
+python scrape.py                     # interactive selection; defaults to all
+python scrape.py codechef leetcode    # selected platforms
+python scrape.py code360 --limit 50   # bounded Code360 scrape
+python scrape.py atcoder --limit 150  # metadata and missing English statements
 ```
 
-The Code 360 scraper supports the same `--limit` flag:
+Individual scrapers can also run directly, for example `python scrapers/leetcode_scraper.py`. Most scrapers resume from existing IDs and checkpoint partial progress. AtCoder refreshes eligible metadata while preserving cached statements; `--metadata-only` skips statement requests and `--retry-unavailable` retries missing English translations. Statement requests are spaced more than one second apart.
 
-```bash
-python scrapers/code360_scraper.py --limit 50      # first 50 problems only
+`scrape.py` checks LeetCode review coverage after scraping, including partially failed runs. New or changed source statements can require review before a clean audit. Review the reported entries rather than automatically replacing their evidence pins.
+
+LeetCode company metadata is imported separately:
+
+```sh
+python scrapers/import_leetcode_companies.py
 ```
 
-### Shared question normalization (offline)
+The bundled source is [snehasishroy/leetcode-companywise-interview-questions](https://github.com/snehasishroy/leetcode-companywise-interview-questions), pinned to revision `e095c259cfd036e3ddb6886e84d7075c2faac477` with a 12 July 2026 snapshot. Code360 company evidence comes from its scraped tags. AtCoder metadata and numeric difficulty estimates come from [AtCoder Problems](https://github.com/kenkoooo/AtCoderProblems/blob/main/doc/api.md), with statements from official task pages. Numeric estimates remain separate from Easy/Medium/Hard labels.
 
-The shared catalog groups equivalent questions while retaining each platform's original title, URL, difficulty, and company evidence. Its offline builder also produces duplicate candidates for review and an alias-aware search API. The library and company lists show each confirmed question once, with Solve on links to its platform versions. Original titles remain searchable; version details retain native statements, difficulties, and contract differences. The page matcher prioritizes confirmed equivalents by URL. A compact runtime catalog verifies source snapshot hashes and preserves existing native saved/solved keys.
+### Building the shared question catalog
 
-```bash
+The offline normalization tools group evidenced equivalents, preserve platform contracts and produce a compact runtime catalog. Candidate suggestions remain separate from confirmed groups. Stable identities keep existing native saved and solved keys usable across catalog refreshes.
+
+After scraping and reviewing source changes:
+
+```sh
+node normalization/audit.mjs
 node normalization/build.mjs
 node normalization/build.mjs --check
-node normalization/audit.mjs # flags new/changed LeetCode entries since individual review
 ```
 
-See [the normalization guide](normalization/README.md) for the schema, stable identities, merge rules, curation workflow, and tests. Inspect [the generated report](data/normalized/report.md) before migrating the extension.
+Keep `data/normalized/identities.json` across refreshes; it preserves historical assignments and redirects. Curation decisions live in `normalization/decisions.json`, with audit and review batch records in `normalization/reviews/`. The build verifies source snapshots; finish scraping before rebuilding.
+
+See [the normalization guide](normalization/README.md) for schemas, merge policy and curation. Inspect [the generated report](data/normalized/report.md) before distributing a refreshed catalog.
 
 ## Contributing
 
-Bugs, ideas, or a scraper for yet another platform — open an issue or send a PR.
+Issues and pull requests are welcome for platform adapters, tracking reliability, dashboard improvements, source coverage and reviewed question mappings. Include relevant checks and keep scraped source evidence distinct from inferred matches.
 
 ## License
 
-MIT License
-
-Closing LeetCode is a normal cached-history state: public profile and calendar updates continue, while saved accepted questions and Done marks remain available. The dashboard shows separate profile, calendar and submission update times. Cached daily counts are marked as lower bounds. A history import waits without an error when the tab is closed and resumes at its saved cursor when the matching signed-in tab reopens; manually paused imports remain paused.
-
-Question cards open their native platform links directly; the Read question expansion has been removed. Code360 page detection reads the current submission verdict inside its Angular component and matches the connected UUID or screen name from its authenticated account response, with navigation links as a fallback. The listener also covers navigation from the Code360 homepage into a problem. Reload the extension and existing Code360 tabs after installing this update. Sample-run verdicts and partial results do not mark Done. Historical solved identities are imported separately from the signed-in profile solved list using Done Questions ? Import past solves. Public profile totals remain separate from imported question counts.
+[MIT](LICENSE)

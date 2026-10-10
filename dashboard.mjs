@@ -1,13 +1,13 @@
-import { mountSolvedImport } from './tracker/solved-import-ui.mjs';
+import { mountSolvedImport } from './tracker/imports/solved-import-ui.mjs';
 import { validateBackup } from './tracker/data-backup.mjs';
-import { mountContestStrip } from './tracker/contest-ui.mjs';
-import { appendTodayIncrease, solvedToday, appendTufActivityToday } from './tracker/count-ui.mjs';
-import { CONTEST_ORIGINS } from './tracker/contests.mjs';
+import { mountContestStrip } from './tracker/contests/contest-ui.mjs';
+import { appendTodayIncrease, solvedToday, appendTufActivityToday } from './tracker/ui/daily-count-ui.mjs';
+import { CONTEST_ORIGINS } from './tracker/contests/contests.mjs';
 import { ratingSeries } from './tracker/ratings.mjs';
 import { filterLibrary, libraryPlatformEnabled } from './tracker/library.mjs';
 import { attachQuestionCatalog, collapseQuestions, sourceDigest } from './tracker/question-catalog.mjs';
-import { mountCompanies } from './tracker/company-ui.mjs';
-import { splitCode360Tags } from './tracker/code360-companies.mjs';
+import { mountCompanies } from './tracker/companies/company-ui.mjs';
+import { splitCode360Tags } from './tracker/companies/code360-companies.mjs';
 import { STORAGE_KEY, PLATFORMS, QUESTION_PLATFORMS, orderedPlatformIds, emptyState, normalizeState, cleanHandle, problemKey, dateKey, shiftDay, dailyActivity, streaks, practiceOverview, safeProblemUrl, doneQuestions, questionIsDone } from './tracker/core.mjs';
 
 const $ = id => document.getElementById(id);

@@ -38,7 +38,7 @@ if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.ur
   const root = new URL('../', import.meta.url), datasets = {};
   for (const platform of PLATFORMS) datasets[platform] = JSON.parse(await readFile(new URL(`data/${platform}-data.json`, root), 'utf8'));
   const companies = JSON.parse(await readFile(new URL('data/leetcode-companies.json', root), 'utf8'));
-  const audit = JSON.parse(await readFile(new URL('normalization/leetcode-audit.json', root), 'utf8'));
+  const audit = JSON.parse(await readFile(new URL('normalization/reviews/leetcode-audit.json', root), 'utf8'));
   const decisions = JSON.parse(await readFile(new URL('normalization/decisions.json', root), 'utf8'));
   const report = auditCoverage(adaptDatasets(datasets, companies).versions, audit, { decisions });
   console.log(JSON.stringify(report, null, 2));

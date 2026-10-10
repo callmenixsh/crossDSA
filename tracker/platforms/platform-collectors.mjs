@@ -1,0 +1,237 @@
+import { atcoder } from './atcoder.mjs';
+import { problemKey } from '../core.mjs';
+import { parseTufProfile } from './tuf-profile.mjs';
+
+const num = value => Number.isFinite(Number(value)) ? Math.max(0, Number(value)) : 0;
+const required = (condition, message = 'The platform returned an unexpected response. Try again later.') => { if (!condition) throw new Error(message); };
+const record = (platform, id, title, url, timestamp, extra = {}) => ({ id: `${platform}:${id}`, key: problemKey(platform, url), platform, title: String(title), url, timestamp: num(timestamp), ...extra });
+const wait = ms => new Promise(resolve => setTimeout(resolve, ms));
+
+async function leetcode(handle, ctx) {
+  const username = JSON.stringify(handle);
+  const data = await ctx.json('https://leetcode.com/graphql', { method: 'POST', body: JSON.stringify({ query: `query {
+    matchedUser(username: ${username}) { username profile { ranking } submitStatsGlobal { acSubmissionNum { difficulty count } } badges { name } userCalendar { activeYears streak totalActiveDays submissionCalendar } }
+    recentAcSubmissionList(username: ${username}, limit: 20) { id title titleSlug timestamp }
+    userContestRanking(username: ${username}) { rating globalRanking attendedContestsCount }
+    userContestRankingHistory(username: ${username}) { attended rating contest { title startTime } }
+  }` }) });
+  required(!data.errors, data.errors?.[0]?.message);
+  const user = data.data?.matchedUser;
+  required(user, 'LeetCode profile not found. Check your handle.');
+  const calendar = {};
+  let submissions = data.data.recentAcSubmissionList || [];
+  let activityWarning = '', activityStatus = 'fresh', recentSource = 'public';
+  if (ctx.ownRecent) {
+    try {
+      const own = await ctx.ownRecent(handle);
+      submissions = [...submissions, ...own]; recentSource = 'signed-in';
+    } catch (error) {
+      if (!submissions.length) {
+        if (error.code === 'LEETCODE_TAB_CLOSED') activityStatus = 'cached';
+        else activityWarning = error.message;
+      }
+    }
+  }
+  if (!submissions.length && recentSource === 'public' && !activityWarning && activityStatus !== 'cached') activityWarning = 'LeetCode returned no public accepted submissions. Open a signed-in LeetCode tab and refresh activity.';
+  const recent = [...new Map(submissions.filter(s => s.id && s.titleSlug && num(s.timestamp)).map(s => {
+    const item = record('leetcode', s.id, s.title, `https://leetcode.com/problems/${encodeURIComponent(s.titleSlug)}/`, num(s.timestamp) * 1000);
+    return [item.id, item];
+  })).values()];
+  const addCalendar = raw => {
+    const entries = JSON.parse(raw || '{}');
+    for (const [seconds, count] of Object.entries(entries)) {
+      const time = num(seconds) * 1000;
+      if (time && num(count)) calendar[new Date(time).toISOString().slice(0, 10)] = num(count);
+    }
+  };
+  addCalendar(user.userCalendar?.submissionCalendar);
+  const activeYears = user.userCalendar?.activeYears || [];
+  const currentYear = new Date().getUTCFullYear();
+  // Three years keep background refresh bounded. Never claim full account history.
+  for (const year of activeYears.filter(y => y >= currentYear - 2 && y < currentYear)) {
+    const older = await ctx.json('https://leetcode.com/graphql', { method: 'POST', body: JSON.stringify({ query: `query { matchedUser(username: ${username}) { userCalendar(year: ${Number(year)}) { submissionCalendar } } }` }) });
+    required(!older.errors && older.data?.matchedUser?.userCalendar);
+    addCalendar(older.data.matchedUser.userCalendar.submissionCalendar);
+  }
+  const breakdown = Object.fromEntries((user.submitStatsGlobal?.acSubmissionNum || []).map(v => [v.difficulty, num(v.count)]));
+  return { totalSolved: breakdown.All || 0, breakdown, rank: num(user.profile?.ranking), rating: data.data.userContestRanking?.rating ?? null, badges: (user.badges || []).map(b => b.name),
+    ratings: (data.data.userContestRankingHistory || []).filter(v => v.attended).map(v => ({ timestamp: num(v.contest.startTime) * 1000, rating: num(v.rating), title: v.contest.title })),
+    calendar, recent, activityWarning, activityStatus, activityNotice: activityStatus === 'cached' ? 'Using saved submission history. New accepts will sync when LeetCode is open.' : '', acceptedHistoryAvailable: recentSource === 'signed-in' || submissions.length > 0, calendarAvailable: user.userCalendar?.submissionCalendar != null, recentSource, coverage: `${recentSource === 'signed-in' ? 'Accepted metadata from up to 100 recent submissions in the matching signed-in LeetCode tab, plus public accepts.' : 'Public recent accepted list: up to 20 per sync.'} Older records retained locally. Calendar: up to 3 years of platform-reported submissions, including activity that may not be a new solve. ${activityWarning}`, activityKind: 'submissions', partial: true };
+}
+
+async function codeforces(handle, ctx) {
+  const accepted = [], seen = new Set();
+  const previous = ctx.previous?.recent || [];
+  const latestKnown = previous.length ? Math.max(...previous.map(r => Number(r.id.split(':').at(-1)) || 0)) : 0;
+  let complete = false;
+  for (let page = 0; page < 10; page++) {
+    if (page) await (ctx.wait || wait)(2100);
+    const data = await ctx.json(`https://codeforces.com/api/user.status?handle=${encodeURIComponent(handle)}&from=${page * 1000 + 1}&count=1000`);
+    required(data.status === 'OK', data.comment || 'Codeforces profile could not be loaded.');
+    required(Array.isArray(data.result));
+    for (const s of data.result) {
+      if (s.verdict !== 'OK' || !s.problem?.contestId || !s.problem.index || seen.has(s.id)) continue;
+      seen.add(s.id);
+      const url = s.problem.contestId >= 100000 ? `https://codeforces.com/gym/${s.problem.contestId}/problem/${s.problem.index}` : `https://codeforces.com/problemset/problem/${s.problem.contestId}/${s.problem.index}`;
+      accepted.push(record('codeforces', s.id, s.problem.name, url, num(s.creationTimeSeconds) * 1000, { topics: s.problem.tags || [], difficulty: s.problem.rating ? String(s.problem.rating) : 'Unrated' }));
+    }
+    if (data.result.length < 1000) { complete = true; break; }
+    if (latestKnown && data.result.some(s => s.id <= latestKnown)) { complete = ctx.previous.historyComplete === true || !ctx.previous.partial; break; }
+  }
+  await (ctx.wait || wait)(2100);
+  const history = await ctx.json(`https://codeforces.com/api/user.rating?handle=${encodeURIComponent(handle)}`);
+  required(history.status === 'OK', history.comment);
+  const ratings = history.result.map(r => ({ timestamp: num(r.ratingUpdateTimeSeconds) * 1000, rating: num(r.newRating), title: r.contestName }));
+  const merged = new Map(previous.map(r => [r.id, r]));
+  for (const item of accepted) merged.set(item.id, item);
+  return { historyComplete: complete, totalSolved: new Set([...Object.values(ctx.previous?.solved || {}).filter(r => r.timestamp && !['import', 'page'].includes(r.source)), ...merged.values()].map(r => r.key)).size, totalIsLowerBound: !complete, breakdown: {}, rating: ratings.at(-1)?.rating ?? null, rank: null, badges: [], ratings, recent: [...merged.values()],
+    coverage: complete ? 'Accepted submission history imported. Unique solves count once per problem; practice activity includes repeat accepts.' : 'Imported the newest 10,000 submissions. Solved count is a lower bound; older history is not included.', activityKind: 'accepted submissions', partial: !complete };
+}
+
+export function parseCodeChefFeed(html) {
+  const records = [];
+  for (const row of String(html).matchAll(/<tr\b[^>]*>([\s\S]*?)<\/tr>/gi)) {
+    const value = row[1];
+    if (!/title\s*=\s*['"]accepted['"]/i.test(value)) continue;
+    const link = value.match(/href\s*=\s*['"]([^'"]*\/problems\/([a-z0-9_]+))['"]/i);
+    const date = value.match(/(\d{1,2}):(\d{2})\s*(AM|PM)\s+(\d{2})\/(\d{2})\/(\d{2,4})/i);
+    if (!link || !date) continue;
+    const [, hour, minute, period, day, month, year] = date;
+    const y = year.length === 2 ? 2000 + Number(year) : Number(year);
+    // CodeChef's public feed displays IST dates, without an explicit offset.
+    const timestamp = Date.parse(`${y}-${month}-${day}T${String(Number(hour) % 12 + (period.toUpperCase() === 'PM' ? 12 : 0)).padStart(2, '0')}:${minute}:00+05:30`);
+    if (!Number.isFinite(timestamp)) continue;
+    const code = link[2];
+    const solution = value.match(/href\s*=\s*['"][^'"]*\/(?:viewsolution|status)\/(\d+)['"]/i)?.[1];
+    records.push(record('codechef', solution || `${code}:${timestamp}`, code, `https://www.codechef.com/problems/${code}`, timestamp));
+  }
+  return records;
+}
+
+export function parseCodeChefCalendar(html) {
+  const raw = String(html).match(/\b(?:var|let|const)\s+userDailySubmissionsStats\s*=\s*(\[[\s\S]*?\])\s*;/)?.[1];
+  required(raw !== undefined, 'CodeChef submission calendar is unavailable.');
+  const entries = JSON.parse(raw), calendar = {};
+  required(Array.isArray(entries), 'CodeChef returned an invalid submission calendar.');
+  for (const entry of entries) {
+    const match = String(entry?.date).match(/^(\d{4})-(\d{1,2})-(\d{1,2})$/);
+    required(match && entry.value != null && String(entry.value).trim() !== '', 'CodeChef returned invalid calendar data.');
+    const day = `${match[1]}-${match[2].padStart(2, '0')}-${match[3].padStart(2, '0')}`;
+    const timestamp = Date.parse(`${day}T00:00:00Z`), count = Number(entry.value);
+    required(Number.isFinite(timestamp) && new Date(timestamp).toISOString().slice(0, 10) === day && Number.isSafeInteger(count) && count >= 0, 'CodeChef returned invalid calendar data.');
+    calendar[day] = count;
+  }
+  return calendar;
+}
+
+async function codechef(handle, ctx) {
+  const profile = await ctx.text(`https://www.codechef.com/users/${encodeURIComponent(handle)}`);
+  const total = profile.match(/Total Problems Solved:\s*([\d,]+)/i)?.[1];
+  required(total !== undefined, 'CodeChef profile unavailable. Check the handle or try again later.');
+  const rating = profile.match(/class=["'][^"']*rating-number[^"']*["'][^>]*>\s*(\d+)/i)?.[1];
+  let calendar, calendarWarning = '', activityWarning = '';
+  try { calendar = parseCodeChefCalendar(profile); }
+  catch {
+    calendar = ctx.previous?.calendar;
+    calendarWarning = calendar ? 'CodeChef calendar could not refresh; saved dates are shown.' : 'CodeChef calendar unavailable; the heatmap shows imported accepted submissions only.';
+  }
+  const accepted = [];
+  let complete = false;
+  try {
+    for (let page = 0; page < 10; page++) {
+      if (page) await (ctx.wait || wait)(500);
+      const feed = await ctx.json(`https://www.codechef.com/recent/user?user_handle=${encodeURIComponent(handle)}&page=${page}`);
+      required(typeof feed.content === 'string' && Number.isFinite(Number(feed.max_page)), 'CodeChef submission feed is unavailable.');
+      accepted.push(...parseCodeChefFeed(feed.content));
+      if (page + 1 >= Math.max(1, num(feed.max_page))) { complete = true; break; }
+    }
+  } catch (error) {
+    if (!calendar) throw error;
+    activityWarning = 'CodeChef accepted submissions could not refresh; saved solves are retained.';
+  }
+  return { totalSolved: num(total.replaceAll(',', '')), breakdown: {}, rating: rating ? num(rating) : null, rank: null, badges: [], ratings: [], recent: accepted,
+    ...(calendar ? { calendar } : {}), calendarWarning, activityWarning,
+    coverage: `${calendar ? 'Heatmap: CodeChef public daily submission calendar, including unsuccessful attempts; provider dates retained.' : ''} ${complete ? 'Available accepted submission pages imported.' : 'Newest 10 submission pages imported; older accepts may be missing.'} Feed dates interpreted as IST. Repeated accepts in the same minute may be combined when no submission ID is exposed. ${calendarWarning} ${activityWarning}`.trim(), partial: !complete, activityKind: calendar ? 'submissions' : 'accepted submissions' };
+}
+
+async function geeksforgeeks(handle, ctx) {
+  const profile = await ctx.json(`https://authapi.geeksforgeeks.org/api-get/user-profile-info/?handle=${encodeURIComponent(handle)}&article_count=false&redirect=true`);
+  required(profile.data && profile.data.total_problems_solved !== undefined, 'GeeksforGeeks profile not found or unavailable.');
+  const data = await ctx.json('https://practiceapi.geeksforgeeks.org/api/v1/user/problems/submissions/', { method: 'POST', body: JSON.stringify({ handle, requestType: '', year: '', month: '' }) });
+  required(data.status === 'success' && data.result, 'GeeksforGeeks solved history is unavailable.');
+  const recent = [], solved = {}, breakdown = {};
+  for (const [difficulty, group] of Object.entries(data.result)) {
+    breakdown[difficulty] = Object.keys(group || {}).length;
+    for (const [id, p] of Object.entries(group || {})) {
+      const day = String(p.user_subtime || '').slice(0, 10);
+      if (!p.slug) continue;
+      const url = `https://www.geeksforgeeks.org/problems/${encodeURIComponent(p.slug)}/1`;
+      solved[problemKey('geeksforgeeks', url)] = { key: problemKey('geeksforgeeks', url), platform: 'geeksforgeeks', title: String(p.pname || p.slug), url, difficulty, source: 'provider' };
+      if (!/^\d{4}-\d{2}-\d{2}$/.test(day) || !Number.isFinite(Date.parse(`${day}T12:00:00Z`))) continue;
+      recent.push(record('geeksforgeeks', id, p.pname, `https://www.geeksforgeeks.org/problems/${encodeURIComponent(p.slug)}/1`, Date.parse(`${day}T12:00:00Z`), { day, difficulty }));
+    }
+  }
+  const totalSolved = num(profile.data.total_problems_solved);
+  return { totalSolved, solved, breakdown, rating: null, score: profile.data.score == null ? null : num(profile.data.score), rank: num(profile.data.institute_rank) || null, badges: [], ratings: [], recent,
+    coverage: `Dated solved-problem records (${recent.length}/${totalSolved}). Provider dates retained as supplied; these are not a complete log of attempts or repeat solves. Profile streak fields describe Problem of the Day.`, partial: recent.length !== totalSolved, activityKind: 'dated solved records' };
+}
+
+async function code360(handle, ctx) {
+  const data = await ctx.json(`https://www.naukri.com/code360/api/v3/public_section/profile/user_details?uuid=${encodeURIComponent(handle)}`);
+  const counts = data.data?.dsa_domain_data?.problem_count_data;
+  required(counts && counts.total_count !== undefined, 'Code 360 profile unavailable. Use the ID or handle from your public profile link.');
+  let history;
+  try { history = await ctx.code360History?.(handle); } catch { /* Public totals and cached history remain usable without a matching tab. */ }
+  return { totalSolved: num(counts.total_count), breakdown: Object.fromEntries((counts.difficulty_data || []).map(v => [v.level, num(v.count)])), rating: null, rank: null, badges: [], ratings: [], recent: history?.recent || [], solved: history?.solved || {},
+    providerStreak: null,
+    historyComplete: history?.complete || ctx.previous?.historyComplete || false,
+    coverage: ctx.previous?.activityKind === 'dated solves' ? ctx.previous.coverage : history ? 'Public profile totals plus recent signed-in solved coding history. Import past solves to scan older pages. Exact dated solves contribute activity; undated solves mark Done only. MCQ activity is excluded.' : 'Public solved totals. Import solved coding history from a matching signed-in Code360 tab; exact dated solves contribute activity. MCQ activity is excluded.', partial: true, activityKind: history || ctx.previous?.activityKind === 'dated solves' ? 'dated solves' : 'profile only' };
+}
+
+async function tuf(handle, ctx) {
+  const prefix = `https://backend-go.takeuforward.org/api/v2/profile/${encodeURIComponent(handle)}`;
+  let progress, heatmap;
+  try {
+    const profile = parseTufProfile(await ctx.text(`https://takeuforward.org/profile/${encodeURIComponent(handle)}`), handle);
+    progress = profile.progress; heatmap = { data: profile.heatmap };
+  } catch (publicError) {
+    try {
+      const data = await ctx.json(prefix);
+      required(data.success && data.data?.learningProgress, data.message || 'TakeUForward profile unavailable.');
+      progress = data.data.learningProgress.find(v => v.platform === 'TUF');
+      required(progress, 'No TUF progress found on this profile.');
+      heatmap = { data: { availableFilters: [], heatmapData: [] } };
+    } catch { throw new Error('TakeUForward profile unavailable. Check the handle in Settings or try again later.'); }
+  }
+  // Explicitly filter the API: public profile calendars can aggregate other sites.
+  let calendar = { ...ctx.previous?.calendar }, fetched = false, calendarWarning = '';
+  if (ctx.json) {
+    const year = new Date(ctx.now?.() ?? Date.now()).getUTCFullYear();
+    const years = [year, year - 1, year - 2];
+    const results = await Promise.allSettled(years.map(y => ctx.json(`${prefix}/heatmap?platform=TUF&year=${y}`)));
+    for (const [index, result] of results.entries()) {
+      const y = years[index];
+      try {
+        if (result.status === 'rejected') throw result.reason;
+        const data = result.value;
+        required(data.success && Array.isArray(data.data?.heatmapData), 'TUF filtered heatmap unavailable.');
+        required(!data.data.selectedPlatform || data.data.selectedPlatform === 'TUF', 'TUF heatmap filter did not match.');
+        const days = data.data.heatmapData.filter(item => /^\d{4}-\d{2}-\d{2}$/.test(item.date) && item.date.startsWith(String(y)));
+        required(days.every(item => Number.isFinite(Number(item.count)) && Number(item.count) >= 0), 'TUF returned invalid calendar counts.');
+        calendar = Object.fromEntries(Object.entries(calendar).filter(([day]) => !day.startsWith(`${y}-`)));
+        for (const item of days) calendar[item.date] = num(item.count);
+        fetched = true;
+      } catch { calendarWarning = 'Some TUF calendar years could not refresh; cached dates were retained.'; }
+    }
+  }
+  const filtered = (heatmap.data.availableFilters || []).filter(v => v !== 'All');
+  if (!fetched && filtered.length === 1 && filtered[0] === 'TUF') {
+    calendar = { ...calendar, ...Object.fromEntries(heatmap.data.heatmapData.filter(v => /^\d{4}-\d{2}-\d{2}$/.test(v.date)).map(v => [v.date, num(v.count)])) };
+  }
+  const coverage = fetched ? 'TUF-only activity from filtered yearly heatmaps (up to three years). Individual solved questions require page observation or import.' : Object.keys(calendar).length ? 'TUF-only provider activity calendar; cached dates retained. Individual solved questions require page observation or import.' : 'Profile totals imported. Combined-platform heatmaps are excluded to prevent double-counting. Individual solved questions require page observation or import.';
+
+  return { totalSolved: num(progress.totalSolved), breakdown: Object.fromEntries((progress.difficultyBreakdown || []).map(v => [v.level, num(v.solved)])), rating: null, rank: null, badges: [], ratings: [], recent: [], calendar,
+    topics: (progress.topicAnalysis || []).map(v => ({ topic: v.topic, count: num(v.solved) })), calendarWarning, coverage: `${coverage} ${calendarWarning}`.trim(), partial: true, activityKind: 'provider contributions' };
+}
+
+export const collectors = { leetcode, codeforces, codechef, geeksforgeeks, code360, tuf, atcoder };
