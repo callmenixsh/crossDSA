@@ -1,5 +1,7 @@
 import { mountContestStrip } from './tracker/contest-ui.mjs';
-import { STORAGE_KEY, normalizeState, practiceOverview } from './tracker/core.mjs';
+import { STORAGE_KEY, PLATFORMS, normalizeState, practiceOverview, orderedPlatformIds } from './tracker/core.mjs';
+import { appendTodayIncrease, solvedToday } from './tracker/count-ui.mjs';
+import { DAILY_PAGES, DAILY_DONE_PREFIX, dailyProblem, dailySolved, dailyDay, dailyDoneKey } from './tracker/daily.mjs';
 
 const DEFAULT_PLATFORMS = ["leetcode", "geeksforgeeks", "codeforces", "codechef", "code360", "atcoder"];
 const SEARCH_ENABLED_KEY = 'dsa-helper-visibility-enabled';
@@ -37,14 +39,50 @@ function updateToggleUI(isEnabled) {
   });
   const platforms = document.getElementById('platformGrid');
   if (platforms) {
-    platforms.inert = !isEnabled;
-    platforms.setAttribute('aria-disabled', String(!isEnabled));
+    platforms.querySelectorAll('.platform-check').forEach(control => { control.disabled = !isEnabled; });
   }
 }
 
 document.addEventListener("DOMContentLoaded", async () => {
   mountContestStrip(document.getElementById('contestStrip')).catch(console.error);
   let trackerState = normalizeState();
+  const dailyTargets = {}, dailyAttempts = new Set(), dailyDone = {}, loadedDailyDone = new Set();
+  function loadDailyStatus(platform) {
+    const account = trackerState.accounts[platform];
+    const day = dailyDay(platform), attempt = `${platform}:${day}`;
+    if (['leetcode', 'geeksforgeeks'].includes(platform) && !dailyAttempts.has(attempt)) {
+      dailyAttempts.add(attempt);
+      (async () => {
+        const origin = platform === 'leetcode' ? 'https://leetcode.com/*' : 'https://practiceapi.geeksforgeeks.org/*';
+        if (!await chrome.permissions.contains?.({ origins: [origin] })) return;
+        dailyTargets[platform] = await dailyProblem(platform);
+        renderChips();
+      })().catch(() => {});
+    }
+    const key = dailyDoneKey(platform, account.handle);
+    if (!loadedDailyDone.has(key)) {
+      loadedDailyDone.add(key);
+      chrome.storage.local.get(key).then(values => { dailyDone[key] = values[key]; renderChips(); }).catch(() => {});
+    }
+  }
+  async function toggleDailyDone(platform, button) {
+    const account = trackerState.accounts[platform];
+    if (!account) return;
+    const key = dailyDoneKey(platform, account.handle), day = dailyDay(platform);
+    const value = { day, done: !(dailyDone[key]?.day === day && dailyDone[key].done) };
+    button.disabled = true;
+    try {
+      await chrome.storage.local.set({ [key]: value });
+      dailyDone[key] = value; renderChips();
+    } catch { dailyStatus.textContent = 'Could not save POTD completion. Try again.'; }
+    finally { button.disabled = false; }
+  }
+  let selectedPlatforms = [...DEFAULT_PLATFORMS];
+  let matchThreshold = 0.4;
+  let indexedProblems = [];
+  let currentRandomProblem = null;
+  let platformSignature = '';
+  function eligiblePlatforms() { return selectedPlatforms.filter(id => trackerState.accounts[id]); }
   const refresh = document.getElementById('refreshOverview');
   function renderOverview() {
     const summary = practiceOverview(trackerState);
@@ -53,11 +91,16 @@ document.addEventListener("DOMContentLoaded", async () => {
     document.getElementById('overviewGoal').textContent = `OF ${summary.goal} TODAY`;
     document.getElementById('overviewRing').style.setProperty('--progress', `${Math.min(100, summary.today / summary.goal * 100)}%`);
     document.getElementById('overviewTotal').textContent = summary.total == null ? '\u2014' : `${summary.lowerBound ? '\u2265 ' : ''}${number(summary.total)}`;
+    appendTodayIncrease(document.getElementById('overviewTotal'), summary.today, Boolean(summary.warning));
+    renderChips();
     document.getElementById('overviewStreak').textContent = summary.streak == null ? '\u2014' : `${number(summary.streak)}d`;
     document.getElementById('overviewStreakLabel').textContent = summary.streakLabel.toUpperCase();
     const accounts = Object.values(trackerState.accounts);
     const oldest = Math.min(...accounts.map(account => account.syncedAt || 0));
-    document.getElementById('overviewStatus').textContent = summary.syncing ? 'Refreshing...' : summary.error || summary.warning || (accounts.length ? `Updated ${oldest ? new Date(oldest).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'never'}` : 'Connect a platform.');
+    const failed = Object.entries(trackerState.accounts).filter(([, account]) => account.error).map(([id]) => PLATFORMS[id].name);
+    const status = document.getElementById('overviewStatus');
+    status.textContent = summary.syncing ? 'Refreshing...' : failed.length ? `Sync issue: ${failed.join(', ')}` : summary.warning ? 'Activity needs attention' : (accounts.length ? `Updated ${oldest ? new Date(oldest).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'never'}` : 'Connect a platform.');
+    status.title = summary.error || summary.warning || status.textContent;
     refresh.disabled = summary.syncing || !accounts.length;
     document.getElementById('openDashboard').title = summary.error || summary.warning || 'Open your DSA dashboard';
   }
@@ -71,11 +114,39 @@ document.addEventListener("DOMContentLoaded", async () => {
         trackerState = normalizeState(result.state);
       }
       renderOverview();
-    } catch (error) { renderOverview(); document.getElementById('overviewStatus').textContent = error.message; }
+    } catch (error) { renderOverview(); document.getElementById('overviewStatus').textContent = 'Could not refresh activity'; document.getElementById('overviewStatus').title = error.message; }
   }
   refresh.addEventListener('click', () => refreshActivity(true));
+  setInterval(renderOverview, 60000);
+  const dailyStatus = document.getElementById('dailyStatus');
+  async function openDaily(platform, button) {
+    if (!trackerState.accounts[platform]) return;
+    button.disabled = true;
+    dailyStatus.textContent = '';
+    try {
+      if (platform === 'leetcode') {
+        const granted = await chrome.permissions.request({ origins: ['https://leetcode.com/*'] });
+        if (!granted) throw new Error('Allow LeetCode access to open its daily problem.');
+        dailyTargets[platform] = await dailyProblem(platform);
+        renderChips();
+        await chrome.tabs.create({ url: dailyTargets[platform].url });
+      } else {
+        await chrome.tabs.create({ url: DAILY_PAGES[platform] });
+      }
+    } catch (error) {
+      dailyStatus.textContent = error.name === 'TimeoutError' ? 'LeetCode took too long to respond. Try again.' : error.message;
+    } finally { button.disabled = false; }
+  }
   chrome.storage.onChanged.addListener((changes, area) => {
+    if (area === 'local') {
+      for (const [key, change] of Object.entries(changes)) if (key.startsWith(DAILY_DONE_PREFIX)) dailyDone[key] = change.newValue;
+      if (Object.keys(changes).some(key => key.startsWith(DAILY_DONE_PREFIX))) renderChips();
+    }
     if (area === 'local' && changes[STORAGE_KEY]) { trackerState = normalizeState(changes[STORAGE_KEY].newValue); renderOverview(); }
+    if (area === 'local' && changes['dsa-preferred-platforms']) {
+      selectedPlatforms = Array.isArray(changes['dsa-preferred-platforms'].newValue) ? changes['dsa-preferred-platforms'].newValue.filter(id => DEFAULT_PLATFORMS.includes(id)) : [...DEFAULT_PLATFORMS];
+      renderChips();
+    }
     if (area === 'local' && changes[SEARCH_ENABLED_KEY]) updateToggleUI(changes[SEARCH_ENABLED_KEY].newValue !== false);
   });
   chrome.storage.local.get(SEARCH_ENABLED_KEY).then(value => {
@@ -86,8 +157,14 @@ document.addEventListener("DOMContentLoaded", async () => {
     if (trackerState.settings.autoSync) refreshActivity();
   }).catch(error => { document.getElementById('overviewStatus').textContent = error.message; });
 
-  for (const id of ['openDashboard', 'dashboardLink']) document.getElementById(id)?.addEventListener('click', () => {
+  for (const id of ['openDashboard', 'dashboardButton']) document.getElementById(id)?.addEventListener('click', () => {
     chrome.tabs.create({ url: chrome.runtime.getURL('dashboard.html') });
+  });
+  document.getElementById('openGithub')?.addEventListener('click', () => {
+    chrome.tabs.create({ url: 'https://github.com/callmenixsh' });
+  });
+  document.getElementById('openSettings')?.addEventListener('click', () => {
+    chrome.tabs.create({ url: chrome.runtime.getURL('dashboard.html#settings') });
   });
   const similaritySlider = document.getElementById("similaritySlider");
   const similarityValue = document.getElementById("similarityValue");
@@ -97,8 +174,6 @@ document.addEventListener("DOMContentLoaded", async () => {
   const toggleBtn = document.getElementById("toggleBtn");
   const problemCount = document.getElementById("problemCount");
   const platformGrid = document.getElementById("platformGrid");
-  const chips = platformGrid ? [...platformGrid.querySelectorAll(".platform-chip")] : [];
-  const resetLink = document.getElementById("resetLink");
   const randomPickBtn = document.getElementById("randomPickBtn");
   const randomResult = document.getElementById("randomResult");
   const randomTitle = document.getElementById("randomTitle");
@@ -107,14 +182,9 @@ document.addEventListener("DOMContentLoaded", async () => {
   const requiredElements = [
     similaritySlider, similarityValue, toggleBtn, thresholdLabel,
     thresholdMinLabel, thresholdMaxLabel, problemCount, platformGrid,
-    resetLink, randomPickBtn, randomResult, randomTitle, randomMeta
+    randomPickBtn, randomResult, randomTitle, randomMeta
   ];
   if (requiredElements.some((element) => !element)) return;
-
-  let selectedPlatforms = [...DEFAULT_PLATFORMS];
-  let matchThreshold = 0.4;
-  let indexedProblems = [];
-  let currentRandomProblem = null;
 
   const PROBLEM_DATA_FILES = {
     leetcode: "data/leetcode-data.json",
@@ -145,10 +215,7 @@ document.addEventListener("DOMContentLoaded", async () => {
         })
       );
       indexedProblems = datasets.flat();
-      problemCount.textContent = indexedProblems.length > 0
-        ? indexedProblems.length.toLocaleString()
-        : "—";
-      randomPickBtn.disabled = indexedProblems.length === 0;
+      renderChips();
     } catch {
       problemCount.textContent = "—";
     }
@@ -156,50 +223,88 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   // ---- Platform selection rendering ----------------------------------------
   function renderChips() {
-    chips.forEach((chip) => {
-      const platform = chip.dataset.platform;
-      const checked = selectedPlatforms.includes(platform);
-      chip.classList.toggle("checked", checked);
-      chip.querySelector(".platform-check").checked = checked;
-    });
+    const ids = orderedPlatformIds(trackerState.settings).filter(id => trackerState.accounts[id]);
+    const signature = ids.join(',');
+    const grid = document.getElementById('platformGrid');
+    if (signature !== platformSignature) {
+      platformSignature = signature;
+      grid.replaceChildren();
+      for (const id of ids) {
+        const row = document.createElement('div'); row.className = 'platform-row'; row.dataset.platform = id;
+        const label = document.createElement('span'); label.className = 'platform-identity';
+        if (DEFAULT_PLATFORMS.includes(id)) {
+          const input = document.createElement('input'); input.type = 'checkbox'; input.className = 'platform-check';
+          input.setAttribute('aria-label', `Search ${PLATFORMS[id].name}`);
+          input.addEventListener('change', async () => {
+            const previous = selectedPlatforms.slice();
+            selectedPlatforms = input.checked ? [...new Set([...selectedPlatforms, id])] : selectedPlatforms.filter(p => p !== id);
+            try { await persistPlatforms(); } catch { selectedPlatforms = previous; renderChips(); showStatus('Could not save platforms', 'error'); }
+          });
+          label.append(input);
+        }
+        const platformLink = document.createElement('a'); platformLink.className = 'platform-link';
+        platformLink.textContent = PLATFORMS[id].name;
+        platformLink.target = '_blank'; platformLink.rel = 'noopener noreferrer';
+        platformLink.addEventListener('click', event => { event.preventDefault(); chrome.tabs.create({ url: platformLink.href }); });
+        label.append(platformLink); row.append(label);
+        if (DAILY_PAGES[id]) {
+          const daily = document.createElement('button'); daily.className = 'daily-button'; daily.type = 'button';
+          daily.id = id === 'geeksforgeeks' ? 'gfgDaily' : `${id}Daily`;
+          daily.textContent = 'POTD \u2197'; daily.setAttribute('aria-label', `Open ${PLATFORMS[id].name} problem of the day`);
+          daily.addEventListener('click', () => openDaily(id, daily)); row.append(daily);
+          if (['tuf', 'code360'].includes(id)) {
+            const complete = document.createElement('button'); complete.className = 'daily-completion'; complete.type = 'button';
+            complete.textContent = '\u2713';
+            complete.addEventListener('click', () => toggleDailyDone(id, complete)); row.append(complete);
+          }
+        }
+        const total = document.createElement('strong'); total.className = 'platform-total'; row.append(total); grid.append(row);
+      }
+    }
+    for (const row of grid.children) {
+      const id = row.dataset.platform, account = trackerState.accounts[id], total = row.querySelector('strong');
+      const platformLink = row.querySelector('.platform-link');
+      platformLink.href = PLATFORMS[id].profile(account.handle);
+      platformLink.title = `Open ${account.handle}'s ${PLATFORMS[id].name} profile`;
+      const daily = row.querySelector('.daily-button');
+      if (daily) {
+        loadDailyStatus(id);
+        const manual = dailyDone[dailyDoneKey(id, account.handle)];
+        const done = dailySolved(id, trackerState, dailyTargets[id]) || Boolean(manual?.day === dailyDay(id) && manual.done);
+        daily.classList.toggle('is-done', done);
+        daily.textContent = done ? 'POTD \u2713' : 'POTD \u2197';
+        daily.title = done ? 'Today\'s POTD is done' : 'Open today\'s problem of the day';
+        daily.setAttribute('aria-label', `Open ${PLATFORMS[id].name} problem of the day${done ? ' (done)' : ''}`);
+        const complete = row.querySelector('.daily-completion');
+        if (complete) {
+          complete.setAttribute('aria-pressed', String(done));
+          complete.title = done ? 'Mark POTD incomplete' : 'Mark today\'s POTD done';
+          complete.setAttribute('aria-label', `${done ? 'Unmark' : 'Mark'} ${PLATFORMS[id].name} POTD done`);
+        }
+      }
+      const input = row.querySelector('input');
+      if (input) { input.checked = selectedPlatforms.includes(id); input.disabled = document.getElementById('toggleBtn').getAttribute('aria-pressed') !== 'true'; }
+      row.classList.toggle('checked', Boolean(input?.checked));
+      total.textContent = account.snapshot ? `${account.snapshot.totalIsLowerBound ? '\u2265 ' : ''}${Number(account.snapshot.totalSolved || 0).toLocaleString()}` : '\u2014';
+      total.title = account.error || account.snapshot?.activityWarning || 'Solved questions';
+      appendTodayIncrease(total, solvedToday({ [id]: account }, trackerState.settings.timeZone), Boolean(account.snapshot?.activityWarning));
+    }
+    document.getElementById('connectPlatforms').hidden = ids.length > 0;
+    document.querySelector('.search-settings').hidden = !ids.some(id => DEFAULT_PLATFORMS.includes(id));
+    const eligible = eligiblePlatforms();
+    problemCount.textContent = indexedProblems.filter(p => trackerState.accounts[p.source]).length.toLocaleString();
+    randomPickBtn.disabled = !indexedProblems.some(p => eligible.includes(p.source));
+    document.querySelector('.random-section').hidden = !eligible.length;
+    if (currentRandomProblem && !eligible.includes(currentRandomProblem.source)) {
+      currentRandomProblem = null; randomResult.hidden = true; randomPickBtn.textContent = 'Pick one';
+    }
   }
 
   async function persistPlatforms() {
     await chrome.storage.local.set({ "dsa-preferred-platforms": selectedPlatforms });
     renderChips();
-    if (currentRandomProblem && !selectedPlatforms.includes(currentRandomProblem.source)) {
-      currentRandomProblem = null;
-      randomResult.hidden = true;
-      randomPickBtn.textContent = "Pick one";
-    }
     showStatus("Platforms updated!", "success");
   }
-
-  chips.forEach((chip) => {
-    chip.addEventListener("click", async (e) => {
-      e.preventDefault();
-      if (chip.querySelector('.platform-check').disabled) return;
-      const platform = chip.dataset.platform;
-      const willBeSelected = !selectedPlatforms.includes(platform);
-      if (!willBeSelected && selectedPlatforms.length === 1) {
-        showStatus("Keep at least one platform", "error", 2500);
-        return;
-      }
-      const previous = selectedPlatforms.slice();
-      if (willBeSelected) {
-        selectedPlatforms.push(platform);
-      } else {
-        selectedPlatforms = selectedPlatforms.filter((p) => p !== platform);
-      }
-      try {
-        await persistPlatforms();
-      } catch (error) {
-        selectedPlatforms = previous;
-        renderChips();
-        showStatus("Could not save platforms", "error");
-      }
-    });
-  });
 
   // ---- Match threshold ------------------------------------------------------
   async function setThreshold(value) {
@@ -226,7 +331,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   randomPickBtn.addEventListener("click", () => {
     const eligibleProblems = indexedProblems.filter((problem) =>
-      selectedPlatforms.includes(problem.source)
+      eligiblePlatforms().includes(problem.source)
     );
     if (!eligibleProblems.length) return;
     let nextProblem;
@@ -271,25 +376,6 @@ document.addEventListener("DOMContentLoaded", async () => {
     }
   });
 
-  // ---- Reset settings -------------------------------------------------------
-  resetLink.addEventListener("click", async (e) => {
-    e.preventDefault();
-    try {
-      await chrome.storage.local.set({
-        "dsa-preferred-platforms": [...DEFAULT_PLATFORMS],
-        "dsa-helper-similarity-threshold": 0.4,
-      });
-      selectedPlatforms = [...DEFAULT_PLATFORMS];
-      matchThreshold = 0.4;
-      renderChips();
-      similaritySlider.value = String(matchThreshold);
-      similarityValue.textContent = String(matchThreshold);
-      showStatus("Settings reset", "success");
-    } catch (error) {
-      showStatus("Could not reset settings", "error");
-    }
-  });
-
   // ---- Load persisted state ------------------------------------------------
   loadProblemIndex();
 
@@ -303,9 +389,8 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   try {
     const response = await chrome.runtime.sendMessage({ action: "getPreferredPlatforms" });
-    if (response && Array.isArray(response.platforms) && response.platforms.length) {
+    if (response && Array.isArray(response.platforms)) {
       selectedPlatforms = response.platforms.filter((p) => DEFAULT_PLATFORMS.includes(p));
-      if (!selectedPlatforms.length) selectedPlatforms = [...DEFAULT_PLATFORMS];
     }
   } catch (e) {
   }

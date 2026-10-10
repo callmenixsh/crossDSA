@@ -1,0 +1,2371 @@
+{
+  "schemaVersion": 1,
+  "groups": [
+    {
+      "id": "q_b31e3d7f-f890-4c64-9912-b81071b4c24f",
+      "title": "Reverse Linked List",
+      "members": [
+        "leetcode:206",
+        "geeksforgeeks:700005",
+        "code360:8909",
+        "code360:8040"
+      ],
+      "fingerprints": {
+        "leetcode:206": "sha256:e621842992c75ad2e93a470bbd6658f5887c2656399e3d38e96a3aab8e77c735",
+        "geeksforgeeks:700005": "sha256:139026b34c38f4699263c37db18f0eb5340fe737ca824fe281183d77b5e82b64",
+        "code360:8909": "sha256:08c8b93fb73611edcd2f623541de8e53feaa7d1ed4297498a87894e035c13883",
+        "code360:8040": "sha256:fc01c489170fc51481b2df7f962972d879bcf512747af9e4143a21c7cce39440"
+      },
+      "reviewedAt": "2026-10-09",
+      "notes": "Reverse a singly linked list and return its new head. The cached objective is complete; the dangling example heading adds no evidence and is excluded from automatic grouping."
+    },
+    {
+      "id": "q_f9abba92-6ee2-472b-a454-9a0af69203a1",
+      "title": "Valid Parentheses",
+      "members": [
+        "leetcode:20",
+        "geeksforgeeks:701331"
+      ],
+      "fingerprints": {
+        "leetcode:20": "sha256:51697d0bc8e5c1cbff135d2184563b99d2df45f61561614cd46abd4bb3f8c6bd",
+        "geeksforgeeks:701331": "sha256:535449484e3aee5cda7e8448499d763102e06dc7b7ad582925a28ae30063f87d"
+      },
+      "reviewedAt": "2026-10-09",
+      "notes": "Determine whether (), [] and {} brackets are balanced and correctly nested. Both return a boolean verdict."
+    },
+    {
+      "id": "q_557c941a-7257-4143-8c49-15b4849e9ae7",
+      "title": "Maximum Subarray",
+      "members": [
+        "leetcode:53",
+        "geeksforgeeks:701215"
+      ],
+      "fingerprints": {
+        "leetcode:53": "sha256:1aa584f1e15d22564412ee7873f8be51477dc5a1bafde7b3deba94fd0eeea13f",
+        "geeksforgeeks:701215": "sha256:54e92237febbc73c88fc4616190ee9f138c78723a43426a0e31da4577935c382"
+      },
+      "reviewedAt": "2026-10-09",
+      "notes": "Return the maximum sum of a nonempty contiguous subarray, including all-negative inputs. Kadane's Algorithm is the GFG title alias."
+    },
+    {
+      "id": "q_80f0d493-574a-47b2-bcf3-a76898f874ad",
+      "title": "Linked List Cycle",
+      "members": [
+        "leetcode:141",
+        "geeksforgeeks:700099"
+      ],
+      "fingerprints": {
+        "leetcode:141": "sha256:927f1dbf08b2f419fb04041ec2952bf38cd0a0ed40dd6d6d895fc607a12df1f2",
+        "geeksforgeeks:700099": "sha256:a67b52761612f3a2188ca4f0d9dc920d158a82580562176adbb6119a7c6f3c5d"
+      },
+      "reviewedAt": "2026-10-09",
+      "notes": "Determine whether a singly linked list contains a cycle. Position indexing is judge setup rather than the function input; both support Floyd cycle detection."
+    },
+    {
+      "id": "q_18ed4afa-82d2-48e2-9eba-e0efa80ffaf3",
+      "title": "Best Time to Buy and Sell Stock",
+      "members": [
+        "leetcode:121",
+        "geeksforgeeks:712197"
+      ],
+      "fingerprints": {
+        "leetcode:121": "sha256:dfda358f16f73b3033e701c723a52fa988d3b381365da2e700a0c51709e6b25d",
+        "geeksforgeeks:712197": "sha256:683ab498bc9482422f10a5f41a475f0ebd78d17861f369b49b1243f9cb421771"
+      },
+      "reviewedAt": "2026-10-09",
+      "notes": "Return maximum profit with at most one purchase followed by one sale, or zero if no profitable transaction exists. Unlimited-transaction variants remain separate."
+    },
+    {
+      "id": "q_e7eeeeb4-aef4-4d0b-a774-02423a91c2e3",
+      "title": "Add Two Numbers",
+      "members": [
+        "leetcode:2",
+        "code360:10157"
+      ],
+      "fingerprints": {
+        "leetcode:2": "sha256:b8e781d623b1e76a25c0b8a54bfc3560dad17451055a25549da60bab18884dfd",
+        "code360:10157": "sha256:f79135b662985c0287e9d69f7fc95e0a21f3b2a924e48bcbf2f455b7b0c87270"
+      },
+      "reviewedAt": "2026-10-09",
+      "notes": "Add reverse-order nonnegative digit lists and return the sum list."
+    },
+    {
+      "id": "q_f58812fe-d536-4b93-9727-94c94e2d8219",
+      "title": "Longest Substring Without Repeating Characters",
+      "members": [
+        "leetcode:3",
+        "code360:7184",
+        "code360:7623"
+      ],
+      "fingerprints": {
+        "leetcode:3": "sha256:9d6dcccd0e17b16ab636cf59aacad8ba88d5a2e00d3967a9fe14031cae65a23f",
+        "code360:7184": "sha256:c64941bb79f9e25d4cdce6cb6dbc018a330c005b7c408fd427bfd7c5ac723293",
+        "code360:7623": "sha256:f11486d8e03cdaee907da36dae3cf8c2c7c2c37b3522494121f059775e5dde87"
+      },
+      "reviewedAt": "2026-10-09",
+      "notes": "Return the length of the longest contiguous substring with no repeated characters; output format explicitly confirms length."
+    },
+    {
+      "id": "q_0896954e-65fa-41fa-a5dc-19a1561c996d",
+      "title": "Median of Two Sorted Arrays",
+      "members": [
+        "leetcode:4",
+        "code360:9430"
+      ],
+      "fingerprints": {
+        "leetcode:4": "sha256:dfc9288bac274a32f29d574b77570161b808d5a82114216851b30b0ba05cd1a5",
+        "code360:9430": "sha256:b4c59a533c8d0814b96fe0225665b33378b9be49ebdac80ae7e0b3570887d27b"
+      },
+      "reviewedAt": "2026-10-09",
+      "notes": "Median of the union of two sorted arrays; binary partition meets both logarithmic requirements."
+    },
+    {
+      "id": "q_47be27ff-37bc-40f5-8406-3d13e70711c2",
+      "title": "Palindrome Number",
+      "members": [
+        "leetcode:9",
+        "geeksforgeeks:703915",
+        "code360:479"
+      ],
+      "fingerprints": {
+        "leetcode:9": "sha256:e9e1d505bd7cf37c18409cec6dbce128069da29fbee2794769eed8921f2261f6",
+        "geeksforgeeks:703915": "sha256:ddf955ecb9da833c3c3e995dfea0d128ba81ac236d78ba54845f14d6a9e8b126",
+        "code360:479": "sha256:95c1f00b89ca92619b80168f66456f18ff507a2db5b0b19724e384437067661d"
+      },
+      "reviewedAt": "2026-10-09",
+      "notes": "Boolean decimal palindrome predicate on an integer; negative inputs do not read the same in reverse."
+    },
+    {
+      "id": "q_8d572d36-fdfb-4922-a4f7-9d74c88fdfad",
+      "title": "Regular Expression Matching",
+      "members": [
+        "leetcode:10",
+        "code360:9925"
+      ],
+      "fingerprints": {
+        "leetcode:10": "sha256:c118961e7797c44fc81f5c6bec7724e67414a8322288cbac1e48644fcfe92071",
+        "code360:9925": "sha256:0a4bfce22cf1f97d75985b2ad89c8d45749f4d0481effc2c697195edb274af3b"
+      },
+      "reviewedAt": "2026-10-09",
+      "notes": "Whole-string regular-expression matching: dot matches one character and star repeats the preceding element zero or more times."
+    },
+    {
+      "id": "q_5ef4b196-9e62-4450-a08b-a47e121d9836",
+      "title": "Container With Most Water",
+      "members": [
+        "leetcode:11",
+        "geeksforgeeks:701939",
+        "code360:8431"
+      ],
+      "fingerprints": {
+        "leetcode:11": "sha256:1f323bded2eef56a7cfc906f1917db557977ce1e65c1822430bf64e5bf520a83",
+        "geeksforgeeks:701939": "sha256:7d865b701d5f27ec712f912d1595d1822944520020ff9cf999e1c8b44872f711",
+        "code360:8431": "sha256:60057c2260ed375217fffc780cb3dee2ad8fe667c397862023237bbf1e1549cf"
+      },
+      "reviewedAt": "2026-10-09",
+      "notes": "Maximize water area between two vertical lines; width is the index gap and height is the lower endpoint."
+    },
+    {
+      "id": "q_2f46abd2-c618-40b4-ac18-690f531a88a7",
+      "title": "Roman to Integer",
+      "members": [
+        "leetcode:13",
+        "geeksforgeeks:702022"
+      ],
+      "fingerprints": {
+        "leetcode:13": "sha256:87f3a38c3c26e7528dff6c7f114f63e87ac8297bf00fbdfd317cf88505cba544",
+        "geeksforgeeks:702022": "sha256:fc8a3f3a18adb2c527d7bbda60ae3866bd3163f76ad58f34251c08a4543a6cbf"
+      },
+      "reviewedAt": "2026-10-09",
+      "notes": "Convert a valid Roman numeral using the same seven symbols and subtractive convention."
+    },
+    {
+      "id": "q_f3909d9e-8899-4834-959d-46b38c654846",
+      "title": "Letter Combinations of a Phone Number",
+      "members": [
+        "leetcode:17",
+        "code360:9361"
+      ],
+      "fingerprints": {
+        "leetcode:17": "sha256:ce53518b21bd908cb3d8705eed7e655b5026e880f9a392879cdd84e42e293bd6",
+        "code360:9361": "sha256:17c349c0933461f2cb818cf2e089c4a863815bf94a9c595945d636d0cec3b5d1"
+      },
+      "reviewedAt": "2026-10-09",
+      "notes": "Enumerate all telephone-keypad letter combinations for digits 2 through 9, in arbitrary order."
+    },
+    {
+      "id": "q_37da7cb9-c351-4149-92db-6f6f8aa8ac0f",
+      "title": "4Sum",
+      "members": [
+        "leetcode:18",
+        "code360:22479"
+      ],
+      "fingerprints": {
+        "leetcode:18": "sha256:106d34de0897d2cd7d9cbd07a8d95f644d20c460694eda61c11b37eec547b670",
+        "code360:22479": "sha256:2318e9942f87ee1b77c0fd2860ce1d0f332316f358d8d8d5c95fa0dfeb0e0416"
+      },
+      "reviewedAt": "2026-10-09",
+      "notes": "Return unique quadruplets of distinct indices whose values sum to the given target; judge printing the count does not change the returned list."
+    },
+    {
+      "id": "q_96439b1d-05f0-456f-a515-62df1c110f26",
+      "title": "Generate Parentheses",
+      "members": [
+        "leetcode:22",
+        "code360:9293",
+        "geeksforgeeks:702078"
+      ],
+      "fingerprints": {
+        "leetcode:22": "sha256:24c456dc3dd38b042fa3f16d3f980abf35de27560ec1bf4a98907cdd4569d0cf",
+        "code360:9293": "sha256:988b0e97f135815974fc5d510348cab7ac23be6af622921cc1a08fc6a297672e",
+        "geeksforgeeks:702078": "sha256:69f623af0e507c5e0c4b77b843f5856100d452afa72126bc8d059b476c937887"
+      },
+      "reviewedAt": "2026-10-09",
+      "notes": "Enumerate all well-formed parentheses strings. Preserve whether the input counts pairs or total characters.",
+      "versionContracts": {
+        "geeksforgeeks:702078": {
+          "variant": "total-length",
+          "notes": "Input n is an even total output length; use n/2 pairs."
+        }
+      }
+    },
+    {
+      "id": "q_a017da28-8d71-4bfa-8ad1-47c63981b17c",
+      "title": "Remove Duplicates from Sorted Array",
+      "members": [
+        "leetcode:26",
+        "code360:9920"
+      ],
+      "fingerprints": {
+        "leetcode:26": "sha256:d0e6ef81b9ef898d738e78d970aa796e2a715ad7b93e7efc0cf8ff94a7123f41",
+        "code360:9920": "sha256:9a84f64586812f09c35b6376e0f46932b5cf57bf5804d169dc7840cf1529f780"
+      },
+      "reviewedAt": "2026-10-09",
+      "notes": "Deduplicate a sorted array in place with constant extra memory and return its new prefix length."
+    },
+    {
+      "id": "q_2629dfbb-a56f-4b37-8827-91d8421208b2",
+      "title": "Next Permutation",
+      "members": [
+        "leetcode:31",
+        "geeksforgeeks:705146"
+      ],
+      "fingerprints": {
+        "leetcode:31": "sha256:baf20523199c837877974db2a3b520fef2c40b7b7826acb9da75610c9a6374c8",
+        "geeksforgeeks:705146": "sha256:430ff8efff99c7260e14806aac31954b62f0cfcc6888643e19f4e684cc828ebe"
+      },
+      "reviewedAt": "2026-10-09",
+      "notes": "Mutate a permutation to its next lexicographic arrangement, wrapping to ascending order when no successor exists."
+    },
+    {
+      "id": "q_827d38ee-568e-41cc-aa24-9b8ed3481f86",
+      "title": "Longest Valid Parentheses",
+      "members": [
+        "leetcode:32",
+        "code360:9747"
+      ],
+      "fingerprints": {
+        "leetcode:32": "sha256:d571fd3fa0140823a806db5450a2f3660332e1dc5c9cdeeb28ef661c6a46ffd0",
+        "code360:9747": "sha256:465f76532c95fe61cc8db27eec101e70ee6bd94e8e17f671eafd9038dd466dec"
+      },
+      "reviewedAt": "2026-10-09",
+      "notes": "Return the length of the longest well-formed parentheses substring."
+    },
+    {
+      "id": "q_533aee69-b88c-4d5f-9d54-2d20a2149ea1",
+      "title": "Search in Rotated Sorted Array",
+      "members": [
+        "leetcode:33",
+        "geeksforgeeks:702828",
+        "code360:7216",
+        "code360:9733"
+      ],
+      "fingerprints": {
+        "leetcode:33": "sha256:b9b823ef00fdb908f260253105670b6cdc7f93ec9de9e9fbc1eaea258629d954",
+        "geeksforgeeks:702828": "sha256:9b8e129490318850bd2ba92fc4627b646887d72121b8066b1b84ae45f04c3078",
+        "code360:7216": "sha256:1fe385d923739ce7b2f439b2127e4929dde07f4d72c5c04653ffc6feb17b2738",
+        "code360:9733": "sha256:93b6df04e3f549d113b8bf39013f42daf49ab973ff31fa4cc0776aff788b3016"
+      },
+      "reviewedAt": "2026-10-09",
+      "notes": "Return zero-based target index or -1 in a rotated sorted array of distinct integers in logarithmic time. Repeated test queries are judge wrappers."
+    },
+    {
+      "id": "q_662a0512-f30c-4d08-87e2-0bc12c496fe8",
+      "title": "Find First and Last Position of Element in Sorted Array",
+      "members": [
+        "leetcode:34",
+        "code360:8183"
+      ],
+      "fingerprints": {
+        "leetcode:34": "sha256:3d6c9bc003d95682e9d5acf184b1d912d3a61d6fc817fe681756b3197b7c5b72",
+        "code360:8183": "sha256:01a52bb420ad4a7926054b26b94d9e56b114e627b185137fd64d5df9da7252a7"
+      },
+      "reviewedAt": "2026-10-09",
+      "notes": "Return first and last zero-based target positions in a sorted array, or [-1,-1]; logarithmic bounds."
+    },
+    {
+      "id": "q_86df1fcf-d828-451c-a097-f52024317172",
+      "title": "Search Insert Position",
+      "members": [
+        "leetcode:35",
+        "code360:8208"
+      ],
+      "fingerprints": {
+        "leetcode:35": "sha256:a771debd584f0ad494bec63d3df3964b7103fd41c38ff33108af7ab09fd9433e",
+        "code360:8208": "sha256:fd03870da75984b12715c806ddf1d6164459e23cc7f052812b95302362c81cf0"
+      },
+      "reviewedAt": "2026-10-09",
+      "notes": "Lower-bound index for a target in a sorted distinct array; returns insertion position when absent."
+    },
+    {
+      "id": "q_b59604fd-d451-4dd8-a520-6279e3805bd6",
+      "title": "Valid Sudoku",
+      "members": [
+        "leetcode:36",
+        "code360:748"
+      ],
+      "fingerprints": {
+        "leetcode:36": "sha256:95add70a4ce3be2a9dbfaaaf04d320339048f057eb551e5957bb3bf5855553a6",
+        "code360:748": "sha256:80dac3be03d87c52d4e1f18f73c1249908cacf13772f6f019566881f7b20605b"
+      },
+      "reviewedAt": "2026-10-09",
+      "notes": "Check only consistency of already-filled Sudoku cells, without solving the puzzle. Zero versus dot is an empty-cell encoding."
+    },
+    {
+      "id": "q_0de8e68e-e4ed-4d76-8814-1f8809cad047",
+      "title": "Sudoku Solver",
+      "members": [
+        "leetcode:37",
+        "code360:7573"
+      ],
+      "fingerprints": {
+        "leetcode:37": "sha256:0d982501142256841b3317bab3a22225c7413bbe50ab2c452886435168179240",
+        "code360:7573": "sha256:f61ea2b6cf06b1fbb38d8c9b8a0de53a17b5f9fc1076b9a0596b5c129c7722c4"
+      },
+      "reviewedAt": "2026-10-09",
+      "notes": "Fill a 9x9 Sudoku puzzle under row, column and subgrid uniqueness; zero versus dot is an input representation."
+    },
+    {
+      "id": "q_7a02f3d8-9ac9-43e9-b30d-1c72015b4461",
+      "title": "First Missing Positive",
+      "members": [
+        "leetcode:41",
+        "code360:7576"
+      ],
+      "fingerprints": {
+        "leetcode:41": "sha256:ce659868e0e19d7652b3a802312094be0287d708a9c3edba1b97c2bf6aab0498",
+        "code360:7576": "sha256:f80ef37a8366aeae6aea788a0d355144922f0e53c05913e7c71f7ffb7860fc88"
+      },
+      "reviewedAt": "2026-10-09",
+      "notes": "Smallest missing positive integer in an unsorted possibly negative array, in linear time and constant auxiliary space."
+    },
+    {
+      "id": "q_608307e1-6c0d-42b3-80f6-83e6383f9093",
+      "title": "Trapping Rain Water",
+      "members": [
+        "leetcode:42",
+        "geeksforgeeks:701211",
+        "code360:7287"
+      ],
+      "fingerprints": {
+        "leetcode:42": "sha256:d0d9ea465557a52f1908f2c772ca17702bb43446f5f50dc20bf82e06a572c2a2",
+        "geeksforgeeks:701211": "sha256:85b70150f0a20a4a80f9475756719b87104c9209a7522a962ed4c76041d4f91c",
+        "code360:7287": "sha256:c8ff1ad7d273448d19203f328cc928c0566faa9ce4b1d465a2e732a360402e83"
+      },
+      "reviewedAt": "2026-10-09",
+      "notes": "Total trapped rainwater for unit-width elevation bars, not maximum container area."
+    },
+    {
+      "id": "q_ed1971aa-52c1-469d-b045-4aad8e385265",
+      "title": "Permutations",
+      "members": [
+        "leetcode:46",
+        "code360:8516"
+      ],
+      "fingerprints": {
+        "leetcode:46": "sha256:37090cd5dbe127dca327efc670bfd3166c6783749569632ae9b5369b282f2bc0",
+        "code360:8516": "sha256:03633a8e0ae247e2e09222d7c7693e87f8eb2e595afe12ebcbca2b535638b8fb"
+      },
+      "reviewedAt": "2026-10-09",
+      "notes": "Enumerate all permutations of an array of distinct integers in arbitrary order."
+    },
+    {
+      "id": "q_a460e0fa-17dc-41b5-ac6c-c863a7f8ce6f",
+      "title": "Group Anagrams",
+      "members": [
+        "leetcode:49",
+        "code360:8058"
+      ],
+      "fingerprints": {
+        "leetcode:49": "sha256:fb6fc19e3bd8d9b7e87866e20fc8bc0bdca35f4bb757d53d3475c6c93e3551f7",
+        "code360:8058": "sha256:54931f2c09517ff0f34b372625629a82a0b672330aa326d72f8ee147ff277e67"
+      },
+      "reviewedAt": "2026-10-09",
+      "notes": "Partition input strings into anagram groups; group and member order do not matter."
+    },
+    {
+      "id": "q_b612651a-02f0-40b5-9101-1ddcc8df788d",
+      "title": "Spiral Matrix",
+      "members": [
+        "leetcode:54",
+        "code360:8076",
+        "code360:8214",
+        "code360:23628"
+      ],
+      "fingerprints": {
+        "leetcode:54": "sha256:b8403d203cde594318b7fdbf9c417d8d68febccc10ceaf3099abf0f70166cc7f",
+        "code360:8076": "sha256:8f62dc48e0ee630795dfa46eb3b5f545a6cb0d47ece9d4d9963b978f313be476",
+        "code360:8214": "sha256:123b2d4d9f1e9b7c26dba77cdcd2b1d29a615b4e799687d6a4e7bc17410800b0",
+        "code360:23628": "sha256:a62878a7cc5d34d284eada5a6a2d43b18b84b6e7fde2dace0a85dd1b68eb652e"
+      },
+      "reviewedAt": "2026-10-09",
+      "notes": "Return the spiral traversal of a rectangular matrix; identical traversal objective under different judge wrappers."
+    },
+    {
+      "id": "q_ea075244-9bcd-413d-a91f-20172f267c3a",
+      "title": "Jump Game",
+      "members": [
+        "leetcode:55",
+        "geeksforgeeks:706104",
+        "code360:16497"
+      ],
+      "fingerprints": {
+        "leetcode:55": "sha256:7f4e6138f9d4a816a52571f4bc94cefca4b21158f55725aa6739e6691bfea5fb",
+        "geeksforgeeks:706104": "sha256:c1ea9690305050f4623dd47d7afba54309b2c251fd40690bb0d9d8c2800cf81c",
+        "code360:16497": "sha256:31cd5df4e19187722db7f4f13338412625cf6281a1ee656fbade2e264f198796"
+      },
+      "reviewedAt": "2026-10-09",
+      "notes": "Boolean reachability of the final index when each value is the maximum forward jump; minimum-jump versions remain separate."
+    },
+    {
+      "id": "q_07e816b4-3161-4e75-96ab-99d92bb0c648",
+      "title": "Insert Interval",
+      "members": [
+        "leetcode:57",
+        "geeksforgeeks:712536",
+        "code360:6132",
+        "code360:9918"
+      ],
+      "fingerprints": {
+        "leetcode:57": "sha256:7f212a4b50170a3f2394be54667d211053616d2521a296dd7c19a47c892e1f68",
+        "geeksforgeeks:712536": "sha256:9de20037cc3236dca72f81a85d6d991f6ad7f982fd51f5466fe532b8b016b433",
+        "code360:6132": "sha256:e056feb2bc743bb9bda832fbe4fed571b54a321871d771ffce7052aa4ace1127",
+        "code360:9918": "sha256:f82aa20ef013f10b2bc5b496de6a277d1ba25fff5e63debad45619ed934baa24"
+      },
+      "reviewedAt": "2026-10-09",
+      "notes": "Insert one interval into sorted non-overlapping intervals, merge intersections, and return a sorted non-overlapping result."
+    },
+    {
+      "id": "q_e5e4ccda-6be9-477f-95a3-cf901527ed12",
+      "title": "Length of Last Word",
+      "members": [
+        "leetcode:58",
+        "geeksforgeeks:703161"
+      ],
+      "fingerprints": {
+        "leetcode:58": "sha256:54163df98ddab1e80abbf8869545d9b76f1c5500be5e384e4ba0b222c743e3bd",
+        "geeksforgeeks:703161": "sha256:2069cee6a22107d2f551ed40ade8df813446d2b8d2a2b271cbef5a0c1ee2b198"
+      },
+      "reviewedAt": "2026-10-09",
+      "notes": "Length of the final non-space word, ignoring trailing spaces."
+    },
+    {
+      "id": "q_e5c43036-e5ee-4cc2-b79c-ca032313924b",
+      "title": "Unique Paths",
+      "members": [
+        "leetcode:62",
+        "code360:9678"
+      ],
+      "fingerprints": {
+        "leetcode:62": "sha256:ed1443c14bd0eda4a6f231e4344b225a800e489b7dc0929b4484c31531f26270",
+        "code360:9678": "sha256:a64edcbcf59226fde09bdc66ac7e9f6dbdcc0dcdbfbb84b28a57d747741d84ed"
+      },
+      "reviewedAt": "2026-10-09",
+      "notes": "Count paths in an obstacle-free rectangular grid from top-left to bottom-right with only right/down moves; same exact count."
+    },
+    {
+      "id": "q_87c5272b-57f3-457b-87e5-e88edd190597",
+      "title": "Minimum Path Sum",
+      "members": [
+        "leetcode:64",
+        "code360:9445"
+      ],
+      "fingerprints": {
+        "leetcode:64": "sha256:603f3df255428fb79c91feccbe87c9971a872cd5f87edface327915e6c810bf3",
+        "code360:9445": "sha256:e2b35c2d6331f733ef539c4bf59d2c4dc4c589ae8fd804e9c30c35074580d9be"
+      },
+      "reviewedAt": "2026-10-09",
+      "notes": "Minimum sum from top-left to bottom-right in a nonnegative grid with only down/right steps."
+    },
+    {
+      "id": "q_670d2bf8-be3a-4215-ad46-a3541c664c7c",
+      "title": "Edit Distance",
+      "members": [
+        "leetcode:72",
+        "geeksforgeeks:703912",
+        "code360:7186"
+      ],
+      "fingerprints": {
+        "leetcode:72": "sha256:2d1a4500e54d94bf18cd034ecd0d229f6d605e69ef513390d35386839b33664e",
+        "geeksforgeeks:703912": "sha256:100cd573513f9d1dbad5666425f9ea08fac071f77943bfc525e71ada55aa34e7",
+        "code360:7186": "sha256:84e5d1df89feb1d304e38779a348a50c50540bdff1da690dc61e310745d66993"
+      },
+      "reviewedAt": "2026-10-09",
+      "notes": "Unit-cost Levenshtein distance with insertion, deletion and replacement; no transposition operation."
+    },
+    {
+      "id": "q_e245f231-6cdd-4178-b7b9-022feada0f8b",
+      "title": "Search a 2D Matrix",
+      "members": [
+        "leetcode:74",
+        "code360:9193",
+        "code360:9735"
+      ],
+      "fingerprints": {
+        "leetcode:74": "sha256:ccb27645148380c30ce6bde7139efb8736541d65799eb632c68c8e2ab1ea3556",
+        "code360:9193": "sha256:de8dd9ef93d3759bdcbda28f52ad3f899cc2eaac5e08eb1e7f8650129dd2d71f",
+        "code360:9735": "sha256:f1c34903e0362f06243ecc9f6fa523c6badc9a8ae5bf72e26894b5d5d3a8732c"
+      },
+      "reviewedAt": "2026-10-09",
+      "notes": "Boolean target membership in a row-major globally sorted matrix; Yes/No is judge output serialization."
+    },
+    {
+      "id": "q_806eafba-24e3-4af7-8d7e-f32759d00e70",
+      "title": "Minimum Window Substring",
+      "members": [
+        "leetcode:76",
+        "code360:10424"
+      ],
+      "fingerprints": {
+        "leetcode:76": "sha256:370a9e1fcec04bddb6b488da6c7b00b38bd339e7e50833f03159b7d3a22ab632",
+        "code360:10424": "sha256:5d6f4bfa30d8bfbd11e954cf794aac1a28e82a99b0fed19f3129be06a2e0febe"
+      },
+      "reviewedAt": "2026-10-09",
+      "notes": "Shortest source substring containing every target character with multiplicity. The Code360 domain guarantees a unique existing answer; the general algorithm handles that domain."
+    },
+    {
+      "id": "q_fe3c0216-9a7b-4610-ba7e-024a0612e958",
+      "title": "Combinations",
+      "members": [
+        "leetcode:77",
+        "code360:16770"
+      ],
+      "fingerprints": {
+        "leetcode:77": "sha256:a13ba4e9b783a51b7220529aee31f47d1c92fc95125be7e6aa285bbf4e252e14",
+        "code360:16770": "sha256:6cabab8ab1f016c0875445b8bd346660fc46a6132ab4dd2c871b0607c791187b"
+      },
+      "reviewedAt": "2026-10-09",
+      "notes": "Enumerate all k-element combinations of labels 1 through n."
+    },
+    {
+      "id": "q_4cbb9f76-fac4-4d67-ad47-c98b08e827be",
+      "title": "Subsets",
+      "members": [
+        "leetcode:78",
+        "geeksforgeeks:706426"
+      ],
+      "fingerprints": {
+        "leetcode:78": "sha256:b795d8f4214c93c6f2ef7079d2147cac4d6aa81d2a6903762e3da0791874b11a",
+        "geeksforgeeks:706426": "sha256:568df4d2e01fbfff2863b8158be8e789271be37faf3b3fb13b4ffebdd6937d8b"
+      },
+      "reviewedAt": "2026-10-09",
+      "notes": "Enumerate the power set of distinct input integers; positive-only input is a domain restriction."
+    },
+    {
+      "id": "q_5f10eddc-3fe5-4d74-840a-b7600aa92a79",
+      "title": "Word Search",
+      "members": [
+        "leetcode:79",
+        "geeksforgeeks:702088",
+        "code360:8514"
+      ],
+      "fingerprints": {
+        "leetcode:79": "sha256:e51fbbe6c66269c7dd906025ce63490d3999a783409bffa418a69ce2074c653b",
+        "geeksforgeeks:702088": "sha256:7ead3d5595d8ae568f446e3be8aac6c21c30cd866f3ac473dca4585ebb3f5da1",
+        "code360:8514": "sha256:219bb66b2671e450f48811f63b0d1c73a16f1656bbd5f7fe56d7d11cfb12b813"
+      },
+      "reviewedAt": "2026-10-09",
+      "notes": "Boolean orthogonal-grid word search without reusing a cell."
+    },
+    {
+      "id": "q_c8857478-5006-42b6-b36f-d38c2d7df447",
+      "title": "Search in Rotated Sorted Array II",
+      "members": [
+        "leetcode:81",
+        "code360:24526"
+      ],
+      "fingerprints": {
+        "leetcode:81": "sha256:da5ea461b020df3d4681e2d121a425d443a25b2c78e059d90a9bd8166e251d09",
+        "code360:24526": "sha256:3dc00e0b14550a1eceaed7e7b05ebed33474cf89033222f0df0047e468adaf94"
+      },
+      "reviewedAt": "2026-10-09",
+      "notes": "Boolean target membership in a rotated sorted array that may contain duplicate values."
+    },
+    {
+      "id": "q_95d51bea-cf21-4325-81ba-3e2e3f20ebbc",
+      "title": "Partition List",
+      "members": [
+        "leetcode:86",
+        "code360:10609"
+      ],
+      "fingerprints": {
+        "leetcode:86": "sha256:83013ff1fa75965b7d52baa8ee7d5f2a0966e8296f97515b21878b8cb038fef5",
+        "code360:10609": "sha256:5807d1d7ef7e8c249a6665b908ec2e970ab2c20f6a6a2608daabac55a9e9cde2"
+      },
+      "reviewedAt": "2026-10-09",
+      "notes": "Stable linked-list partition into values below threshold followed by values at least threshold."
+    },
+    {
+      "id": "q_f2d81c41-9412-4792-9c3c-7786fca01e8c",
+      "title": "Scramble String",
+      "members": [
+        "leetcode:87",
+        "code360:8660"
+      ],
+      "fingerprints": {
+        "leetcode:87": "sha256:e9eade12002c288504d94410d0136c43187c961f3f812e0ae0999d38f5a960d1",
+        "code360:8660": "sha256:2157d20bf3db5a60047af631d931d2ff702df889581732f1825f9a26ec8af7b2"
+      },
+      "reviewedAt": "2026-10-09",
+      "notes": "Boolean recursive scramble equivalence via nonempty splits and optional swaps of the two pieces."
+    },
+    {
+      "id": "q_366b3768-fa66-449f-96fa-08c58d19aae2",
+      "title": "Symmetric Tree",
+      "members": [
+        "leetcode:101",
+        "geeksforgeeks:700583",
+        "code360:7192"
+      ],
+      "fingerprints": {
+        "leetcode:101": "sha256:289f7e792abab5731e772968a975272c5ca82b9b8a4bd37410b5ac20abef54e8",
+        "geeksforgeeks:700583": "sha256:f88ed6a4f5893c1808011e9183124cb5d982e4153ad39e4125f83a1797eb3388",
+        "code360:7192": "sha256:edec908423194dbba3c207e81c02351d69afd628a70fe9478700433a36de4079"
+      },
+      "reviewedAt": "2026-10-09",
+      "notes": "Boolean mirror symmetry of a binary tree around its root."
+    },
+    {
+      "id": "q_f847668b-5045-4842-8a1b-b6cb4035ade8",
+      "title": "Maximum Depth of Binary Tree",
+      "members": [
+        "leetcode:104",
+        "geeksforgeeks:712233",
+        "code360:9788"
+      ],
+      "fingerprints": {
+        "leetcode:104": "sha256:7e0eaa89fa0ed033affb8d98f3fe043392c60de95c72c2c4f998b387eebad013",
+        "geeksforgeeks:712233": "sha256:14641eae247ca8348830c39da4f52defe5f9bc7c5ba05d927f7c56253b299e20",
+        "code360:9788": "sha256:9e403ccccbfdfa7fc277e6d18ec7c8fc295519e0d1200f5028c14490e223e064"
+      },
+      "reviewedAt": "2026-10-09",
+      "notes": "Maximum root-to-leaf depth measured in nodes, not edges."
+    },
+    {
+      "id": "q_c76be9af-36b5-4656-a463-e6313c7e1d45",
+      "title": "Construct Binary Tree from Inorder and Postorder Traversal",
+      "members": [
+        "leetcode:106",
+        "code360:10850"
+      ],
+      "fingerprints": {
+        "leetcode:106": "sha256:c331906d86ce7a5dbccc7a79eb1a2d1e663995188b562a8abf4877eff241bde1",
+        "code360:10850": "sha256:641d7fefeb1199ac61c8d9ab167bb26e02a7a9f0512effb976d0c3a1ffe49ed9"
+      },
+      "reviewedAt": "2026-10-09",
+      "notes": "Reconstruct a unique-valued binary tree from its inorder and postorder traversals."
+    },
+    {
+      "id": "q_7fbb8eb9-8f49-4505-8d80-47f0e0344567",
+      "title": "Minimum Depth of Binary Tree",
+      "members": [
+        "leetcode:111",
+        "geeksforgeeks:700257",
+        "code360:7533"
+      ],
+      "fingerprints": {
+        "leetcode:111": "sha256:c38b2f581ba8bf4db5321a97097dbfd97494e054e8ad8019d72ad066506a25f6",
+        "geeksforgeeks:700257": "sha256:7352b52d95de97b19272efeba6532fb392823c59a68e7a218f965eb17ef034d8",
+        "code360:7533": "sha256:5c5afffcd94816c4a69b4cea4e7c84baa782b52b40f753c8330e88b1c60166de"
+      },
+      "reviewedAt": "2026-10-09",
+      "notes": "Minimum root-to-leaf depth measured in nodes; a single-child node is not a leaf."
+    },
+    {
+      "id": "q_b7e84386-a38f-4c61-a7c5-4f6d2a017029",
+      "title": "Flatten Binary Tree to Linked List",
+      "members": [
+        "leetcode:114",
+        "geeksforgeeks:706436",
+        "code360:9954"
+      ],
+      "fingerprints": {
+        "leetcode:114": "sha256:6e803d8999548bffba3fa931caeb297a4947549fb3ef3eb275454c08b23aac3e",
+        "geeksforgeeks:706436": "sha256:90f2cc2b385522ba6b52d6307bf11a17d7830f2eb232f0477f99c77982fdf469",
+        "code360:9954": "sha256:505ea8627cb4383fb754453187faa1cd41a5c7705f1dccaecdc868ab1a8f354c"
+      },
+      "reviewedAt": "2026-10-09",
+      "notes": "Flatten the existing binary tree in preorder using right pointers as next links and null left pointers."
+    },
+    {
+      "id": "q_45a9f7d9-00f2-448a-87ab-f0848705477a",
+      "title": "Distinct Subsequences",
+      "members": [
+        "leetcode:115",
+        "code360:9246"
+      ],
+      "fingerprints": {
+        "leetcode:115": "sha256:dc79a633bbd3a3e251f23c84d7bb500e0ada237931bb831451f18f7c9adfb7cd",
+        "code360:9246": "sha256:ce58184363c8847afecab85c2ff702db088cb1afa63e3cb7a645d376ad784152"
+      },
+      "reviewedAt": "2026-10-09",
+      "notes": "Count occurrences of a target string as subsequences of a source string; not the count of all distinct source subsequences."
+    },
+    {
+      "id": "q_77719d60-09fb-4873-940a-796bf2f122c6",
+      "title": "Populating Next Right Pointers in Each Node II",
+      "members": [
+        "leetcode:117",
+        "code360:10856"
+      ],
+      "fingerprints": {
+        "leetcode:117": "sha256:5a5415f348ea68fab14f27127539623dda399e2db78a54942fbcafbdba89eed9",
+        "code360:10856": "sha256:c8ea5c52966b97cf6f98bcbedc5044e5285a06a81374cc85153cf4d1dfc2d1aa"
+      },
+      "reviewedAt": "2026-10-09",
+      "notes": "Populate immediate right-neighbor pointers at every level of an arbitrary binary tree, with null at each level end."
+    },
+    {
+      "id": "q_6c6438c3-5799-4fb8-82b3-e822279a6354",
+      "title": "Pascal's Triangle",
+      "members": [
+        "leetcode:118",
+        "code360:9764"
+      ],
+      "fingerprints": {
+        "leetcode:118": "sha256:ed9b8cc338bd8379cd19cf822bf69045e6a3f865d8fc7cb5289e8d053fd8eb36",
+        "code360:9764": "sha256:f0ffe05d13cfcab871890224ea4ec3af5a3188bac659efd4d298da13d8a2acfd"
+      },
+      "reviewedAt": "2026-10-09",
+      "notes": "Return the first n rows of Pascal triangle, not only its nth row."
+    },
+    {
+      "id": "q_14caacf1-470d-4f4c-8779-a2e81c83bc7a",
+      "title": "Triangle",
+      "members": [
+        "leetcode:120",
+        "code360:10458"
+      ],
+      "fingerprints": {
+        "leetcode:120": "sha256:f0c4f3802e84c02d522ab4aa5ea2a29fb2449ead272f3f2c1fc0d1d3a14c6805",
+        "code360:10458": "sha256:c58cdf1ee0bea12818cab28487713b42d4818bc207355991dfb2d21ee3dbf200"
+      },
+      "reviewedAt": "2026-10-09",
+      "notes": "Minimum top-to-bottom triangular path sum, moving to either of the two adjacent entries in the next row."
+    },
+    {
+      "id": "q_fddfa9b8-04d3-4218-8d4b-73f9af54e5b0",
+      "title": "Best Time to Buy and Sell Stock II",
+      "members": [
+        "leetcode:122",
+        "code360:7048",
+        "code360:13746",
+        "code360:22896"
+      ],
+      "fingerprints": {
+        "leetcode:122": "sha256:d1d026da6ecc1a3f411bfd9095bcfcdb4581a2d551407b5a262d71a15cc213ce",
+        "code360:7048": "sha256:0da937b934dfc2dfd864758ce3cf56e71bf06f0b15270ac53f9d2eaf18338b83",
+        "code360:13746": "sha256:6619b1301116009d08ca814495af7a165e59800d7c2d3db0df65411cf6255a2f",
+        "code360:22896": "sha256:c7acc74bf24f0cc9f0977f5c1b5085e4ab01be5d27c81062b52fcbfa5076d1e7"
+      },
+      "reviewedAt": "2026-10-09",
+      "notes": "Maximum stock profit with unlimited transactions but at most one share held; no fee or cooldown."
+    },
+    {
+      "id": "q_8652324c-5f20-4817-9c89-72e874608ff1",
+      "title": "Best Time to Buy and Sell Stock III",
+      "members": [
+        "leetcode:123",
+        "code360:9645"
+      ],
+      "fingerprints": {
+        "leetcode:123": "sha256:b7cd529423a36c81d77953b1a2bb23832d2a07d9957be559ba7a23a4f70a440f",
+        "code360:9645": "sha256:1c71353e525c967efc51d6f106082fc8547aea92e199edd5b18e46e05110de69"
+      },
+      "reviewedAt": "2026-10-09",
+      "notes": "Maximum stock profit with at most two non-overlapping transactions."
+    },
+    {
+      "id": "q_42ae7a5c-c871-4614-ae69-4fc48aa18436",
+      "title": "Binary Tree Maximum Path Sum",
+      "members": [
+        "leetcode:124",
+        "code360:10921"
+      ],
+      "fingerprints": {
+        "leetcode:124": "sha256:3adcb5f6bebb7d9ad39ad64dace0f75a2f4e9af32bcb921040d023c25fa6136e",
+        "code360:10921": "sha256:53ff909d9acf3d1d1cd75252a38bbfc3a1e0bdbff4686ceffce10dfe35446571"
+      },
+      "reviewedAt": "2026-10-09",
+      "notes": "Maximum sum of a nonempty simple path anywhere in a binary tree, including negative node values."
+    },
+    {
+      "id": "q_7e7fa3c9-0799-4f0b-81b2-14ee8706f629",
+      "title": "Longest Consecutive Sequence",
+      "members": [
+        "leetcode:128",
+        "code360:7703"
+      ],
+      "fingerprints": {
+        "leetcode:128": "sha256:7a000a14988395a47395f8563980093065de529fdd76bad072ee670ccad2447b",
+        "code360:7703": "sha256:0a1edbbc8ce4c3c27fe36785aae19c3cc881424ac5168b9bba8495d292e3b701"
+      },
+      "reviewedAt": "2026-10-09",
+      "notes": "Length of the longest consecutive-value run in an unsorted array, ignoring duplicates; expected linear time."
+    },
+    {
+      "id": "q_4a2497d0-4cf3-40d3-aa46-ae438306d565",
+      "title": "Palindrome Partitioning",
+      "members": [
+        "leetcode:131",
+        "code360:8055"
+      ],
+      "fingerprints": {
+        "leetcode:131": "sha256:ceba55f0aa6601ad5a4137e3181d9d03c3af751695ccbf9779f65c3c370b4992",
+        "code360:8055": "sha256:165d18ef9e69e759a2ff9ffd6e29996aeb62a332cf14c37dde3b8e91b56f71f4"
+      },
+      "reviewedAt": "2026-10-09",
+      "notes": "Enumerate all partitions of a string into palindromic substrings."
+    },
+    {
+      "id": "q_fd7c60d8-b963-449d-80da-9d8bd933b68f",
+      "title": "Reverse Words in a String",
+      "members": [
+        "leetcode:151",
+        "code360:7540"
+      ],
+      "fingerprints": {
+        "leetcode:151": "sha256:c4b2b4c61b8fb804bd8f51ae45024e4c78f77082d623b1b2081fb5b29b5ac9b4",
+        "code360:7540": "sha256:06c4022896fcfe16bbc50ba6cb18cb47cbf4073be3ab9b4ab647d4540c332e7d"
+      },
+      "reviewedAt": "2026-10-09",
+      "notes": "Reverse word order, collapse separating whitespace, and remove leading/trailing whitespace."
+    },
+    {
+      "id": "q_625dc4c3-cc57-4535-9a3f-6cfe84702848",
+      "title": "Maximum Product Subarray",
+      "members": [
+        "leetcode:152",
+        "geeksforgeeks:702919",
+        "code360:9992"
+      ],
+      "fingerprints": {
+        "leetcode:152": "sha256:85d270e32c42e5fde405880fe28abb8f760d1bb525b00476da6122155ffaea58",
+        "geeksforgeeks:702919": "sha256:9191fd181b31004b6df195588e2b08f9739564701c4b2c9b23400a7178854362",
+        "code360:9992": "sha256:990d75480655d6bc1161fc652487d5e41ad3368bba41f6d533898eca6246dbb2"
+      },
+      "reviewedAt": "2026-10-09",
+      "notes": "Maximum product of a nonempty contiguous subarray, allowing negative entries and zeros."
+    },
+    {
+      "id": "q_16e8f76c-dc87-4964-8ab6-2bfb0f7a488f",
+      "title": "Find Minimum in Rotated Sorted Array",
+      "members": [
+        "leetcode:153",
+        "code360:9826"
+      ],
+      "fingerprints": {
+        "leetcode:153": "sha256:eed881580224586421bf0295225ede195d03c50eb25eea3a3e4f44abdf4018d4",
+        "code360:9826": "sha256:e3d96d86e9c6b8b9aa13bee74f2a18d37b733a11067978706179860d19547daf"
+      },
+      "reviewedAt": "2026-10-09",
+      "notes": "Minimum value of a rotated ascending array with distinct elements, in logarithmic time."
+    },
+    {
+      "id": "q_b560ab78-9db2-4f97-a03d-b7820aa70701",
+      "title": "Intersection of Two Linked Lists",
+      "members": [
+        "leetcode:160",
+        "code360:7223"
+      ],
+      "fingerprints": {
+        "leetcode:160": "sha256:ea35e2ba6099adf2223a74c211859c16d0eb06ab9211da9cb5184b6ecbebcdbd",
+        "code360:7223": "sha256:8a09d4340d90663459c7d25fd959c835f2a54522d0a1e6b74087a40a43431bb5"
+      },
+      "reviewedAt": "2026-10-09",
+      "notes": "Return the first shared node by pointer identity in two singly linked lists, or null; value-set intersection remains separate."
+    },
+    {
+      "id": "q_e42bc3a6-853a-4ba5-b00f-e62fa92fceb0",
+      "title": "Find Peak Element",
+      "members": [
+        "leetcode:162",
+        "code360:9688"
+      ],
+      "fingerprints": {
+        "leetcode:162": "sha256:3bc15e2511f915b0074062d4854f2d7fc99148042bd048814bfdfd08a4def6ec",
+        "code360:9688": "sha256:6a70a4a2801968b439f7c4e1d62c884d862c62af37f3d1fff2fb264f3044a8a9"
+      },
+      "reviewedAt": "2026-10-09",
+      "notes": "Return an index of any strict peak with negative-infinity virtual endpoints and unequal adjacent elements."
+    },
+    {
+      "id": "q_7b775206-8679-424d-a75b-f23c0d700216",
+      "title": "Maximum Gap",
+      "members": [
+        "leetcode:164",
+        "geeksforgeeks:702710"
+      ],
+      "fingerprints": {
+        "leetcode:164": "sha256:da3c80d7dd60636da85d1fa90619c7f4af2299760138a2fbebe9493e31221ff0",
+        "geeksforgeeks:702710": "sha256:cfbaba577126d4c732e422124048d2ea566a1f2e7204310f577cc0341eee2bda"
+      },
+      "reviewedAt": "2026-10-09",
+      "notes": "Maximum adjacent gap after sorting values; return zero for fewer than two elements, with a linear-time bucket/radix solution."
+    },
+    {
+      "id": "q_821a9aa8-2eb1-425d-895e-8923959c057e",
+      "title": "Majority Element",
+      "members": [
+        "leetcode:169",
+        "code360:8561",
+        "geeksforgeeks:701220",
+        "code360:8278"
+      ],
+      "fingerprints": {
+        "leetcode:169": "sha256:ab919049f74a53b5fc7666aa9a20e619c81329b20841971521a495c3997dced3",
+        "code360:8561": "sha256:dc34bd2d2726672e93643650c864d786f96cce42f828e2b6993dd8b2fbb860d5",
+        "geeksforgeeks:701220": "sha256:8422c5561d9ec971cf51ecdd172342a3c44099cbfdb4c257a58f34f385257147",
+        "code360:8278": "sha256:383ff8326af625128fd1a24bcef5d608cb4d5f57c926278ced25ee260d528d50"
+      },
+      "reviewedAt": "2026-10-09",
+      "notes": "Return the value occurring strictly more than n/2 times. Some versions guarantee existence, others require a no-majority sentinel.",
+      "versionContracts": {
+        "geeksforgeeks:701220": {
+          "variant": "optional-majority",
+          "notes": "Return -1 if no majority exists."
+        },
+        "code360:8278": {
+          "variant": "optional-majority",
+          "notes": "Return -1 if no majority exists."
+        }
+      }
+    },
+    {
+      "id": "q_7cb9e351-463b-4d1f-8d34-c58f24fd3edd",
+      "title": "Unique Binary Search Trees",
+      "members": [
+        "leetcode:96",
+        "code360:10853"
+      ],
+      "fingerprints": {
+        "leetcode:96": "sha256:25943143a58351986a8bc03f1cb9d1b4ab5fd0e79609c23fe655ec27ba54a595",
+        "code360:10853": "sha256:5fec478e292c749765361d7e76a0bedf5fe1843b2a46e2110cef9aa07ea1456f"
+      },
+      "reviewedAt": "2026-10-10",
+      "notes": "Count structurally unique BSTs on the ordered labels 1..n."
+    },
+    {
+      "id": "q_36ae0b32-cbf8-4dc1-ae2b-aca31de42b4a",
+      "title": "Clone Graph",
+      "members": [
+        "leetcode:133",
+        "code360:9933"
+      ],
+      "fingerprints": {
+        "leetcode:133": "sha256:fa8148ae52db5f9c190996e79dd6b1930c5b56ad68220aca4abdb056d5e9abc5",
+        "code360:9933": "sha256:4d641b9f9e3059ecb5878b7e69932c581125d8c2e672a5229bb331cfab4fa6e8"
+      },
+      "reviewedAt": "2026-10-10",
+      "notes": "Deep-copy the connected undirected graph, preserving labels and neighbor relationships with new nodes."
+    },
+    {
+      "id": "q_80fcd232-e4f8-42ca-b02e-ac1b2e413607",
+      "title": "Single Number",
+      "members": [
+        "leetcode:136",
+        "code360:10413"
+      ],
+      "fingerprints": {
+        "leetcode:136": "sha256:6203ec5909f80d9d4efddc420739d59a1c0f8669429fcf19f4e1d3b44c1e33ca",
+        "code360:10413": "sha256:6220c50e2bfbc9afa3b8da0bc16290b733a959fdec316f62a2cbc1e3fe1479e3"
+      },
+      "reviewedAt": "2026-10-10",
+      "notes": "Find the sole value appearing once while every other value appears twice; XOR meets linear time and constant space."
+    },
+    {
+      "id": "q_6dd80079-b90b-48bc-a0ae-36b10f3d4f20",
+      "title": "Copy List with Random Pointer",
+      "members": [
+        "leetcode:138",
+        "code360:8418"
+      ],
+      "fingerprints": {
+        "leetcode:138": "sha256:1afb210144155ffffb90d71ae31e53cdc82ae42f7158e28339c99663ff6c1c8c",
+        "code360:8418": "sha256:606b4e76fe2c1ed2c37698b4c1ee67bec505f78ec0b095b03ee32535f6323753"
+      },
+      "reviewedAt": "2026-10-10",
+      "notes": "Deep-copy both next and random links of a linked list; copied pointers must reference copied nodes."
+    },
+    {
+      "id": "q_585c4d1a-f0f1-45ab-ade3-176680e9e337",
+      "title": "Word Break",
+      "members": [
+        "leetcode:139",
+        "geeksforgeeks:702073",
+        "code360:9845"
+      ],
+      "fingerprints": {
+        "leetcode:139": "sha256:684f15b4616bb7d816ad4c7d090430d70edde8cd71067b5c4c3aabf19a3cbd41",
+        "geeksforgeeks:702073": "sha256:64252407cba9c16e4098e47d8cdbd819e4b695b4c2de64909203de5a7aaf4a19",
+        "code360:9845": "sha256:a7994a2008ddc29c978f829d61c3c5927f14525ac83ebe071cc1e77234039b51"
+      },
+      "reviewedAt": "2026-10-10",
+      "notes": "Boolean segmentation of a string into reusable dictionary words."
+    },
+    {
+      "id": "q_beeb4c12-07b7-4db7-a82f-0fbb81f76884",
+      "title": "Word Break II",
+      "members": [
+        "leetcode:140",
+        "code360:9373"
+      ],
+      "fingerprints": {
+        "leetcode:140": "sha256:c73a8c6039d35c256fe23c6d4e149661c0b6fe87695bb41b97834a823ec3474c",
+        "code360:9373": "sha256:d7d0a0e18a68206a50a9a9ae7840e6c979618c8216a146d4a1a7dd8e03a57aff"
+      },
+      "reviewedAt": "2026-10-10",
+      "notes": "Enumerate all dictionary-word segmentations as sentences, with words reusable."
+    },
+    {
+      "id": "q_671c5d89-92ba-498f-83ac-62120a431029",
+      "title": "Linked List Cycle II",
+      "members": [
+        "leetcode:142",
+        "code360:9967"
+      ],
+      "fingerprints": {
+        "leetcode:142": "sha256:89f99b73ba50fbc4fa290400a9dadf071e56d2c9e867f20b98dbb7b8ec5c642c",
+        "code360:9967": "sha256:de85e8490e7e64873aacb0a13cf8b18a580a7a69f1dc6942bec07c5b6c887cd2"
+      },
+      "reviewedAt": "2026-10-10",
+      "notes": "Return the entry node of a linked-list cycle, or null when absent; preserve the list."
+    },
+    {
+      "id": "q_13c909f9-15e8-4fbe-9d95-749491db93e9",
+      "title": "Reorder List",
+      "members": [
+        "leetcode:143",
+        "geeksforgeeks:700138"
+      ],
+      "fingerprints": {
+        "leetcode:143": "sha256:81d201a7a211374b1f39bbb8b677b949d5601a994044561b33a9c5361b259c64",
+        "geeksforgeeks:700138": "sha256:da5584e1ad14d5bf0adeeedc56446db95a740b8db14d7c2a098c86d7e7c0f78b"
+      },
+      "reviewedAt": "2026-10-10",
+      "notes": "Reorder existing linked-list nodes by alternating first and last, then second and second-last."
+    },
+    {
+      "id": "q_bc2bde69-f977-477d-8f43-dad495af9fff",
+      "title": "LRU Cache",
+      "members": [
+        "leetcode:146",
+        "geeksforgeeks:700366",
+        "code360:22940"
+      ],
+      "fingerprints": {
+        "leetcode:146": "sha256:88b0c0be89abba976f23df58f6577dd825eae2ad21bcad10a94e84538a89f18f",
+        "geeksforgeeks:700366": "sha256:22d6f54d8ec21c36aee2e67ad3fa03c747c1484b01c0a29401b7eb0a22a5df85",
+        "code360:22940": "sha256:b83e20c7e95950370c385ba7d98d235a6f6577157ac8b2e754e923f75d26c569"
+      },
+      "reviewedAt": "2026-10-10",
+      "notes": "LRU key/value cache with get=-1 for misses, updates on put, and least-recently-used eviction; hash map plus list meets all bounds."
+    },
+    {
+      "id": "q_146584bf-7d2d-4b39-a86e-b185bd054e0d",
+      "title": "Repeated DNA Sequences",
+      "members": [
+        "leetcode:187",
+        "code360:11835"
+      ],
+      "fingerprints": {
+        "leetcode:187": "sha256:adf81522b420d58e6c3b16e5410c93bce20817fed91d5d972595e9c98083eaba",
+        "code360:11835": "sha256:9e5cd70738f9640d5115ad442761be828e117267e805fc1b8857d990a0f64422"
+      },
+      "reviewedAt": "2026-10-10",
+      "notes": "Return all length-10 DNA substrings occurring more than once. Upper/lower-case alphabet serialization is a representation difference."
+    },
+    {
+      "id": "q_11d8bbca-1d35-4681-8f6d-9b82b804ce5d",
+      "title": "Best Time to Buy and Sell Stock IV",
+      "members": [
+        "leetcode:188",
+        "code360:9676"
+      ],
+      "fingerprints": {
+        "leetcode:188": "sha256:b2fec4e80150bd648530eaa18f395ed821d2ff8ea93b221195a3106ede486b95",
+        "code360:9676": "sha256:d8e8e701a6954819be79cda385a6c2e29d83f8822f3910d9ccf94100205473f6"
+      },
+      "reviewedAt": "2026-10-10",
+      "notes": "Maximum stock profit with at most k completed non-overlapping buy/sell transactions."
+    },
+    {
+      "id": "q_4553e559-4fd1-4bb5-a667-379fc905fb60",
+      "title": "Delete Duplicate Emails",
+      "members": [
+        "leetcode:196",
+        "code360:14328"
+      ],
+      "fingerprints": {
+        "leetcode:196": "sha256:d58e4af741997d5ac38a7fc0d54fde5ba7cee6c80d6d9f0db2c2873c207a9006",
+        "code360:14328": "sha256:c231ad5ab38592743fbe85409e2be1f6c2ea1c206d6efa71363f13a8ba78c936"
+      },
+      "reviewedAt": "2026-10-10",
+      "notes": "Delete duplicate-email rows, retaining the smallest id for each email."
+    },
+    {
+      "id": "q_82f04fee-cee4-4a25-a13c-4702c8116f1d",
+      "title": "Rising Temperature",
+      "members": [
+        "leetcode:197",
+        "code360:14318"
+      ],
+      "fingerprints": {
+        "leetcode:197": "sha256:84a3bb855d46be4b53b0c5ecf84895b8e2973029ac7abd4fae3fb24135a49146",
+        "code360:14318": "sha256:df1a7d38008962d6e0ecf12f06fbf067176e37df9b9c31df1d86cb70555057fa"
+      },
+      "reviewedAt": "2026-10-10",
+      "notes": "Return weather row IDs with temperature greater than the preceding calendar day."
+    },
+    {
+      "id": "q_26f247cd-6c6f-4158-a7be-13190d6edad5",
+      "title": "House Robber",
+      "members": [
+        "leetcode:198",
+        "code360:7278",
+        "code360:22899"
+      ],
+      "fingerprints": {
+        "leetcode:198": "sha256:7958f91e322018bd8a6e29a28bdca2ee21beb14abb53d95a02dd818301fef02b",
+        "code360:7278": "sha256:ab8aaede8cf47c65b8c902f960db52cbe778b0001dcf866b3af8897245d58fdd",
+        "code360:22899": "sha256:3552ab607a26c65f1d751774b69466464b5d64154bca3dda946af12ae40fa3c6"
+      },
+      "reviewedAt": "2026-10-10",
+      "notes": "Maximum sum of non-adjacent house values in a line; not the circular variant or the equal-value n,k special case."
+    },
+    {
+      "id": "q_4de8c299-9692-4256-85cc-2a49b8e1ee9c",
+      "title": "Isomorphic Strings",
+      "members": [
+        "leetcode:205",
+        "geeksforgeeks:701298",
+        "code360:10035"
+      ],
+      "fingerprints": {
+        "leetcode:205": "sha256:341692b5ae67fd2a8afcf4de08a7fef58e4d493efb4bde0105afdbff9fbbcf54",
+        "geeksforgeeks:701298": "sha256:b6f26c93d398ca79509d15af5494016067d918d096c0e4fd8dc69fecb0e2c639",
+        "code360:10035": "sha256:3cc43f585156232b912085fb60dbac60be210509d2db7bc9998dc27f36e342f1"
+      },
+      "reviewedAt": "2026-10-10",
+      "notes": "Boolean bijective character substitution preserving all positions and equal-character occurrences."
+    },
+    {
+      "id": "q_0d108f97-d0bf-425f-b0ad-c929f90acfdb",
+      "title": "Course Schedule",
+      "members": [
+        "leetcode:207",
+        "code360:9424"
+      ],
+      "fingerprints": {
+        "leetcode:207": "sha256:e0b5755e348f8352b86b3b0421f379bd72c186fd6804b2fc387b6ffffd137974",
+        "code360:9424": "sha256:999f87e170b0b989597a829a8abfd8172292dfcbecca5c282fd6d3b34629cbaf"
+      },
+      "reviewedAt": "2026-10-10",
+      "notes": "Boolean feasibility of completing every course under prerequisite edges; course labels are identifiers, and a cycle makes it impossible."
+    },
+    {
+      "id": "q_7ebbc47c-943c-4aa7-9456-b8c14c38d306",
+      "title": "Course Schedule II",
+      "members": [
+        "leetcode:210",
+        "geeksforgeeks:707516",
+        "code360:9611"
+      ],
+      "fingerprints": {
+        "leetcode:210": "sha256:ff3a45ad777180142c9e484c036a4b28ce9fbe687f57c5b27ea8e7eaf4e95792",
+        "geeksforgeeks:707516": "sha256:b20b1c98f314fd67f79e9ef78b16de5fd82d54f223581a8907373d0b4f284256",
+        "code360:9611": "sha256:bbeabe6887d77be0285760a5956c62123290b8ba33563e43605685e05386f80b"
+      },
+      "reviewedAt": "2026-10-10",
+      "notes": "Return any topological course ordering, or an empty list if prerequisite constraints are cyclic."
+    },
+    {
+      "id": "q_e89ea9d5-3734-46b3-9000-fb06790fee6d",
+      "title": "Design Add and Search Words Data Structure",
+      "members": [
+        "leetcode:211",
+        "geeksforgeeks:876601"
+      ],
+      "fingerprints": {
+        "leetcode:211": "sha256:67a9ba294e492c8ebef8753bdb8a1d3e055c7633bf029b1db62514c323398086",
+        "geeksforgeeks:876601": "sha256:748c40e4bc0cce371d31dd06278c4bf95cd1a57d23ddec79fa1f3e0f652624bc"
+      },
+      "reviewedAt": "2026-10-10",
+      "notes": "Word dictionary with insertion and whole-word lookup where dot matches any one character."
+    },
+    {
+      "id": "q_1ad4f472-df7a-4205-ab97-bf9146ad0e1e",
+      "title": "Word Search II",
+      "members": [
+        "leetcode:212",
+        "geeksforgeeks:876764"
+      ],
+      "fingerprints": {
+        "leetcode:212": "sha256:0320448efbef570d7d738804bddd4d3d43f365f3a257c19cd5a5e9fc3c120384",
+        "geeksforgeeks:876764": "sha256:5a1d357bb007f541e2206a6fdd70f4be47e34471618c175ed01b6cd778be81d6"
+      },
+      "reviewedAt": "2026-10-10",
+      "notes": "Return dictionary words occurring in an orthogonally adjacent character grid, with no cell reused within one word."
+    },
+    {
+      "id": "q_755348c6-5c65-4a7d-85ee-dfef6cf653c4",
+      "title": "House Robber II",
+      "members": [
+        "leetcode:213",
+        "code360:8185"
+      ],
+      "fingerprints": {
+        "leetcode:213": "sha256:410d1cb616335cca1846290c01e88b410380b5049d1f7750725728dfcd57d072",
+        "code360:8185": "sha256:35764ce0c2f22280c046f5d593187431fe6b9d35cc9a9b62667f19ce3dbd7872"
+      },
+      "reviewedAt": "2026-10-10",
+      "notes": "Maximum sum of robbed house values on a cycle with adjacent houses forbidden, including the first/last adjacency."
+    },
+    {
+      "id": "q_4dfeabac-0f16-4a7c-8180-73ffdda20932",
+      "title": "Single Number III",
+      "members": [
+        "leetcode:260",
+        "code360:7599"
+      ],
+      "fingerprints": {
+        "leetcode:260": "sha256:96ff49a214e0aa18c0add79fbf2f0984f87fbf3e817cbcdad555fb54b6e7086a",
+        "code360:7599": "sha256:8403103191b66fb2d4e1757a48d86df0be73dc72a038c4c20ce565fcfad34a28"
+      },
+      "reviewedAt": "2026-10-10",
+      "notes": "Return the two once-occurring values when every other integer occurs twice, in linear time and constant space."
+    },
+    {
+      "id": "q_8e034a7b-0771-4f59-b241-8e22805e55fc",
+      "title": "Ugly Number II",
+      "members": [
+        "leetcode:264",
+        "geeksforgeeks:712222"
+      ],
+      "fingerprints": {
+        "leetcode:264": "sha256:faaf8ad51dce6d80546702bfda3d19ad21918893bddafa2f20162bcdbf95c0be",
+        "geeksforgeeks:712222": "sha256:4ecfbf53db04d7971bb672be18cf019436c9502ecd41af11450aed2331d36581"
+      },
+      "reviewedAt": "2026-10-10",
+      "notes": "Return the nth positive integer with no prime factors outside 2,3,5."
+    },
+    {
+      "id": "q_63eca8bb-cce2-4bd5-9ee5-95b85ded7464",
+      "title": "First Bad Version",
+      "members": [
+        "leetcode:278",
+        "code360:10083"
+      ],
+      "fingerprints": {
+        "leetcode:278": "sha256:99b8e70a4804a7017f380437e49f5abce170ba2b9e5f8ab065646fe694f28f9d",
+        "code360:10083": "sha256:6cb31f27865b33e7e62661ee6ca0d7d91bd5cdcf823c52cff903355601f42ada"
+      },
+      "reviewedAt": "2026-10-10",
+      "notes": "Find the first bad version in a monotone good/bad sequence with logarithmically many predicate calls."
+    },
+    {
+      "id": "q_eda41e9d-ec00-49ff-9f81-ed43619e8ea8",
+      "title": "Expression Add Operators",
+      "members": [
+        "leetcode:282",
+        "geeksforgeeks:712214",
+        "code360:43628"
+      ],
+      "fingerprints": {
+        "leetcode:282": "sha256:eca899a534247bcd7e0b5014382de1b53b67dc06289a172bb4f624ef08d01dc1",
+        "geeksforgeeks:712214": "sha256:782406869255597a32eed0cc5c1e25c7d48756f3bf1d1b9b260d3c734dfa0a54",
+        "code360:43628": "sha256:534c1b638ac089db644b2c894c2230e1c49c300cbe19dfd69d5d647a45cb7e16"
+      },
+      "reviewedAt": "2026-10-10",
+      "notes": "Enumerate expressions formed by inserting +,-,* into a digit string to reach the target; normal multiplication precedence and no leading-zero operands."
+    },
+    {
+      "id": "q_1839d29e-a6de-42e3-bec8-e183d1a1d8af",
+      "title": "Peeking Iterator",
+      "members": [
+        "leetcode:284",
+        "code360:10672"
+      ],
+      "fingerprints": {
+        "leetcode:284": "sha256:c84aad8ec4ccd2a911e2703126ee583c705111336910a0bf99f8e5ddc43524c4",
+        "code360:10672": "sha256:f8e42eedd95ae8861ba4fedb8127b8c0e679e9149e01b81d2e25970fa1ff169e"
+      },
+      "reviewedAt": "2026-10-10",
+      "notes": "Iterator adapter where peek returns the next value without advancing, alongside next and hasNext."
+    },
+    {
+      "id": "q_b6cd8d97-840e-4a44-aaaf-ecd5da376f03",
+      "title": "Game of Life",
+      "members": [
+        "leetcode:289",
+        "code360:10280"
+      ],
+      "fingerprints": {
+        "leetcode:289": "sha256:a2f8f51526607c001a061ad40f043fc8f250875fa0269383ccb6b42e2d30a19b",
+        "code360:10280": "sha256:8b6073a60d2444d56262d3389358ad48da25e7aef457ff4aaf1af3b7f32f411a"
+      },
+      "reviewedAt": "2026-10-10",
+      "notes": "Compute one simultaneous generation of the eight-neighbor Conway automaton, with birth at three and survival at two or three."
+    },
+    {
+      "id": "q_08b72aba-e6c6-46d9-a8b1-c42705a05372",
+      "title": "Word Pattern",
+      "members": [
+        "leetcode:290",
+        "code360:9382"
+      ],
+      "fingerprints": {
+        "leetcode:290": "sha256:f49033570ed6f6cd8d444c0f4a2c2668becaba87a88672982725b909b2b427bf",
+        "code360:9382": "sha256:b0160334d56ceee7d1b1044bf260d6fc65dc88995744ba1e13d4bb69b5dfb11b"
+      },
+      "reviewedAt": "2026-10-10",
+      "notes": "Boolean bijection between pattern characters and whitespace-delimited words."
+    },
+    {
+      "id": "q_185a7c2d-2ccc-40c9-8170-5aad541de947",
+      "title": "Serialize and Deserialize Binary Tree",
+      "members": [
+        "leetcode:297",
+        "geeksforgeeks:700281",
+        "code360:8820"
+      ],
+      "fingerprints": {
+        "leetcode:297": "sha256:ad1577efc70db8ec5dd444878d282e78ecee2d6b4d3555f0bf5cbcabb4b59391",
+        "geeksforgeeks:700281": "sha256:0c5185f6783ccb72f50c538995f67525d8c67e704ad6728ee2206563f61a59fc",
+        "code360:8820": "sha256:cd7255eb67aa388cafb9f91b4d658c84415bfd2c8ec5bb981d6e023827ba4623"
+      },
+      "reviewedAt": "2026-10-10",
+      "notes": "Serialize and deserialize a binary tree with identical round-trip structure and node values; serialized storage type is a platform interface."
+    },
+    {
+      "id": "q_278a20ac-fc3f-404a-93f4-e83b9b90f938",
+      "title": "Longest Increasing Subsequence",
+      "members": [
+        "leetcode:300",
+        "geeksforgeeks:701428",
+        "code360:7226",
+        "code360:9573"
+      ],
+      "fingerprints": {
+        "leetcode:300": "sha256:8fc84ff5147a7a958c4d326d5c5772412d9a0df4cba27f6f43817e3faeec1d9e",
+        "geeksforgeeks:701428": "sha256:1a59acdfc4b577e0188e75cc6bb3294c914863ed8a2c4d406ec379002d9226f3",
+        "code360:7226": "sha256:5ba933b624fb60ee0a433603c6a825b4fd678a69897b7cd41df5412438804f08",
+        "code360:9573": "sha256:20803caf635c4a607ab59e873700f6cb9b86e33b38a32b5fcf95ba6e84a5f805"
+      },
+      "reviewedAt": "2026-10-10",
+      "notes": "Return the length of a strictly increasing subsequence; not non-decreasing, contiguous, or count of subsequences."
+    },
+    {
+      "id": "q_42596de0-b3a5-42b7-a643-845b0d7a0288",
+      "title": "Reverse Substrings Between Each Pair of Parentheses",
+      "members": [
+        "leetcode:1190",
+        "code360:12745"
+      ],
+      "fingerprints": {
+        "leetcode:1190": "sha256:87a533926536ffaf00c285654b9ab8ae0917337a43068a8ce412aaaede11b48b",
+        "code360:12745": "sha256:4e3ae2f9236547414226bc8f74c84f372de4be8f5c507e4884062220c9302530"
+      },
+      "reviewedAt": "2026-10-10",
+      "notes": "Reverse text inside matching parentheses from innermost out and remove all parentheses."
+    },
+    {
+      "id": "q_09513a79-c99c-4079-ae7e-4a18f7985583",
+      "title": "Factorial Trailing Zeroes",
+      "members": [
+        "leetcode:172",
+        "geeksforgeeks:704825"
+      ],
+      "fingerprints": {
+        "leetcode:172": "sha256:ce4b0b98fa4de583b8743dbd8b67c3eb62ca1d6b1e02f0cc756a9ff0163078b7",
+        "geeksforgeeks:704825": "sha256:96e6a1086a3fd8b034bfff396498dbd57f2d5c6fb33bbafa3914db209627b67c"
+      },
+      "reviewedAt": "2026-10-10",
+      "notes": "Number of trailing zeros in n factorial."
+    },
+    {
+      "id": "q_7ad638db-386b-47b9-84aa-7f326bb17246",
+      "title": "Longest String Chain",
+      "members": [
+        "leetcode:1048",
+        "geeksforgeeks:712573"
+      ],
+      "fingerprints": {
+        "leetcode:1048": "sha256:b9658f05640f4a7ae2f71994ef55b3e1fb022070f6822fe99eeea948856d3340",
+        "geeksforgeeks:712573": "sha256:a93a6bf3bab50ed6b876989232facd8758f8378b2200bc2c6e72e79d5b064133"
+      },
+      "reviewedAt": "2026-10-10",
+      "notes": "Longest word-chain length where each step inserts exactly one character without changing existing character order."
+    },
+    {
+      "id": "q_3e94d675-57d2-467e-b5c8-bc37a8a14888",
+      "title": "Last Moment Before All Ants Fall Out of a Plank",
+      "members": [
+        "leetcode:1503",
+        "geeksforgeeks:878151"
+      ],
+      "fingerprints": {
+        "leetcode:1503": "sha256:d9375957eb8611fb54b611ef0eeff2153fbd6ff06cc90de0235b5c776faac16f",
+        "geeksforgeeks:878151": "sha256:0880c81a48f22b84523da517fc0cbb8e4e03dc8f3604e2a4f96f60f9e6604489"
+      },
+      "reviewedAt": "2026-10-10",
+      "notes": "Time of the last ant falling off a plank with unit speed and instantaneous direction swaps on collision."
+    },
+    {
+      "id": "q_7533692b-6563-4333-8fa9-06e786d52273",
+      "title": "Split Array into Fibonacci Sequence",
+      "members": [
+        "leetcode:842",
+        "code360:12445"
+      ],
+      "fingerprints": {
+        "leetcode:842": "sha256:451a7d0cca2b025bf1d0f52d397334c61de124bd523185664d1b08071c87a686",
+        "code360:12445": "sha256:f6a1237bbeb14306ebe667ded20ad76ab6fbd7a4de666d4769448b4e1f6ead4c"
+      },
+      "reviewedAt": "2026-10-10",
+      "notes": "Split a digit string into at least three 32-bit nonnegative Fibonacci terms, with no leading zero except zero itself; any valid split or empty."
+    },
+    {
+      "id": "q_229e1d27-b8b0-4c5f-9a43-5665c2bbaa4d",
+      "title": "Make Sum Divisible by P",
+      "members": [
+        "leetcode:1590",
+        "code360:12551"
+      ],
+      "fingerprints": {
+        "leetcode:1590": "sha256:1a8371bb4123afdd8f51db4484f846799366f33a0958703751e941e03c1f44ff",
+        "code360:12551": "sha256:d91dacf32ab7c425c4d4fd0f01958780c8f04b27e7bf0c07f97ba82a1af9752c"
+      },
+      "reviewedAt": "2026-10-10",
+      "notes": "Shortest removable contiguous subarray making the remaining positive-array sum divisible by p; cannot remove the whole array, -1 if impossible."
+    },
+    {
+      "id": "q_d07eb176-768d-4231-b9e3-f904b181c225",
+      "title": "Reformat Department Table",
+      "members": [
+        "leetcode:1179",
+        "code360:14361"
+      ],
+      "fingerprints": {
+        "leetcode:1179": "sha256:70796f09ff79a050262619d889d69ade2b255c0df82f8145bcaf3feb7d29ddaa",
+        "code360:14361": "sha256:4a5c74d13cdaeb3f7b91da0dd224bf9332319f731ea7937771076a3c729606f6"
+      },
+      "reviewedAt": "2026-10-10",
+      "notes": "Pivot monthly department revenue into one row per department with a column for each named month."
+    },
+    {
+      "id": "q_d56d6ab8-d0fa-497a-81be-4122b5176b7d",
+      "title": "Number of Good Leaf Nodes Pairs",
+      "members": [
+        "leetcode:1530",
+        "code360:10857"
+      ],
+      "fingerprints": {
+        "leetcode:1530": "sha256:155e5e278e457ebb3c92a46b1f6a446fd93b253e7cf9ab2c89a45151a0980de0",
+        "code360:10857": "sha256:a642632ed42c0f871c2878839f46e9910e4e3eccd4003b52fdff61301a047f38"
+      },
+      "reviewedAt": "2026-10-10",
+      "notes": "Count distinct leaf pairs whose tree distance in edges is at most the supplied threshold."
+    },
+    {
+      "id": "q_9aa563c8-1ef5-470b-ad47-a64a6d01cb44",
+      "title": "Monotone Increasing Digits",
+      "members": [
+        "leetcode:738",
+        "code360:12058"
+      ],
+      "fingerprints": {
+        "leetcode:738": "sha256:e2cbd5dbecc3a18a8f2f8cb911efbd4cec721d6721a52eb0760f56ae671ca920",
+        "code360:12058": "sha256:fc289e1f2fc73cabeabff13c80535a383ba0a1787adc6d8183ac5998d2c9f937"
+      },
+      "reviewedAt": "2026-10-10",
+      "notes": "Largest number at most n with non-decreasing decimal digits."
+    },
+    {
+      "id": "q_7f213da2-53f1-41a2-83e6-8fe692d4e7dc",
+      "title": "Binary Tree Cameras",
+      "members": [
+        "leetcode:968",
+        "code360:10526"
+      ],
+      "fingerprints": {
+        "leetcode:968": "sha256:1f9e94be3dc2c05821abb520e4374bc1c9d55cbd1fb947d6a23d1e248f8e619e",
+        "code360:10526": "sha256:dddb8b9b53a37d3d5021799b3b3719bbd5bb776205587091f0511e0a587f4bba"
+      },
+      "reviewedAt": "2026-10-10",
+      "notes": "Minimum cameras on tree nodes, each covering its parent, itself and immediate children."
+    },
+    {
+      "id": "q_3a812377-edd5-4d9b-b262-6faa63e140ac",
+      "title": "Palindrome Linked List",
+      "members": [
+        "leetcode:234",
+        "code360:7985",
+        "geeksforgeeks:700391"
+      ],
+      "fingerprints": {
+        "leetcode:234": "sha256:4a7ccfde810ce028d09fbcf4a3d0a7dc25fbbbf55d8ce4e260a3fb1a4acf072f",
+        "code360:7985": "sha256:4eca1767cb832043cb0c94523c3ab9ae5786843cb8c6e36f01f2d7adf18f5917",
+        "geeksforgeeks:700391": "sha256:3164bffe05604a40d910804210147b22eedf084added1cb915a1289c030dee66"
+      },
+      "reviewedAt": "2026-10-10",
+      "notes": "Boolean palindrome predicate on singly linked-list values."
+    },
+    {
+      "id": "q_32128216-5000-4309-a635-20d305aa2bb0",
+      "title": "Count the Number of Good Subarrays",
+      "members": [
+        "leetcode:2537",
+        "code360:39844"
+      ],
+      "fingerprints": {
+        "leetcode:2537": "sha256:6f8adb01d029071a7136fc37f2329128502253de370b450f07facb987677483e",
+        "code360:39844": "sha256:39aaec012624d126b0dfe36e9b9467e6f63fd7f284ea109d02bba96f1b7c6e18"
+      },
+      "reviewedAt": "2026-10-10",
+      "notes": "Count contiguous subarrays with at least k equal-value index pairs; not a same-title task with another good-subarray definition."
+    },
+    {
+      "id": "q_66e58091-8901-4316-8c2e-b7e5be11c69b",
+      "title": "Diameter of Binary Tree",
+      "members": [
+        "leetcode:543",
+        "geeksforgeeks:700165"
+      ],
+      "fingerprints": {
+        "leetcode:543": "sha256:7ecdd5e9e64ef8dc245e27c7fb46aff9694701cda569139f8fd8e88ad00bde6b",
+        "geeksforgeeks:700165": "sha256:7e2d3ceaeb5ee494c9791b00682c314bed198c908b305f3ed95a1233bfe9bec6"
+      },
+      "reviewedAt": "2026-10-10",
+      "notes": "Binary-tree diameter as the maximum simple-path edge count, not node count."
+    },
+    {
+      "id": "q_4f7e3d24-0529-4af6-987e-53a80c7cbd9e",
+      "title": "The Latest Login in 2020",
+      "members": [
+        "leetcode:1890",
+        "code360:14534"
+      ],
+      "fingerprints": {
+        "leetcode:1890": "sha256:78f3b05751384175a4d07286a9b00c511ad6eee53643d4e6f77a85c14a52cfd4",
+        "code360:14534": "sha256:ac432218889127acc84d74e9005f19f6ce67079447c21faf321e11ab0fb9a368"
+      },
+      "reviewedAt": "2026-10-10",
+      "notes": "Latest login per user within calendar year 2020, excluding users without a login that year."
+    },
+    {
+      "id": "q_c4c43b9a-2835-4138-8c15-a7441e82ef3f",
+      "title": "Not Boring Movies",
+      "members": [
+        "leetcode:620",
+        "code360:14345"
+      ],
+      "fingerprints": {
+        "leetcode:620": "sha256:1ed9deb59e0ff6dfa0af0a9b4f6f72eae8413523ed09e02809c523582a21b01e",
+        "code360:14345": "sha256:4f345c728d5d90fb5e9aeb29289cf51c84b36326e37981701710c21d86b170fd"
+      },
+      "reviewedAt": "2026-10-10",
+      "notes": "Select odd-ID movies whose description is not boring, sorted by rating descending."
+    },
+    {
+      "id": "q_13a881bc-5c5a-45c9-b8d1-ce6ae6770172",
+      "title": "Count Salary Categories",
+      "members": [
+        "leetcode:1907",
+        "code360:14530"
+      ],
+      "fingerprints": {
+        "leetcode:1907": "sha256:70551c2aa9e492f0956dfc90b2c15a0953ba03618ea23f67d92bfcf16617f88b",
+        "code360:14530": "sha256:fbee727bf907598425c63e4f893b628b0c5debeca27833f8afaf7c153622690f"
+      },
+      "reviewedAt": "2026-10-10",
+      "notes": "Count accounts in salary ranges below 20000, inclusive 20000..50000, above 50000; include zero-count categories."
+    },
+    {
+      "id": "q_bf0475da-16b8-452d-a6c0-e9f2593d1b82",
+      "title": "Fix Names in a Table",
+      "members": [
+        "leetcode:1667",
+        "code360:14538"
+      ],
+      "fingerprints": {
+        "leetcode:1667": "sha256:3c0155d773b9a1b8a0171923b3eaf5f9efe49e3f7913688d81d665356eb22c41",
+        "code360:14538": "sha256:4df7ff10d3acfd4e363d6e39e9d3ea62289f6688c0817d3575ceed5746b84841"
+      },
+      "reviewedAt": "2026-10-10",
+      "notes": "Capitalize the first character of each user name and lowercase the rest, ordering results by user_id."
+    },
+    {
+      "id": "q_bae94676-d1c8-4d2d-b072-51ffdaaf525c",
+      "title": "Maximum Sum Circular Subarray",
+      "members": [
+        "leetcode:918",
+        "code360:10761"
+      ],
+      "fingerprints": {
+        "leetcode:918": "sha256:0ae988f618b602748529246f30b9c6a8169d018de20ee89b81ee2fa0689babea",
+        "code360:10761": "sha256:453042f777270a0e3a7d9d51f9eb3583156d01e2f5da0848ebf02ea36c33e778"
+      },
+      "reviewedAt": "2026-10-10",
+      "notes": "Maximum sum of a nonempty circular-array subarray using each position at most once."
+    },
+    {
+      "id": "q_bde2f12f-a8a9-41f6-a3dc-071b2e3273fd",
+      "title": "Sliding Puzzle",
+      "members": [
+        "leetcode:773",
+        "code360:10852"
+      ],
+      "fingerprints": {
+        "leetcode:773": "sha256:96b55387f34da123b2dc1668c452ef9b016e038750f590e02712551ee75f7de8",
+        "code360:10852": "sha256:3981f38ede8a6b653a059d19a4807fc1498011129566fccea76a1abaf97a363d"
+      },
+      "reviewedAt": "2026-10-10",
+      "notes": "Minimum orthogonal blank swaps to solve the fixed 2x3 sliding puzzle, -1 when unreachable."
+    },
+    {
+      "id": "q_1f99ca18-03ae-412f-8841-436ba7630e1f",
+      "title": "Customer Placing the Largest Number of Orders",
+      "members": [
+        "leetcode:586",
+        "code360:14331"
+      ],
+      "fingerprints": {
+        "leetcode:586": "sha256:71ea25b809e277a2f49a597b31cf7c81ab23edefe987ea4fedf5de74330b2067",
+        "code360:14331": "sha256:24482fd9d92e58985e414534c04a6e8c84c31bf6bbb1beb78ee0530bcd5bafa0"
+      },
+      "reviewedAt": "2026-10-10",
+      "notes": "Customer number with the greatest number of orders, with a unique winner guaranteed."
+    },
+    {
+      "id": "q_26aa1f9b-a8b8-4a35-8d47-0a151fa2fd84",
+      "title": "Most Stones Removed with Same Row or Column",
+      "members": [
+        "leetcode:947",
+        "code360:11063"
+      ],
+      "fingerprints": {
+        "leetcode:947": "sha256:08e3006a5ce7e4b9fad7aa7c735ed6117b359f92d9f61e5422f0831a17b1d414",
+        "code360:11063": "sha256:3889b6b775cc4a5f22fab615b12ff71b7487cf11b4c0821ddaffc2cbd1c1f6e8"
+      },
+      "reviewedAt": "2026-10-10",
+      "notes": "Maximum removable stones where each removed stone shares a row or column with a remaining stone."
+    },
+    {
+      "id": "q_1406b058-07d6-456a-bdd3-7b4bc5899cfb",
+      "title": "Reformat Date",
+      "members": [
+        "leetcode:1507",
+        "code360:10641"
+      ],
+      "fingerprints": {
+        "leetcode:1507": "sha256:b15cc01139b9f042057b46518e2b9d5c4474765c5f99d516a82fe14d5eca24ce",
+        "code360:10641": "sha256:a2f20fe1dd5227cc59043ca7d42ff3a903e95c280a97216b936c65353aa958fd"
+      },
+      "reviewedAt": "2026-10-10",
+      "notes": "Convert a valid ordinal-day and English month-name date to zero-padded YYYY-MM-DD."
+    },
+    {
+      "id": "q_ca4d8655-1d2d-4988-b103-db75af024568",
+      "title": "Increasing Order Search Tree",
+      "members": [
+        "leetcode:897",
+        "code360:10517"
+      ],
+      "fingerprints": {
+        "leetcode:897": "sha256:3981db36982c2d4c51a88beddbd498dcc2dd27d56b841f20d335b181546c14e1",
+        "code360:10517": "sha256:c6f609743ec1437a900243eb73584a9b50e988ee3eb4072812d80acdc8483e0f"
+      },
+      "reviewedAt": "2026-10-10",
+      "notes": "Rearrange BST nodes into the ascending inorder right-only chain with all left links null."
+    },
+    {
+      "id": "q_5b00a976-5905-45d2-a180-8d09041dfd0f",
+      "title": "Non-decreasing Array",
+      "members": [
+        "leetcode:665",
+        "code360:7574"
+      ],
+      "fingerprints": {
+        "leetcode:665": "sha256:fa4ee201d13f48130a8034648a5419c981c8e40a46ba716699088eca84d46445",
+        "code360:7574": "sha256:7dd2bef965774097e449fe30ed6f1cc2ed77ca118305fe04804db9ae9ee5b7a4"
+      },
+      "reviewedAt": "2026-10-10",
+      "notes": "Boolean feasibility of making an array non-decreasing by modifying at most one value."
+    },
+    {
+      "id": "q_9387298b-30c4-454a-98fd-0f101ae64559",
+      "title": "Longest Palindromic Subsequence",
+      "members": [
+        "leetcode:516",
+        "geeksforgeeks:703355"
+      ],
+      "fingerprints": {
+        "leetcode:516": "sha256:b6bf1a6d3f71233eee1c0df7ba343097c627af4496b1937999d9e8c6dd857bd2",
+        "geeksforgeeks:703355": "sha256:795e9b6e5726f619af67054a5752530fd5b3aa78b13476bb2e4312cc5140adb5"
+      },
+      "reviewedAt": "2026-10-10",
+      "notes": "Length of the longest palindromic subsequence, not a contiguous substring."
+    },
+    {
+      "id": "q_a5bc34a8-104c-48d5-a547-1a5aa59f7c3c",
+      "title": "Min Cost Climbing Stairs",
+      "members": [
+        "leetcode:746",
+        "geeksforgeeks:708151"
+      ],
+      "fingerprints": {
+        "leetcode:746": "sha256:eda55ae787293bcda360469fa76154b51810db31e8b6966584b9a19e307b1c5a",
+        "geeksforgeeks:708151": "sha256:dc7dc34daec9de774efffd4f30aeb2734afb14212972376b037dc7442fea3490"
+      },
+      "reviewedAt": "2026-10-10",
+      "notes": "Minimum stair-climbing cost with one/two-step moves and either index zero or one as a starting step."
+    },
+    {
+      "id": "q_36f4339a-83cb-4e49-a44a-2b430a489a50",
+      "title": "Longest Palindromic Substring",
+      "members": [
+        "leetcode:5",
+        "geeksforgeeks:706172",
+        "code360:7624",
+        "code360:8506",
+        "code360:8523",
+        "code360:22893"
+      ],
+      "reviewedAt": "2026-10-10",
+      "fingerprints": {
+        "leetcode:5": "sha256:0cc4b4f47420d28b5e3f8a0625874217786db9723d673afd2e2bfeb9a14dea44",
+        "geeksforgeeks:706172": "sha256:b66838b3eeea009111daec9682c17b12a0eeef2f2c20abc46bee8c1911ff2669",
+        "code360:7624": "sha256:dfbd7b946b41f14e8af85fcf9fda81befba81920a26bf0f70c55a69c468878af",
+        "code360:8506": "sha256:555b95e236cc0c53f6395c44c520f8c15df641116af41a75c0a36ca4dd3230ca",
+        "code360:8523": "sha256:49d8b0421571edf2303bb5dfa639bfe06fe99277ca229e804e7983160313f333",
+        "code360:22893": "sha256:ef840e9254b3ccb7e985b62ddc684e3b53832f5d41b893581d44bf0abbef946f"
+      },
+      "notes": "Core task: return a longest palindromic substring. Tie-breaking is an explicit version contract, not a separate canonical task.",
+      "versionContracts": {
+        "leetcode:5": {
+          "variant": "any-longest",
+          "notes": "Any maximum-length palindrome is accepted."
+        },
+        "code360:7624": {
+          "variant": "any-longest",
+          "notes": "Any maximum-length palindrome is accepted."
+        },
+        "code360:22893": {
+          "variant": "any-longest",
+          "notes": "Any maximum-length palindrome is accepted."
+        },
+        "geeksforgeeks:706172": {
+          "variant": "leftmost-longest",
+          "notes": "Return the earliest maximum-length palindrome."
+        },
+        "code360:8523": {
+          "variant": "leftmost-longest",
+          "notes": "Return the maximum-length palindrome with the smaller start index."
+        },
+        "code360:8506": {
+          "variant": "rightmost-longest",
+          "notes": "Return the rightmost maximum-length palindrome."
+        }
+      }
+    },
+    {
+      "id": "q_fcb1b25a-69e0-4588-bc38-e5b111d0de93",
+      "title": "Reverse Integer",
+      "members": [
+        "leetcode:7",
+        "code360:10753"
+      ],
+      "reviewedAt": "2026-10-10",
+      "fingerprints": {
+        "leetcode:7": "sha256:4dc2287641492f4e4efe0dbe468d61d30c959d3c66b7a4dee01c6ad58ec309b1",
+        "code360:10753": "sha256:9d314b166436dbedd2bbe3c8ce10e9cc3f3952a3f860389fc82ab2e429f8924f"
+      },
+      "notes": "Reverse a signed 32-bit integer using 32-bit arithmetic; overflow sentinels belong to individual versions.",
+      "versionContracts": {
+        "leetcode:7": {
+          "variant": "overflow-zero",
+          "notes": "Return 0 when reversal overflows signed 32-bit range."
+        },
+        "code360:10753": {
+          "variant": "overflow-negative-one",
+          "notes": "Return -1 when reversal overflows signed 32-bit range."
+        }
+      }
+    },
+    {
+      "id": "q_39cbd64a-d424-43e3-87e9-8156ddd96aff",
+      "title": "Two Sum II - Input Array Is Sorted",
+      "members": [
+        "leetcode:167",
+        "code360:18796"
+      ],
+      "reviewedAt": "2026-10-10",
+      "fingerprints": {
+        "leetcode:167": "sha256:5b7f8ac5db21728ec30a3c9ed6e841065befc76bce64539e3ed9c060a79f8475",
+        "code360:18796": "sha256:92b16a8a277ff7ee73b6d1e43e3ed404ad219e6b9821dff8f9b763771d311985"
+      },
+      "notes": "Return two distinct indices in a sorted array whose values sum to target. Index base and uniqueness guarantees are version details.",
+      "versionContracts": {
+        "leetcode:167": {
+          "variant": "one-based-indices",
+          "notes": "Return indices in [1,n]; a unique solution is guaranteed."
+        },
+        "code360:18796": {
+          "variant": "zero-based-indices",
+          "notes": "Return indices in [0,n-1]; any valid pair is accepted."
+        }
+      }
+    },
+    {
+      "id": "q_d3dbec5e-06a3-467c-b387-ff72a708c310",
+      "title": "Min Stack",
+      "members": [
+        "leetcode:155",
+        "code360:17280"
+      ],
+      "reviewedAt": "2026-10-10",
+      "fingerprints": {
+        "leetcode:155": "sha256:c8c27523ee1ac4a99f5ad0f6a9e1d665607ee59278d922ebb2c01c84a760eccc",
+        "code360:17280": "sha256:bc92b21f5be3e0a280ec9c5c2925cbf9ba16e363627bcc00452149c28f92ae55"
+      },
+      "notes": "Minimum-tracking stack with constant-time push/pop/top/min. Preserve operation return types and empty-stack behavior.",
+      "versionContracts": {
+        "code360:17280": {
+          "variant": "returning-pop-and-empty-sentinel",
+          "notes": "Pop returns the removed value; pop/top/getMin return -1 on an empty stack. LeetCode pop returns void and query validity is guaranteed."
+        }
+      }
+    },
+    {
+      "id": "q_57ca0cf0-cb8c-4140-8655-70a76ff3f976",
+      "title": "Subsets II",
+      "members": [
+        "leetcode:90",
+        "code360:16763"
+      ],
+      "reviewedAt": "2026-10-10",
+      "fingerprints": {
+        "leetcode:90": "sha256:9de03dfac94fcf42bb5bf009f9b1881d5ac0b95dce5bafb42c494456601b646b",
+        "code360:16763": "sha256:7a334392e5599dd2cb28ce11cacc44e66c770edf4da2462048daf8c7ee8b9579"
+      },
+      "notes": "Enumerate all distinct subsets of a multiset. Required result ordering is a platform-specific output contract.",
+      "versionContracts": {
+        "code360:16763": {
+          "variant": "sorted-subsets",
+          "notes": "Return the subsets in the sorted format required by the judge."
+        }
+      }
+    },
+    {
+      "id": "q_adeeffec-7e37-429a-92f2-e574859c05a2",
+      "title": "Restore IP Addresses",
+      "members": [
+        "leetcode:93",
+        "code360:9467"
+      ],
+      "reviewedAt": "2026-10-10",
+      "fingerprints": {
+        "leetcode:93": "sha256:6239c7fce7f6ee5c12dcbe6b05caa5befa181d6f1c51fb8216d575f2a75e686e",
+        "code360:9467": "sha256:63b2cbe116e1735c534fae15d38eb034fc0a302451102c4c9a793bfd3108eaa3"
+      },
+      "notes": "Enumerate IPv4 addresses formed by inserting three separators without removing/reordering digits, with valid octets and no leading zeros.",
+      "versionContracts": {
+        "code360:9467": {
+          "variant": "lexicographic-order",
+          "notes": "Return addresses in lexicographical order."
+        }
+      }
+    },
+    {
+      "id": "q_5510a892-d2dd-4198-9e28-98ab84c92891",
+      "title": "Merge Intervals",
+      "members": [
+        "leetcode:56",
+        "code360:7572"
+      ],
+      "reviewedAt": "2026-10-10",
+      "fingerprints": {
+        "leetcode:56": "sha256:8be24cd33c51385bf31fab6be414aa8d1212f7555253999524f153268da8fbd7",
+        "code360:7572": "sha256:ec5c9630c012a9fa19ca23a391c3939872812f1c5150af11a3a830ff10d26837"
+      },
+      "notes": "Merge all intersecting closed intervals and return their union intervals.",
+      "versionContracts": {
+        "code360:7572": {
+          "variant": "sorted-intervals",
+          "notes": "Return merged intervals by increasing start time."
+        }
+      }
+    },
+    {
+      "id": "q_46bddb11-cd36-43eb-add6-331e256a9a1a",
+      "title": "Combination Sum",
+      "members": [
+        "leetcode:39",
+        "code360:9265"
+      ],
+      "reviewedAt": "2026-10-10",
+      "fingerprints": {
+        "leetcode:39": "sha256:43039b4ed18d2920725b5c134de39aca77f9b50e98da80bb57ebb6bc8d5fc962",
+        "code360:9265": "sha256:3ba4a8360e060c4e51dad22f7c089ae86766256986c6c68db8ce4c51591892db"
+      },
+      "notes": "Enumerate distinct target-sum combinations of positive candidates, with unlimited reuse.",
+      "versionContracts": {
+        "code360:9265": {
+          "variant": "sorted-combination-elements",
+          "notes": "Elements within each returned combination must be non-decreasing."
+        }
+      }
+    },
+    {
+      "id": "q_6888d83a-999a-4900-95e3-d6f312b804a1",
+      "title": "Combination Sum II",
+      "members": [
+        "leetcode:40",
+        "code360:9961"
+      ],
+      "reviewedAt": "2026-10-10",
+      "fingerprints": {
+        "leetcode:40": "sha256:c6db6c24acad368ab85616d8cefdc6cca61e76d043268f135e327a078bedd3cc",
+        "code360:9961": "sha256:ffca67e578b9000bcb79b91aa69bab1e8c59dbfbd7f63ccfa235fa9c327daa2b"
+      },
+      "notes": "Enumerate unique target-sum combinations, using each input element at most once.",
+      "versionContracts": {
+        "code360:9961": {
+          "variant": "lexicographic-combinations",
+          "notes": "Sort each combination and return the list in lexicographical order."
+        }
+      }
+    },
+    {
+      "id": "q_89f865f6-1d6f-4975-9424-24d449f828bb",
+      "title": "Multiply Strings",
+      "members": [
+        "leetcode:43",
+        "code360:9296"
+      ],
+      "reviewedAt": "2026-10-10",
+      "fingerprints": {
+        "leetcode:43": "sha256:e6b689be69f81642598a0bd6eda42474a9840b6c6afe8b2300881ac32d171e46",
+        "code360:9296": "sha256:1ef24fabce88c9c9aaea3191d00077dd3bbfd281b9dc32702a5edc278639a389"
+      },
+      "notes": "Multiply two nonnegative decimal strings without a BigInteger library or whole-input integer conversion."
+    },
+    {
+      "id": "q_edc6f42a-3a32-455e-ad38-821d941e0906",
+      "title": "Merge k Sorted Lists",
+      "members": [
+        "leetcode:23",
+        "code360:9464"
+      ],
+      "reviewedAt": "2026-10-10",
+      "fingerprints": {
+        "leetcode:23": "sha256:748b9e2e7d7e6acc6c4ae9898b63c335d4f13aec7ae22f8d1a2649400dad919d",
+        "code360:9464": "sha256:89367037d8d73e399ee53d4644c6fb30693d2e3b94bfd792e4a19bfe5648348d"
+      },
+      "notes": "Merge k increasing singly linked lists and return the merged sorted head."
+    },
+    {
+      "id": "q_44558595-e407-460d-8e7e-27cc67ec85e5",
+      "title": "Swap Nodes in Pairs",
+      "members": [
+        "leetcode:24",
+        "code360:7697"
+      ],
+      "reviewedAt": "2026-10-10",
+      "fingerprints": {
+        "leetcode:24": "sha256:3716d4cf8e196d5c56f5905769b9d43ff4608194c7546e93c56289268360bd3c",
+        "code360:7697": "sha256:83d9548de30a5c3cc4bbe019a2275751f6982f397746a6044c4515be2dc1bb4c"
+      },
+      "notes": "Swap adjacent linked-list nodes pairwise and return the head."
+    },
+    {
+      "id": "q_6b905167-fc71-421a-b75d-3813887b1370",
+      "title": "Largest Rectangle in Histogram",
+      "members": [
+        "leetcode:84",
+        "code360:9476"
+      ],
+      "reviewedAt": "2026-10-10",
+      "fingerprints": {
+        "leetcode:84": "sha256:10477c924c7a3c3ffc25278f889f2a16405ff206a6e5b4e0cea2b5730526a993",
+        "code360:9476": "sha256:83b801087fe0f9ceb77c8fafcc5edd31d22aa1106291523fe290c13e4e558729"
+      },
+      "notes": "Largest rectangle area in a histogram of unit-width bars; linear-time stack meets both bounds."
+    }
+  ],
+  "pairs": [
+    {
+      "left": "leetcode:1",
+      "right": "code360:8164",
+      "relation": "variant",
+      "fingerprints": {
+        "leetcode:1": "sha256:c0477a62fd25a287f82e7b8dcb96c05af0cbd418c31c4777fbf2f52346661b8d",
+        "code360:8164": "sha256:4ef6a624809386813ae903966a754af9a50d8a92fad260136ee0127cfbd0e98d"
+      },
+      "reviewedAt": "2026-10-09",
+      "notes": "One pair of indices versus all pairs of values: output contracts differ."
+    },
+    {
+      "left": "leetcode:1",
+      "right": "code360:23516",
+      "relation": "variant",
+      "fingerprints": {
+        "leetcode:1": "sha256:c0477a62fd25a287f82e7b8dcb96c05af0cbd418c31c4777fbf2f52346661b8d",
+        "code360:23516": "sha256:2050660f9eebac9a2b4f390815f323684536319e68842d202504f3fce2dd19f2"
+      },
+      "reviewedAt": "2026-10-09",
+      "notes": "Pair of indices versus YES/NO existence: output contracts differ."
+    },
+    {
+      "left": "leetcode:322",
+      "right": "leetcode:518",
+      "relation": "variant",
+      "fingerprints": {
+        "leetcode:322": "sha256:b4951d1ac75e1ab8af6a84184237cda35999db8dd385437be4f348396e451178",
+        "leetcode:518": "sha256:6ae840890fb64e3f5cfdcd9a6eea164e12b7c597d143abf2ebd4dfb85aff9d2e"
+      },
+      "reviewedAt": "2026-10-09",
+      "notes": "Minimum number of coins versus number of combinations: objectives differ."
+    },
+    {
+      "left": "leetcode:25",
+      "right": "geeksforgeeks:700013",
+      "relation": "variant",
+      "fingerprints": {
+        "leetcode:25": "sha256:a9d592356ed8c2f8f851ee3a6f99d9eea2447fcda2cb92556ac31ebc1cbc7074",
+        "geeksforgeeks:700013": "sha256:745fa230fd55865fcc0022f82a811355cd7862abd1766193e25f19956d4fb34d"
+      },
+      "reviewedAt": "2026-10-09",
+      "notes": "LeetCode leaves a final incomplete k-block unchanged; GFG reverses it."
+    },
+    {
+      "left": "leetcode:25",
+      "right": "code360:7767",
+      "relation": "variant",
+      "fingerprints": {
+        "leetcode:25": "sha256:a9d592356ed8c2f8f851ee3a6f99d9eea2447fcda2cb92556ac31ebc1cbc7074",
+        "code360:7767": "sha256:359fe8a355cbd16a6ff4447cca316326e0e0d37e0bc80320df106e87d8306f83"
+      },
+      "reviewedAt": "2026-10-09",
+      "notes": "Fixed block size k versus an array of varying block sizes."
+    },
+    {
+      "left": "leetcode:53",
+      "right": "code360:8679",
+      "relation": "variant",
+      "fingerprints": {
+        "leetcode:53": "sha256:1aa584f1e15d22564412ee7873f8be51477dc5a1bafde7b3deba94fd0eeea13f",
+        "code360:8679": "sha256:f2da5d74403b75ca4ac72c5419e8142c226517d94eb72ef16a9bece098eae35c"
+      },
+      "reviewedAt": "2026-10-09",
+      "notes": "Maximum sum versus returning the subarray with a length tie-break."
+    },
+    {
+      "left": "leetcode:121",
+      "right": "geeksforgeeks:701212",
+      "relation": "variant",
+      "fingerprints": {
+        "leetcode:121": "sha256:dfda358f16f73b3033e701c723a52fa988d3b381365da2e700a0c51709e6b25d",
+        "geeksforgeeks:701212": "sha256:f5fbb817adbac3679957b68c17f96e979f8a3b6a5f4d1a75759007beab1a3cfd"
+      },
+      "reviewedAt": "2026-10-09",
+      "notes": "At most one transaction versus unlimited transactions."
+    },
+    {
+      "left": "codeforces:1970D2",
+      "right": "codeforces:1970D3",
+      "relation": "variant",
+      "fingerprints": {
+        "codeforces:1970D2": "sha256:e887c3fe008e35f5848e8a6bf1f23accd1becf1726db8b2f03082a065f03fefa",
+        "codeforces:1970D3": "sha256:dd62be6b5546be381c5edfc0f06627ea4db01a5a41c5958faf4dc517de1e3abf"
+      },
+      "reviewedAt": "2026-10-09",
+      "notes": "Medium and hard task variants have identical cached descriptions; that does not prove equivalent constraints."
+    },
+    {
+      "left": "leetcode:206",
+      "right": "leetcode:322",
+      "relation": "different",
+      "fingerprints": {
+        "leetcode:206": "sha256:e621842992c75ad2e93a470bbd6658f5887c2656399e3d38e96a3aab8e77c735",
+        "leetcode:322": "sha256:b4951d1ac75e1ab8af6a84184237cda35999db8dd385437be4f348396e451178"
+      },
+      "reviewedAt": "2026-10-09",
+      "notes": "Linked-list transformation and coin minimization are unrelated tasks."
+    },
+    {
+      "left": "leetcode:14",
+      "right": "code360:3607",
+      "relation": "different",
+      "fingerprints": {
+        "leetcode:14": "sha256:6976173f67fab8f722ad4de90778a6c240aca7cd01bfcd868032d994ba3a61e9",
+        "code360:3607": "sha256:d0af69d81692b578ef3ee8e9ff0a80490396ec1c8019c3d8f14ad79467ce26fa"
+      },
+      "reviewedAt": "2026-10-09",
+      "notes": "Array-wide common prefix versus a word-search/steps task with inconsistent cached bounds."
+    },
+    {
+      "left": "leetcode:15",
+      "right": "code360:8549",
+      "relation": "variant",
+      "fingerprints": {
+        "leetcode:15": "sha256:61cec7da05e5b23c949ffe231ef1dc90c1bff3eb8d4594a8a5919cf72e317530",
+        "code360:8549": "sha256:2adb6546e36cc18f6c0b7e52b56c5dfb2fff68ee45a7ebd98ecf759d4d396cfa"
+      },
+      "reviewedAt": "2026-10-09",
+      "notes": "Zero-sum triplets versus an additional variable target K."
+    },
+    {
+      "left": "leetcode:36",
+      "right": "code360:7661",
+      "relation": "variant",
+      "fingerprints": {
+        "leetcode:36": "sha256:95add70a4ce3be2a9dbfaaaf04d320339048f057eb551e5957bb3bf5855553a6",
+        "code360:7661": "sha256:700a3865bc9b466c34a91fb1dc7ebfa0181769ea5a28f08b062a74dbec81c748"
+      },
+      "reviewedAt": "2026-10-09",
+      "notes": "Check existing-cell consistency versus determine whether an incomplete Sudoku has a completion."
+    },
+    {
+      "left": "leetcode:39",
+      "right": "code360:10450",
+      "relation": "different",
+      "fingerprints": {
+        "leetcode:39": "sha256:43039b4ed18d2920725b5c134de39aca77f9b50e98da80bb57ebb6bc8d5fc962",
+        "code360:10450": "sha256:bcad4dbe9b5c45f8581ba4dfa101f4271e25f73fe861bbd5f884d751e9f09ba5"
+      },
+      "reviewedAt": "2026-10-09",
+      "notes": "Enumerate target-sum combinations versus sum numbers formed from bounded digits 3,4,5 modulo 1e9+7."
+    },
+    {
+      "left": "leetcode:55",
+      "right": "code360:8622",
+      "relation": "variant",
+      "fingerprints": {
+        "leetcode:55": "sha256:7f4e6138f9d4a816a52571f4bc94cefca4b21158f55725aa6739e6691bfea5fb",
+        "code360:8622": "sha256:45cd641aa77987e80680d12ace676782a740c01fd27efe7b5a9c886befd538cb"
+      },
+      "reviewedAt": "2026-10-09",
+      "notes": "Reachability verdict versus minimum number of jumps."
+    },
+    {
+      "left": "leetcode:55",
+      "right": "code360:22901",
+      "relation": "variant",
+      "fingerprints": {
+        "leetcode:55": "sha256:7f4e6138f9d4a816a52571f4bc94cefca4b21158f55725aa6739e6691bfea5fb",
+        "code360:22901": "sha256:e3505a2ce49d374c1f46e650b9fbbe2cc7df030fa49912d10e3886ac544d19d2"
+      },
+      "reviewedAt": "2026-10-09",
+      "notes": "Reachability verdict versus minimum number of jumps."
+    },
+    {
+      "left": "leetcode:63",
+      "right": "code360:9167",
+      "relation": "variant",
+      "fingerprints": {
+        "leetcode:63": "sha256:53de41aa260e88563fb286d5ada8743695c574254ca0b54731df16e562ed3e74",
+        "code360:9167": "sha256:525590f585e26ac3a0677542a66fde7620a9d99aa4e2da462fe43c8965382a35"
+      },
+      "reviewedAt": "2026-10-09",
+      "notes": "Exact obstacle-grid path count versus modulo 1e9+7 and different obstacle encoding."
+    },
+    {
+      "left": "leetcode:110",
+      "right": "code360:13791",
+      "relation": "different",
+      "fingerprints": {
+        "leetcode:110": "sha256:48a019881f4b78c999f5f48eea819bb6d0706e4cc90b8b575d821064af4d3eb7",
+        "code360:13791": "sha256:c6046234a080ceeebec2a93a40887ded351fe322ca2ae8c2932c211a58edcccb"
+      },
+      "reviewedAt": "2026-10-09",
+      "notes": "Check a given tree balance versus count balanced trees of a specified height."
+    },
+    {
+      "left": "leetcode:112",
+      "right": "code360:16515",
+      "relation": "variant",
+      "fingerprints": {
+        "leetcode:112": "sha256:9d814d7b7e31442544ce01f53806384efd8e6496ff1fed9b0b4da74dc89e6972",
+        "code360:16515": "sha256:3d273c0e8d1c29ea405ee9ba7d99354159500261e5917d9ac5c5cbf111a777af"
+      },
+      "reviewedAt": "2026-10-09",
+      "notes": "Existence of a target-sum root-to-leaf path versus count of such paths."
+    },
+    {
+      "left": "leetcode:115",
+      "right": "code360:8018",
+      "relation": "variant",
+      "fingerprints": {
+        "leetcode:115": "sha256:dc79a633bbd3a3e251f23c84d7bb500e0ada237931bb831451f18f7c9adfb7cd",
+        "code360:8018": "sha256:98e7bcce98218ecf7f7f9d83c6554b9550b35da66445d1e92ac0270b109c3b83"
+      },
+      "reviewedAt": "2026-10-09",
+      "notes": "Count target occurrences as subsequences versus count all distinct source subsequences."
+    },
+    {
+      "left": "leetcode:127",
+      "right": "code360:9924",
+      "relation": "variant",
+      "fingerprints": {
+        "leetcode:127": "sha256:956355b21db42a54962e1b1239f19f4803f548ac6a4d9397b4cb31ec87f02f39",
+        "code360:9924": "sha256:ca2fdcb22d86bc998f42ac334e2b7e6b9f26bce3a1ceb2237318dd090c22709e"
+      },
+      "reviewedAt": "2026-10-09",
+      "notes": "Shortest transformation length with different no-path sentinels; Code360 length convention also needs verification."
+    },
+    {
+      "left": "leetcode:150",
+      "right": "code360:16527",
+      "relation": "variant",
+      "fingerprints": {
+        "leetcode:150": "sha256:8aa469f840e43652ce0e71381a5b1ab07ac9b505c8ca9771b78828d0dbd2cd7e",
+        "code360:16527": "sha256:27410e7559e21a2b7848b488fd2bb058f28905e2818622b62803765d9985365c"
+      },
+      "reviewedAt": "2026-10-09",
+      "notes": "Exact signed reverse-Polish result versus arithmetic result modulo 1e9+7."
+    },
+    {
+      "left": "leetcode:160",
+      "right": "geeksforgeeks:700535",
+      "relation": "different",
+      "fingerprints": {
+        "leetcode:160": "sha256:ea35e2ba6099adf2223a74c211859c16d0eb06ab9211da9cb5184b6ecbebcdbd",
+        "geeksforgeeks:700535": "sha256:0c319bdf7a1b20bf1cc5ad533348c5aa6a26b7dbe420d59c22175df5d1fe1443"
+      },
+      "reviewedAt": "2026-10-09",
+      "notes": "First shared node by pointer identity versus a new list of common values."
+    },
+    {
+      "left": "leetcode:179",
+      "right": "code360:14643",
+      "relation": "different",
+      "fingerprints": {
+        "leetcode:179": "sha256:1825989464de7c50b3fc7499cb4f2c81991396efc3f2c8923e00aa87a0f22e1f",
+        "code360:14643": "sha256:6daabf647f9e7659ff37b9955d902a2b03577dee0ce62d7a91264f8a4b809a91"
+      },
+      "reviewedAt": "2026-10-09",
+      "notes": "Largest concatenated integer versus largest K with both K and -K present."
+    },
+    {
+      "left": "leetcode:180",
+      "right": "code360:8980",
+      "relation": "different",
+      "fingerprints": {
+        "leetcode:180": "sha256:620e8cd3b9027984fe2251f179cd67eaa06a21599327099841040e883345fc15",
+        "code360:8980": "sha256:c88febcd050668b51e9c357134f480887e3768f48986c91f3cc9bffdd7f0e1f7"
+      },
+      "reviewedAt": "2026-10-09",
+      "notes": "SQL runs of repeated log numbers versus solving K XOR (K-1) = N."
+    },
+    {
+      "left": "leetcode:189",
+      "right": "geeksforgeeks:701213",
+      "relation": "variant",
+      "fingerprints": {
+        "leetcode:189": "sha256:9a041373500929d088aa81ba43c4fe46f02261c1fe680f14104d6f2a289e4a93",
+        "geeksforgeeks:701213": "sha256:f1a1f2080e13be2fbbaaaf4d16c707bbff5cdfdfc27ebe2a249e0f79f868aebf"
+      },
+      "reviewedAt": "2026-10-10",
+      "notes": "Right rotation versus left rotation."
+    },
+    {
+      "left": "leetcode:190",
+      "right": "geeksforgeeks:706210",
+      "relation": "variant",
+      "fingerprints": {
+        "leetcode:190": "sha256:5d007a6113c5efba1923e2585ea0d978d24f5f788e69ad692ed0ccf7bcf12568",
+        "geeksforgeeks:706210": "sha256:0929856f41ad5d2a2a07d0288f748e8af869c6154e7799503974cbd6ac8f003d"
+      },
+      "reviewedAt": "2026-10-10",
+      "notes": "Fixed 32-bit reversal versus reversing only significant bits without leading zeros."
+    },
+    {
+      "left": "leetcode:198",
+      "right": "geeksforgeeks:703863",
+      "relation": "variant",
+      "fingerprints": {
+        "leetcode:198": "sha256:7958f91e322018bd8a6e29a28bdca2ee21beb14abb53d95a02dd818301fef02b",
+        "geeksforgeeks:703863": "sha256:7ee90b489679c06efbb17e3e4837c4afbecf8c25ee3b33374d2ee0ee78bb747e"
+      },
+      "reviewedAt": "2026-10-10",
+      "notes": "Arbitrary per-house amounts versus an n,k equal-value special case."
+    },
+    {
+      "left": "leetcode:200",
+      "right": "code360:8327",
+      "relation": "variant",
+      "fingerprints": {
+        "leetcode:200": "sha256:3f27d1df2bdaa422ae2ed14dac7544db807cacb17ce77373d72411e461d6b1fb",
+        "code360:8327": "sha256:707575b6f1ad27f6828589d4ab04018e40793368408c855a035257b534c5c2b5"
+      },
+      "reviewedAt": "2026-10-10",
+      "notes": "Four-neighbor land connectivity versus eight-neighbor connectivity including diagonals."
+    },
+    {
+      "left": "leetcode:200",
+      "right": "code360:9444",
+      "relation": "variant",
+      "fingerprints": {
+        "leetcode:200": "sha256:3f27d1df2bdaa422ae2ed14dac7544db807cacb17ce77373d72411e461d6b1fb",
+        "code360:9444": "sha256:2805b0e42c81da9267954f80cbb6fc7a4ec0f44aa539e2b1501bbc2a77189dd7"
+      },
+      "reviewedAt": "2026-10-10",
+      "notes": "Four-neighbor land connectivity versus eight-neighbor connectivity including diagonals."
+    },
+    {
+      "left": "leetcode:204",
+      "right": "code360:13655",
+      "relation": "different",
+      "fingerprints": {
+        "leetcode:204": "sha256:66a9bdfd2f6cb0cfb7fcba4703248bbebacee22ef32e0bde0b3816d76754f948",
+        "code360:13655": "sha256:88d8626c0a8f55641c6d9f625fc06bc660e66e5f239a89fc344581d2d03b8eef"
+      },
+      "reviewedAt": "2026-10-10",
+      "notes": "Count primes below n versus enumerate unique prime factors of n."
+    },
+    {
+      "left": "leetcode:1211",
+      "right": "code360:14363",
+      "relation": "variant",
+      "fingerprints": {
+        "leetcode:1211": "sha256:b8da1a03ccebe072caa8012fd2c9979b299784dd8be24a43fc0f59c215a357ca",
+        "code360:14363": "sha256:6716b3e698834ded3127a647ea02c3549b0839562b69934fde8d609b4795149f"
+      },
+      "reviewedAt": "2026-10-10",
+      "notes": "Quality and poor-query percentage output versus quality alone."
+    },
+    {
+      "left": "leetcode:652",
+      "right": "code360:8925",
+      "relation": "variant",
+      "fingerprints": {
+        "leetcode:652": "sha256:eb4c843891050a60a9b661a95b7ce27e7ecb6f4613337a999bb621b74a0decfb",
+        "code360:8925": "sha256:428295c09667d49a164798bd05f586755eab28f3827a08cb9453a027284d2110"
+      },
+      "reviewedAt": "2026-10-10",
+      "notes": "Return duplicate subtree roots versus root values, which can lose subtree identity."
+    }
+  ]
+}

@@ -1,4 +1,4 @@
-import { dateKey } from './core.mjs';
+import { dateKey, orderedPlatformIds } from './core.mjs';
 import { CONTEST_SOURCES, contestPlatform, sourceCache, sourceIsFresh } from './contests.mjs';
 
 export function monthDays(month) {
@@ -8,7 +8,7 @@ export function monthDays(month) {
     new Date(Date.UTC(first.getUTCFullYear(), first.getUTCMonth(), 1 - first.getUTCDay() + i)));
 }
 
-export function createContestCalendar({ host, getSettings, getCache, makeCard }) {
+export function createContestCalendar({ host, getSettings, getCache, getAccounts = () => ({}), makeCard }) {
   const container = host;
   container.className = 'contest-calendar'; container.setAttribute('aria-label', 'Contest calendar');
   let month, platform = 'all', expanded = new Set();
@@ -18,7 +18,14 @@ export function createContestCalendar({ host, getSettings, getCache, makeCard })
   function render() {
     if (!month) month = currentMonth();
     const prefs = getSettings(), cache = getCache(), today = dateKey(Date.now(), prefs.timeZone);
+    const sources = orderedPlatformIds(prefs, Object.keys(CONTEST_SOURCES)).filter(id => getAccounts()[id]).map(id => [id, CONTEST_SOURCES[id]]);
+    if (platform !== 'all' && !getAccounts()[platform]) platform = 'all';
     container.replaceChildren();
+    if (!sources.length) {
+      const message = node('p', 'contest-calendar-caption', 'Connect a contest platform to see upcoming contests.');
+      const link = node('a', 'contest-calendar-settings', 'Connect platforms'); link.href = '#settings';
+      container.append(message, link); return;
+    }
     const header = node('div', 'contest-calendar-heading');
     header.append(node('h2', '', month.toLocaleDateString(undefined, { timeZone: 'UTC', month: 'long', year: 'numeric' })));
     const controls = node('div', 'contest-calendar-controls');
@@ -26,7 +33,7 @@ export function createContestCalendar({ host, getSettings, getCache, makeCard })
       button('‹', 'Previous month', () => move(-1)), button('›', 'Next month', () => move(1)));
     header.append(controls); container.append(header);
     const filters = node('div', 'contest-calendar-filters'); filters.setAttribute('role', 'group'); filters.setAttribute('aria-label', 'Contest platforms');
-    for (const [value, name] of [['all', 'All'], ...Object.entries(CONTEST_SOURCES).map(([key, source]) => [key, source.name])]) {
+    for (const [value, name] of [...(sources.length > 1 ? [['all', 'All connected']] : []), ...sources.map(([key, source]) => [key, source.name])]) {
       const control = button(name, `Show ${name} contests`, () => { platform = value; expanded.clear(); render(); });
       control.setAttribute('aria-pressed', String(platform === value)); filters.append(control);
     }
@@ -34,7 +41,7 @@ export function createContestCalendar({ host, getSettings, getCache, makeCard })
     const caption = node('p', 'contest-calendar-caption', `Confirmed contests · ${prefs.timeZone}`);
     caption.setAttribute('role', 'status'); container.append(caption);
     const statuses = node('div', 'contest-source-statuses'); statuses.setAttribute('aria-label', 'Schedule status');
-    for (const [key, source] of Object.entries(CONTEST_SOURCES)) {
+    for (const [key, source] of sources) {
       const saved = sourceCache(cache, key);
       if (saved.needsAccess) {
         const control = button(`Enable ${source.name}`, `Enable ${source.name} contest access`, async () => {
@@ -45,7 +52,7 @@ export function createContestCalendar({ host, getSettings, getCache, makeCard })
         });
         control.dataset.platform = key; statuses.append(control);
       } else {
-        const text = saved.error || saved.updatedAt && !sourceIsFresh(cache, key) ? 'saved schedule' : saved.limited ? 'next two only' : saved.updatedAt ? 'updated' : 'loading…';
+        const text = saved.error || saved.updatedAt && !sourceIsFresh(cache, key) ? 'saved schedule' : saved.limited ? (key === 'leetcode' ? 'next two only' : 'partial schedule') : saved.updatedAt ? 'updated' : 'loading…';
         const status = node('span', 'contest-source-status', `${source.name} · ${text}`); status.dataset.platform = key;
         status.title = saved.error || (saved.updatedAt ? `Updated ${new Date(saved.updatedAt).toLocaleString()}` : 'Loading contest schedule');
         statuses.append(status);
@@ -54,7 +61,7 @@ export function createContestCalendar({ host, getSettings, getCache, makeCard })
     container.append(statuses);
     const grid = node('div', 'contest-calendar-grid');
     for (const day of ['SUN', 'MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT']) grid.append(node('div', 'contest-weekday', day));
-    const items = (cache.needsAccess ? [] : cache.items || []).filter(item => platform === 'all' || contestPlatform(item) === platform);
+    const items = (cache.needsAccess ? [] : cache.items || []).filter(item => getAccounts()[contestPlatform(item)] && (platform === 'all' || contestPlatform(item) === platform));
     const groups = new Map();
     for (const item of items) { const key = dateKey(item.start, prefs.timeZone); if (!groups.has(key)) groups.set(key, []); groups.get(key).push(item); }
     let inMonth = 0;

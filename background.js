@@ -35,10 +35,10 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
             const result = await chrome.storage.local.get('dsa-preferred-platforms');
             const list = result['dsa-preferred-platforms'];
             const valid = Array.isArray(list) ? [...new Set(list.filter(p => platforms.includes(p)))] : [];
-            return { platforms: valid.length ? valid : null };
+            return { platforms: Array.isArray(list) ? valid : null };
         }
-        if (!Array.isArray(request.platforms) || !request.platforms.length || request.platforms.some(p => !platforms.includes(p))) {
-            throw new Error('Choose at least one supported platform.');
+        if (!Array.isArray(request.platforms) || request.platforms.some(p => !platforms.includes(p))) {
+            throw new Error('Choose supported platforms.');
         }
         await chrome.storage.local.set({ 'dsa-preferred-platforms': [...new Set(request.platforms)] });
         return { success: true };

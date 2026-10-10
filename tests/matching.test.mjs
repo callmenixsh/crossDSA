@@ -6,6 +6,7 @@ import { readFile } from 'node:fs/promises';
 const source = await readFile(new URL('../content.js', import.meta.url), 'utf8');
 function matcher() {
   const context = vm.createContext({
+    URL,
     console: { log() {} }, performance: { now: () => 0 },
     requestAnimationFrame: fn => fn(),
     window: { location: { hostname: 'leetcode.com', pathname: '/problems/two-sum/', href: 'https://leetcode.com/problems/two-sum/' } },
@@ -14,6 +15,7 @@ function matcher() {
     localStorage: { getItem() { throw new Error('Website storage unavailable'); } },
   });
   vm.runInContext(source.replace(/init\(\);\s*$/, ''), context);
+  vm.runInContext("connectedAccounts = Object.fromEntries(DEFAULT_PLATFORMS.map(id => [id, {}])); updatePreferredPlatforms();", context);
   return context;
 }
 
@@ -27,6 +29,22 @@ test('matching retains the same title on different platforms and deduplicates wi
   ]; computeTitleIdf();`, context);
   const matches = await context.findMatchingProblems('Pair of integers target sum', 'Two Sum');
   assert.deepEqual(Array.from(matches, p => p.source), ['codeforces', 'geeksforgeeks']);
+});
+
+test('confirmed catalog matches use native URLs, distinguish contracts and respect search scope', async () => {
+  const context = matcher();
+  vm.runInContext(`SIMILARITY_THRESHOLD = 1; problemsData = [
+    { title: 'Two Sum', url: 'https://leetcode.com/problems/two-sum/', source: 'leetcode', canonicalId: 'q_test' },
+    { title: 'Unrelated wording', url: 'https://www.geeksforgeeks.org/problems/pair/1', source: 'geeksforgeeks', canonicalId: 'q_test' },
+    { title: 'Another title', url: 'https://www.codechef.com/problems/PAIR', source: 'codechef', canonicalId: 'q_test', contract: {variant:'one-based'} }
+  ]; computeTitleIdf();`, context);
+  let matches = await context.findMatchingProblems('', 'Two Sum');
+  assert.deepEqual(Array.from(matches, p => [p.source, p.matchType]), [['geeksforgeeks', 'confirmed'], ['codechef', 'platform-variant']]);
+  vm.runInContext("preferredPlatforms = ['geeksforgeeks']", context);
+  assert.deepEqual(Array.from(await context.findMatchingProblems('', 'Two Sum'), p => p.source), ['geeksforgeeks']);
+  context.window.location.href = 'https://leetcode.com/problems/unknown/';
+  matches = await context.findMatchingProblems('', 'Two Sum');
+  assert.equal(matches.length, 0, 'Similar page titles cannot confirm an unknown native question');
 });
 
 test('thresholds accept the slider range and reject corrupt values without reading website storage', () => {
@@ -157,9 +175,33 @@ test('settings changes during startup preserve newer values and initialize uncha
     context.init();
     change(changed === 'platforms' ? { 'dsa-preferred-platforms': { newValue: ['codechef'] } } :
       { 'dsa-helper-similarity-threshold': { newValue: 0.8 } }, 'local');
-    read({ 'dsa-preferred-platforms': ['codeforces'], 'dsa-helper-similarity-threshold': 0.3 });
+    read({ 'crossdsa-tracker-v1': { accounts: { codeforces: {}, codechef: {} } }, 'dsa-preferred-platforms': ['codeforces'], 'dsa-helper-similarity-threshold': 0.3 });
     await new Promise(resolve => setImmediate(resolve));
     assert.equal(vm.runInContext('SIMILARITY_THRESHOLD', context), changed === 'threshold' ? 0.8 : 0.3);
     assert.deepEqual(Array.from(vm.runInContext('preferredPlatforms', context)), [changed === 'platforms' ? 'codechef' : 'codeforces']);
   }
+});
+
+test('search scope follows connections, preserves unchecked choices and never falls back to all platforms', async () => {
+  const context = matcher();
+  let read, change;
+  context.chrome.storage = {
+    local: { get: () => new Promise(resolve => { read = resolve; }) },
+    onChanged: { addListener: fn => { change = fn; } },
+  };
+  context.loadProblemsData = () => new Promise(() => {});
+  context.init();
+  change({ 'crossdsa-tracker-v1': { newValue: { accounts: { leetcode: {} } } } }, 'local');
+  read({ 'crossdsa-tracker-v1': { accounts: { codeforces: {} } }, 'dsa-preferred-platforms': ['leetcode', 'codeforces'] });
+  await new Promise(resolve => setImmediate(resolve));
+  const scope = () => Array.from(vm.runInContext('preferredPlatforms', context));
+  assert.deepEqual(scope(), ['leetcode'], 'New connection state wins over the startup read');
+  change({ 'dsa-preferred-platforms': { newValue: [] } }, 'local');
+  assert.deepEqual(scope(), []);
+  change({ 'crossdsa-tracker-v1': { newValue: { accounts: { leetcode: {}, codeforces: {} } } } }, 'local');
+  assert.deepEqual(scope(), [], 'Connecting an account does not reset search choices');
+  change({ 'dsa-preferred-platforms': { newValue: ['leetcode'] } }, 'local');
+  assert.deepEqual(scope(), ['leetcode']);
+  change({ 'crossdsa-tracker-v1': { newValue: { accounts: {} } } }, 'local');
+  assert.deepEqual(scope(), []);
 });

@@ -74,11 +74,11 @@ To bring TakeUForward into the full set, a `tuf_scraper.py` plus a `tuf-data.jso
 | CodeChef | Profile solved total/current rating and dated accepted submissions | Refresh reads the newest 10 feed pages. Older activity can be missing. Feed dates are interpreted as IST; accepts in the same minute may merge if no submission ID is public. |
 | GeeksforGeeks | Solved totals/difficulty, coding score, institute rank, dated solved records | These records are not a complete attempt/repeat-solve log. Provider dates are retained without inventing a timezone. Missing dated records are flagged. |
 | Code 360 | Public solved total/difficulty and available streak statistics | Requires the ID/handle from a public profile URL. Dated submission history is not imported; it does not contribute to the combined calendar or daily goal. |
-| TakeUForward | Public TUF solved totals/difficulty and TUF-only activity calendar | Keep a TakeUForward tab open for refresh: its API requires its website origin. Profile heatmaps that combine other connected platforms are excluded to avoid double-counting. No individual accepted problem history is imported. |
+| TakeUForward | Public TUF solved totals/difficulty and TUF-only activity calendar | Syncs from the public profile without an open TUF tab; an existing tab can provide an API fallback. Profile heatmaps that combine other connected platforms are excluded to avoid double-counting. No individual accepted problem history is imported. |
 
 The activity streak is calculated from imported activity, including repeat submissions where a provider counts them. Missing history is not proof of inactivity. Daily goals count distinct problems with an accepted or dated solved record today (including repeat practice of older problems), not raw calendar contributions. Problems count separately on each platform; fuzzy matching does not merge solved identities.
 
-Data stays in `chrome.storage.local` in the current browser profile. Failed refreshes retain the last successful snapshot and show the error. Accounts are replaced separately when a handle changes, while saved lists stay intact. Cached accepted history is capped at 15,000 records per platform. Automatic refresh runs every 30 minutes and after submission clicks (30 seconds and 2 minutes). The dashboard and popup also refresh activity when it is at least 30 minutes old. It requires a running browser and public data may lag; an open TUF tab is additionally required for TUF. LeetCode accounts without public accepted history need an open signed-in LeetCode tab. Opening or returning to LeetCode automatically retries unavailable or stale activity with a one-minute cooldown; navigation during that cooldown schedules a deferred retry. This obeys the automatic sync setting. Both helpers are restored even with automatic sync disabled, so new accepted submissions can still be observed. Scripting access is granted through Connect platforms. LeetCode cards show separate profile and activity update times and an Open LeetCode action when activity needs attention; failed activity reads preserve the last activity update time and saved accepts. Opening the popup refreshes stale activity, and its Refresh button requests an update immediately.
+Data stays in `chrome.storage.local` in the current browser profile. Failed refreshes retain the last successful snapshot and show the error. Accounts are replaced separately when a handle changes, while saved lists stay intact. Cached accepted history is capped at 15,000 records per platform. Automatic refresh runs every 30 minutes and after submission clicks (30 seconds and 2 minutes). The dashboard and popup also refresh activity when it is at least 30 minutes old. It requires a running browser and public data may lag. LeetCode accounts without public accepted history need an open signed-in LeetCode tab. Opening or returning to LeetCode automatically retries unavailable or stale activity with a one-minute cooldown; navigation during that cooldown schedules a deferred retry. This obeys the automatic sync setting. Both helpers are restored even with automatic sync disabled, so new accepted submissions can still be observed. Scripting access is granted through Connect platforms. LeetCode cards show separate profile and activity update times and an Open LeetCode action when activity needs attention; failed activity reads preserve the last activity update time and saved accepts. Opening the popup refreshes stale activity, and its Refresh button requests an update immediately.
 
 ### Dashboard development and checks
 
@@ -168,6 +168,17 @@ The Code 360 scraper supports the same `--limit` flag:
 ```bash
 python scrapers/code360_scraper.py --limit 50      # first 50 problems only
 ```
+
+### Shared question normalization (offline)
+
+The shared catalog groups equivalent questions while retaining each platform's original title, URL, difficulty, and company evidence. Its offline builder also produces duplicate candidates for review and an alias-aware search API. The library and company lists show each confirmed question once, with Solve on links to its platform versions. Original titles remain searchable; version details retain native statements, difficulties, and contract differences. The page matcher prioritizes confirmed equivalents by URL. A compact runtime catalog verifies source snapshot hashes and preserves existing native saved/solved keys.
+
+```bash
+node normalization/build.mjs
+node normalization/build.mjs --check
+```
+
+See [the normalization guide](normalization/README.md) for the schema, stable identities, merge rules, curation workflow, and tests. Inspect [the generated report](data/normalized/report.md) before migrating the extension.
 
 ## Contributing
 

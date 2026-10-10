@@ -1177,6 +1177,30 @@ button.dsa-helper-float-btn.is-dragging {
   text-transform: uppercase;
 }
 
+/* Confirmed catalog copies stand apart from heuristic suggestions. */
+.dsa-helper-btn.confirmed-match {
+  background: #ecfdf5;
+  border: 1px solid #5eaa98;
+  border-left: 4px solid #0f766e;
+}
+.dsa-helper-btn.confirmed-match:hover,
+.dsa-helper-btn.confirmed-match:focus-visible {
+  background: #d5f5ea;
+  border-color: #0f766e;
+}
+.confirmed-match-label {
+  display: block;
+  width: fit-content;
+  margin-bottom: 8px;
+  padding: 4px 7px;
+  border-radius: 4px;
+  background: #0f766e;
+  color: #fff;
+  font-size: 10px;
+  font-weight: 700;
+  line-height: 1.4;
+}
+
 .result-category-tabs .platform-tabs {
   justify-content: stretch;
   padding: 8px 8px 0;
@@ -1192,5 +1216,19 @@ button.dsa-helper-float-btn.is-dragging {
     color: #99f6e4;
     background: #123c38;
     border-color: #277c72;
+  }
+  .dsa-helper-btn.confirmed-match {
+    background: #152b28;
+    border-color: #327e70;
+    border-left-color: #5eead4;
+  }
+  .dsa-helper-btn.confirmed-match:hover,
+  .dsa-helper-btn.confirmed-match:focus-visible {
+    background: #1b3933;
+    border-color: #5eead4;
+  }
+  .confirmed-match-label {
+    background: #23564c;
+    color: #b9fff0;
   }
 }

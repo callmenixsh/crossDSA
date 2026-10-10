@@ -18,7 +18,14 @@ const FILE_SOURCES = {
 
 const DEFAULT_PLATFORMS = ['leetcode', 'geeksforgeeks', 'codeforces', 'codechef', 'code360', 'atcoder'];
 
-let preferredPlatforms = DEFAULT_PLATFORMS.slice();
+let preferredPlatforms = [];
+let platformPreferences = DEFAULT_PLATFORMS.slice();
+const DEFAULT_PLATFORM_ORDER = ['leetcode', 'codeforces', 'codechef', 'geeksforgeeks', 'code360', 'atcoder'];
+let platformDisplayOrder = DEFAULT_PLATFORM_ORDER.slice();
+let connectedAccounts = {};
+function updatePreferredPlatforms() {
+    preferredPlatforms = platformDisplayOrder.filter(id => platformPreferences.includes(id) && connectedAccounts[id]);
+}
 let problemsData = [];
 let buttonContainer = null;
 let isSearching = false;
@@ -30,6 +37,9 @@ const DRAG_START_DISTANCE = 5;
 
 async function loadProblemsData() {
     try {
+        const hashes = {};
+        let catalogModule;
+        try { catalogModule = await import(chrome.runtime.getURL('tracker/question-catalog.mjs')); } catch { /* Source matching remains available. */ }
         const results = await Promise.all(PROBLEM_DATA_FILES.map(async (file) => {
             try {
                 const response = await fetch(chrome.runtime.getURL(file));
@@ -37,12 +47,13 @@ async function loadProblemsData() {
                     console.log(`${file} not available (${response.status})`);
                     return [];
                 }
-                const data = await response.json();
+                const text = await response.text(), data = JSON.parse(text);
                 if (!Array.isArray(data)) return [];
                 const source = FILE_SOURCES[file];
+                if (catalogModule) hashes[source] = await catalogModule.sourceDigest(text);
                 return data.map(p => {
                     if (!p || typeof p !== 'object') return p;
-                    return p.source ? p : { ...p, source };
+                    return { ...p, source, platform: source };
                 });
             } catch (fileError) {
                 console.log(`Failed to load ${file}:`, fileError);
@@ -51,6 +62,12 @@ async function loadProblemsData() {
         }));
 
         problemsData = results.flat();
+        if (catalogModule) {
+            try {
+                const response = await fetch(chrome.runtime.getURL('data/normalized/runtime.json'));
+                if (response.ok) problemsData = catalogModule.attachQuestionCatalog(problemsData.filter(p => p && typeof p === 'object'), await response.json(), hashes);
+            } catch { /* Missing/stale metadata cannot create confirmed matches. */ }
+        }
         console.log('Loaded problems data:', problemsData.length, 'problems across', PROBLEM_DATA_FILES.length, 'platforms');
     } catch (error) {
         console.log('Failed to load problems data:', error);
@@ -473,6 +490,7 @@ async function findMatchingProblems(pageText, pageTitle, requestId = searchReque
 
     const currentPlatform = getCurrentPlatform();
     const currentSource = (currentPlatform === 'tuf' || currentPlatform === null) ? null : currentPlatform;
+    const catalogRecord = findCurrentCatalogRecord();
 
     const matches = [];
     let lastYield = performance.now();
@@ -495,6 +513,12 @@ async function findMatchingProblems(pageText, pageTitle, requestId = searchReque
 
         // Only search platforms the user enabled in settings
         if (!preferredPlatforms.includes(problem.source)) {
+            continue;
+        }
+
+        if (catalogRecord?.canonicalId && problem.canonicalId === catalogRecord.canonicalId) {
+            const sameContract = (catalogRecord.contract?.variant || 'base') === (problem.contract?.variant || 'base');
+            matches.push({ ...problem, combinedScore: 1, confidence: 1, matchType: sameContract ? 'confirmed' : 'platform-variant', titleMatch: 0, descMatch: 0 });
             continue;
         }
 
@@ -535,12 +559,15 @@ async function findMatchingProblems(pageText, pageTitle, requestId = searchReque
     }
 
     await waitForNextFrame();
-    matches.sort((a, b) => b.combinedScore - a.combinedScore);
+    matches.sort((a, b) => Number(b.matchType === 'confirmed') - Number(a.matchType === 'confirmed') || b.combinedScore - a.combinedScore);
 
     // Preserve equivalents on different platforms when deduplicating titles.
     const uniqueMatches = [];
     const seenTitles = [];
+    const seenCatalog = new Set();
     for (const match of matches) {
+        const catalogKey = match.canonicalId ? `${match.source}:${match.canonicalId}` : null;
+        if (catalogKey && seenCatalog.has(catalogKey)) continue;
         const titleToks = tokenize(match.title);
         let isRedundant = false;
         for (const seen of seenTitles) {
@@ -551,6 +578,7 @@ async function findMatchingProblems(pageText, pageTitle, requestId = searchReque
         }
         if (!isRedundant) {
             uniqueMatches.push(match);
+            if (catalogKey) seenCatalog.add(catalogKey);
             seenTitles.push({ source: match.source, tokens: titleToks });
         }
         if (uniqueMatches.length >= 30) break;
@@ -558,6 +586,23 @@ async function findMatchingProblems(pageText, pageTitle, requestId = searchReque
 
     console.log('Found', uniqueMatches.length, 'unique matches');
     return uniqueMatches.slice(0, 20);
+}
+
+function findCurrentCatalogRecord() {
+    const source = getCurrentPlatform();
+    const identity = value => {
+        try {
+            const path = new URL(value, window.location.href).pathname;
+            if (source === 'codeforces') {
+                const match = path.match(/\/problemset\/problem\/(\d+)\/([a-z\d]+)/i) || path.match(/\/(?:contest|gym)\/(\d+)\/problem\/([a-z\d]+)/i);
+                return match ? `${match[1]}:${match[2].toUpperCase()}` : null;
+            }
+            if (source === 'atcoder') return path.match(/\/tasks\/([^/]+)/)?.[1] || null;
+            return path.match(/\/problems\/([^/]+)/)?.[1] || null;
+        } catch { return null; }
+    };
+    const key = identity(window.location.href);
+    return key ? problemsData.find(p => p.source === source && p.canonicalId && identity(p.url) === key) || null : null;
 }
 
 function findCurrentProblemRecord(pageTitle) {
@@ -604,7 +649,8 @@ async function findRelatedProblems(pageText, pageTitle, excludedUrls = new Set()
     const pageTitleTokens = canonicalTitleTokens(pageTitle);
     const pageTitleSet = new Set(pageTitleTokens);
     const pageDescSet = new Set(tokenize(pageText));
-    const currentRecord = findCurrentProblemRecord(pageTitle);
+    const confirmedCurrent = findCurrentCatalogRecord();
+    const currentRecord = confirmedCurrent || findCurrentProblemRecord(pageTitle);
     const currentTopics = normalizeTopics(currentRecord?.topics || []);
     const currentConcepts = extractConcepts(
         `${pageTitle || ''} ${pageText || ''}`,
@@ -621,6 +667,7 @@ async function findRelatedProblems(pageText, pageTitle, excludedUrls = new Set()
         if (!preferredPlatforms.includes(problem.source)) continue;
         if (excludedUrls.has(problem.url)) continue;
         if (problem === currentRecord) continue;
+        if (confirmedCurrent?.canonicalId && problem.canonicalId === confirmedCurrent.canonicalId) continue;
         const features = getProblemTokens(problem);
         const candidateTitleTokens = canonicalTitleTokens(problem.title);
         const candidateTitleSet = new Set(candidateTitleTokens);
@@ -1161,6 +1208,8 @@ function escapeHtml(value) {
 function createLeetCodeButton(problem) {
     const button = document.createElement('button');
     button.className = 'dsa-helper-btn';
+    const confirmed = problem.matchType === 'confirmed' || problem.matchType === 'platform-variant';
+    if (confirmed) button.classList.add('confirmed-match');
     
     if (problem.isPremium) {
         button.classList.add('premium-problem');
@@ -1174,6 +1223,7 @@ function createLeetCodeButton(problem) {
     const scoreBadges = isRelated
         ? `<span class="match-percent total-match">${totalPercent}% Related</span>`
         : '';
+    const confirmedLabel = confirmed ? `<span class="confirmed-match-label">✓ Same question${problem.matchType === 'platform-variant' ? ' · Platform variant' : ''}</span>` : '';
     const relationBadges = isRelated
         ? (problem.relationReasons || []).map(reason => `<span class="relation-badge">${reason}</span>`).join('')
         : '';
@@ -1184,6 +1234,7 @@ function createLeetCodeButton(problem) {
     
     button.innerHTML = `
     <div class="btn-content">
+      ${confirmedLabel}
       <div class="btn-title">${escapeHtml(problem.title)} ${sqlBadge}</div>
       <div class="btn-meta">
         <span class="difficulty ${(problem.difficulty || 'unknown').toLowerCase()}">${problem.difficulty || 'Unknown'}</span>
@@ -1369,7 +1420,7 @@ function updateUI(matches) {
     });
 
     // Only platforms that actually have matches get a tab
-    const sourceKeys = [...groups.keys()];
+    const sourceKeys = [...groups.keys()].sort((a, b) => platformDisplayOrder.indexOf(a) - platformDisplayOrder.indexOf(b));
     
     container.style.display = 'block';
     const header = document.createElement('div');
@@ -1768,7 +1819,7 @@ function injectFloatingButton() {
 }
 
 function injectTitleButton() {
-    if (!visibilityEnabled || !isSupportedProblemPage()) {
+    if (!visibilityEnabled || !preferredPlatforms.length || !isSupportedProblemPage()) {
         removeTitleButton();
         hidePopup();
         return;
@@ -1815,6 +1866,7 @@ function debounce(func, wait) {
 async function init() {
     let visibilityRevision = 0;
     let platformsRevision = 0;
+    let accountsRevision = 0;
     let thresholdRevision = 0;
     // React to setting changes (platform toggles, threshold, visibility) from the
     // popup/background immediately, instead of waiting for the next page load.
@@ -1825,7 +1877,18 @@ async function init() {
             platformsRevision += 1;
             const stored = changes['dsa-preferred-platforms'].newValue;
             const valid = Array.isArray(stored) ? stored.filter(p => DEFAULT_PLATFORMS.includes(p)) : [];
-            preferredPlatforms = valid.length ? valid : DEFAULT_PLATFORMS.slice();
+            platformPreferences = Array.isArray(stored) ? valid : DEFAULT_PLATFORMS.slice();
+        }
+        if (changes['crossdsa-tracker-v1']) {
+            accountsRevision += 1;
+            connectedAccounts = changes['crossdsa-tracker-v1'].newValue?.accounts || {};
+            const saved = changes['crossdsa-tracker-v1'].newValue?.settings?.platformOrder;
+            platformDisplayOrder = [...new Set([...(Array.isArray(saved) ? saved : []), ...DEFAULT_PLATFORM_ORDER])].filter(id => DEFAULT_PLATFORMS.includes(id));
+        }
+        if (changes['dsa-preferred-platforms'] || changes['crossdsa-tracker-v1']) {
+            updatePreferredPlatforms();
+            closeSearchResults();
+            if (buttonContainer) injectTitleButton();
         }
 
         if (changes['dsa-helper-similarity-threshold']) {
@@ -1854,16 +1917,23 @@ async function init() {
     try {
         const revision = visibilityRevision;
         const initialPlatformsRevision = platformsRevision;
+        const initialAccountsRevision = accountsRevision;
         const initialThresholdRevision = thresholdRevision;
         const result = await chrome.storage.local.get([
-            'dsa-preferred-platforms', 'dsa-helper-visibility-enabled', 'dsa-helper-similarity-threshold'
+            'dsa-preferred-platforms', 'dsa-helper-visibility-enabled', 'dsa-helper-similarity-threshold', 'crossdsa-tracker-v1'
         ]);
         if (revision === visibilityRevision) visibilityEnabled = result['dsa-helper-visibility-enabled'] !== false;
         if (initialPlatformsRevision === platformsRevision) {
             const stored = Array.isArray(result['dsa-preferred-platforms']) ? result['dsa-preferred-platforms'] : [];
             const valid = stored.filter(p => DEFAULT_PLATFORMS.includes(p));
-            preferredPlatforms = valid.length ? valid : DEFAULT_PLATFORMS.slice();
+            platformPreferences = Array.isArray(result['dsa-preferred-platforms']) ? valid : DEFAULT_PLATFORMS.slice();
         }
+        if (initialAccountsRevision === accountsRevision) {
+            connectedAccounts = result['crossdsa-tracker-v1']?.accounts || {};
+            const saved = result['crossdsa-tracker-v1']?.settings?.platformOrder;
+            platformDisplayOrder = [...new Set([...(Array.isArray(saved) ? saved : []), ...DEFAULT_PLATFORM_ORDER])].filter(id => DEFAULT_PLATFORMS.includes(id));
+        }
+        updatePreferredPlatforms();
         if (initialThresholdRevision === thresholdRevision) SIMILARITY_THRESHOLD = normalizeThreshold(result['dsa-helper-similarity-threshold']);
     } catch (e) {
     }
@@ -1992,14 +2062,12 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
         sendResponse({ platforms: preferredPlatforms.slice() });
     }
     if (request.action === 'setPreferredPlatforms') {
-        if (Array.isArray(request.platforms) && request.platforms.length) {
-            preferredPlatforms = request.platforms.filter(p => DEFAULT_PLATFORMS.includes(p));
-            if (!preferredPlatforms.length) preferredPlatforms = DEFAULT_PLATFORMS.slice();
-        } else {
-            preferredPlatforms = DEFAULT_PLATFORMS.slice();
-        }
+        platformPreferences = Array.isArray(request.platforms) ? request.platforms.filter(p => DEFAULT_PLATFORMS.includes(p)) : DEFAULT_PLATFORMS.slice();
+        updatePreferredPlatforms();
+        closeSearchResults();
+        injectTitleButton();
         try {
-            chrome.storage.local.set({ 'dsa-preferred-platforms': preferredPlatforms });
+            chrome.storage.local.set({ 'dsa-preferred-platforms': platformPreferences });
         } catch (e) {
         }
         sendResponse({ success: true, platforms: preferredPlatforms.slice() });
@@ -2008,7 +2076,7 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
         sendResponse({ enabled: visibilityEnabled });
     }
     if (request.action === 'getProblemCount') {
-        sendResponse({ count: problemsData.length });
+        sendResponse({ count: problemsData.filter(problem => connectedAccounts[problem.source]).length });
     }
 });
 

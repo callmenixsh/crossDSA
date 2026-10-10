@@ -378,7 +378,6 @@
 
       .github-btn {
         position: static;
-        grid-column: 2;
         color: #5f6368;
         background: transparent;
         border: 0;
@@ -1071,15 +1070,49 @@
       .overview-status{margin:4px 10px 0}
       .random-result{margin-top:6px;padding:7px 8px;gap:8px}
       .footer-note{padding:8px 12px}
+      .popup-settings-btn {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 7px;
+        grid-column: 2;
+        width: 28px;
+        height: 28px;
+        margin: 0;
+        padding: 5px;
+        color: #3c4043;
+        background: #ffffff;
+        border: 1px solid #dfe1e5;
+        border-radius: 8px;
+        font: inherit;
+        font-size: 12px;
+        font-weight: 600;
+        cursor: pointer;
+      }
+      .popup-settings-btn:hover { background: #f0fdfa; border-color: #5eead4; }
+      .popup-settings-btn:focus-visible { outline: 2px solid #0d9488; outline-offset: 2px; }
+      .popup-actions { grid-column: 2; display: flex; align-items: center; gap: 6px; }
+      @media (prefers-color-scheme: dark) {
+        .popup-settings-btn { color: #e5e7eb; background: #191c1f; border-color: #303438; }
+        .popup-settings-btn:hover { background: #162e2b; border-color: #277c72; }
+      }
+      .search-settings { padding: 6px 10px; }
       .search-settings .search-control-row {
         display: flex;
         align-items: center;
         justify-content: space-between;
-        padding-bottom: 9px;
+        padding-bottom: 6px;
         border-bottom: 1px solid #dfe1e5;
-        margin-bottom: 9px;
+        margin-bottom: 6px;
       }
-      .search-settings .match-settings { margin-top: 10px; }
+      .search-settings .match-settings { margin-top: 6px; }
+      .search-settings .setting-heading { margin-bottom: 4px; font-size: 12px; }
+      .search-settings .slider { display: block; margin: 7px 0 0; }
+      .search-settings .slider::-webkit-slider-thumb { width: 13px; height: 13px; }
+      .search-settings .slider-endpoints { margin-top: 4px; }
+      .search-heading { display: flex; align-items: baseline; gap: 7px; min-width: 0; }
+      .search-question-count { color: #80868b; font-size: 10px; white-space: nowrap; }
+      .search-question-count strong { font-weight: 600; }
       .search-settings.search-disabled { filter: grayscale(1); }
       .search-settings.search-disabled .visibility-title,
       .search-settings.search-disabled .platform-grid,
@@ -1088,14 +1121,61 @@
       .search-settings.search-disabled .slider { cursor: not-allowed; }
       @media (prefers-color-scheme: dark) {
         .search-settings .search-control-row { border-color: #303438; }
+        .search-question-count { color: #8c949c; }
       }
     </style>
   <link rel="stylesheet" href="tracker/contests.css">
+  <link rel="stylesheet" href="tracker/counts.css">
+  <style>
+    #platformGrid { display: grid; gap: 6px; }
+    .platform-row { display: flex; align-items: center; gap: 7px; padding: 9px 8px; border: 1px solid #dadce0; border-radius: 6px; font-size: 12px; background: #fff; }
+    .platform-row.checked { background: #f0fdfa; border-color: #5eead4; }
+    .platform-identity { display: flex; align-items: center; gap: 7px; white-space: nowrap; }
+    .platform-link { color: inherit; text-decoration: none; }
+    .platform-link:hover { text-decoration: underline; }
+    .platform-link:focus-visible { outline: 2px solid #0d9488; outline-offset: 2px; }
+    .platform-row input { margin: 0; accent-color: #0d9488; width: 14px; height: 14px; }
+    .platform-row .platform-total { margin-left: auto; white-space: nowrap; font-variant-numeric: tabular-nums; font-weight: 600; }
+    .platform-row .daily-button { padding: 2px 4px; border: 0; border-radius: 3px; background: transparent; color: #0f766e; font: inherit; font-size: 10px; cursor: pointer; white-space: nowrap; }
+    .platform-row .daily-button:hover { background: #ccfbf1; }
+    .platform-row .daily-button:focus-visible,.platform-row input:focus-visible { outline: 2px solid #0d9488; outline-offset: 2px; }
+    .platform-row .daily-button:disabled { opacity: .5; cursor: wait; }
+    .platform-row .daily-button.is-done { color: #16804a; font-weight: 600; }
+    .daily-completion { display: inline-flex; align-items: center; justify-content: center; width: 17px; height: 17px; padding: 0; border: 1px solid #dadce0; border-radius: 50%; background: transparent; color: #80868b; font: inherit; font-size: 10px; cursor: pointer; }
+    .daily-completion[hidden] { display: none; }
+    .daily-completion:hover { border-color: #16804a; color: #16804a; }
+    .daily-completion[aria-pressed="true"] { border-color: #16804a; background: #16804a; color: #fff; }
+    .daily-completion:focus-visible { outline: 2px solid #0d9488; outline-offset: 2px; }
+    .connect-platforms { font-size: 12px; color: #0f766e; text-decoration: none; }
+    .connect-platforms:hover { text-decoration: underline; }
+    #dailyStatus:empty { display: none; }
+    @media (prefers-color-scheme: dark) {
+      .platform-row { background: #191c1f; border-color: #3b4045; }
+      .platform-row.checked { background: #162e2b; border-color: #277c72; }
+      .platform-row .daily-button,.connect-platforms { color: #5eead4; }
+      .platform-row .daily-button:hover { background: #123c38; }
+      .platform-row .daily-button.is-done { color: #70cf9b; }
+      .daily-completion { color: #8c949c; border-color: #3b4045; }
+      .daily-completion:hover { color: #70cf9b; border-color: #70cf9b; }
+    }
+    #overviewTotal { display: block; }
+    #overviewStatus { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  </style>
   </head>
   <body>
     <div class="header">
-      <a class="github-btn" href="https://github.com/callmenixsh" target="_blank">GitHub</a>
       <h1>crossDSA</h1>
+      <div class="popup-actions" role="group" aria-label="Navigation">
+      <button class="popup-settings-btn" id="openGithub" type="button" aria-label="Open GitHub" title="GitHub">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2a10 10 0 0 0-3.16 19.49c.5.09.68-.22.68-.48v-1.86c-2.78.6-3.37-1.18-3.37-1.18-.45-1.16-1.11-1.47-1.11-1.47-.91-.62.07-.61.07-.61 1 .07 1.53 1.03 1.53 1.03.89 1.52 2.34 1.08 2.91.82.09-.64.35-1.08.64-1.33-2.22-.25-4.56-1.11-4.56-4.94 0-1.09.39-1.99 1.03-2.69-.1-.25-.45-1.27.1-2.65 0 0 .84-.27 2.75 1.03A9.6 9.6 0 0 1 12 6.82c.85 0 1.71.11 2.51.34 1.91-1.3 2.75-1.03 2.75-1.03.55 1.38.2 2.4.1 2.65.64.7 1.03 1.6 1.03 2.69 0 3.84-2.34 4.69-4.57 4.94.36.31.68.92.68 1.85v2.75c0 .27.18.58.69.48A10 10 0 0 0 12 2Z"/></svg>
+      </button>
+      <button class="popup-settings-btn" id="dashboardButton" type="button" aria-label="Open dashboard" title="Dashboard">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+      </button>
+      <button class="popup-settings-btn" id="openSettings" type="button" aria-label="Open settings" title="Settings">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 3-.6 2.3-2 .9-2.1-.6-2 3.4 1.6 1.7v2.6L2.3 15l2 3.4 2.1-.6 2 .9L9 21h4l.6-2.3 2-.9 2.1.6 2-3.4-1.6-1.7v-2.6L19.7 9l-2-3.4-2.1.6-2-.9L13 3Z"/><circle cx="11" cy="12" r="3"/></svg>
+      </button>
+      </div>
     </div>
 
     <button id="openDashboard" type="button" class="overview-card" aria-label="Open your DSA dashboard">
@@ -1104,59 +1184,24 @@
       <span class="overview-stat"><strong id="overviewTotal">&mdash;</strong><span>SOLVED OVERALL</span></span>
       <span class="overview-stat"><strong><svg width="12" height="14" viewBox="0 0 16 20" fill="none" stroke="currentColor" stroke-width="1.3" aria-hidden="true"><path d="M9 1c1 5-3 5-1 9 2-1 3-3 3-4 3 4 4 6 3 9-1 5-10 5-12 0-1-4 1-6 3-9 0 3 1 4 2 4C5 6 7 4 9 1Z"/></svg><span id="overviewStreak">&mdash;</span></strong><span id="overviewStreakLabel">STREAK - LEETCODE</span></span>
     </button>
-    <div class="overview-status"><span id="overviewStatus" role="status">Connect a platform.</span><button id="refreshOverview" type="button" aria-label="Refresh activity">Refresh</button><button id="dashboardLink" type="button" aria-label="Open dashboard">Dashboard &#8599;</button></div>
+    <div class="overview-status"><span id="overviewStatus" role="status">Connect a platform.</span><button id="refreshOverview" type="button" aria-label="Refresh activity">Refresh</button></div>
 
     <div id="contestStrip" class="contest-strip" aria-label="Upcoming contests" hidden></div>
 
+    <div class="section platform-section" id="platformCountsSection">
+      <div class="section-title">Your platforms</div>
+      <div id="platformGrid" role="group" aria-label="Connected platforms and search selection"></div>
+      <a id="connectPlatforms" class="connect-platforms" href="dashboard.html#settings" target="_blank">Connect platforms &#8599;</a>
+      <p id="dailyStatus" class="hint" role="status"></p>
+    </div>
+
     <div class="section search-settings" role="group" aria-labelledby="searchSettingsLabel">
       <div class="search-control-row">
-        <span class="visibility-title" id="searchSettingsLabel">Search</span>
+        <span class="search-heading"><span class="visibility-title" id="searchSettingsLabel">Search</span><span class="search-question-count"><strong id="problemCount">&mdash;</strong> questions</span></span>
         <button class="toggle-btn enabled" id="toggleBtn" type="button" aria-pressed="true" title="Show or hide the search button">
           <span class="toggle-state">On</span>
           <span class="toggle-track" aria-hidden="true"><span class="toggle-thumb"></span></span>
         </button>
-      </div>
-      <div class="platform-grid" id="platformGrid" role="group" aria-label="Search platforms">
-        <label class="platform-chip" data-platform="leetcode" title="LeetCode" aria-label="Search LeetCode">
-          <input type="checkbox" class="platform-check" />
-          <span class="chip-check">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
-          </span>
-          <span class="chip-name">LC</span>
-        </label>
-        <label class="platform-chip" data-platform="geeksforgeeks" title="GeeksforGeeks" aria-label="Search GeeksforGeeks">
-          <input type="checkbox" class="platform-check" />
-          <span class="chip-check">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
-          </span>
-          <span class="chip-name">GfG</span>
-        </label>
-        <label class="platform-chip" data-platform="codeforces" title="Codeforces" aria-label="Search Codeforces">
-          <input type="checkbox" class="platform-check" />
-          <span class="chip-check">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
-          </span>
-          <span class="chip-name">CF</span>
-        </label>
-        <label class="platform-chip" data-platform="codechef" title="CodeChef" aria-label="Search CodeChef">
-          <input type="checkbox" class="platform-check" />
-          <span class="chip-check">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
-          </span>
-          <span class="chip-name">CC</span>
-        </label>
-        <label class="platform-chip" data-platform="code360" title="Code 360" aria-label="Search Code 360">
-          <input type="checkbox" class="platform-check" />
-          <span class="chip-check">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
-          </span>
-          <span class="chip-name">C360</span>
-        </label>
-        <label class="platform-chip" data-platform="atcoder" title="AtCoder" aria-label="Search AtCoder">
-          <input type="checkbox" class="platform-check" />
-          <span class="chip-check"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg></span>
-          <span class="chip-name">AC</span>
-        </label>
       </div>
       <div class="match-settings">
         <div class="setting-label setting-heading">
@@ -1192,11 +1237,6 @@
         </span>
         <span class="random-arrow" aria-hidden="true">↗</span>
       </button>
-    </div>
-
-    <div class="footer-note">
-      <span><strong id="problemCount">—</strong> questions</span>
-      <a href="#" id="resetLink">Reset</a>
     </div>
 
     <span class="sr-only" id="statusMessage" aria-live="polite"></span>

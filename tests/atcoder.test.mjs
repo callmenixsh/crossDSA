@@ -23,14 +23,16 @@ test('AtCoder links reject foreign hosts, credentials and non-task routes', () =
   ]) assert.equal(safeProblemUrl(url, 'atcoder'), null, url);
 });
 
-test('AtCoder library and manual Done work without an account and do not invent daily accepts', () => {
+test('AtCoder library requires a connection while saved Done history remains preserved', () => {
   const problem = { key: 'atcoder:dp_a', platform: 'atcoder', id: 'dp_a', title: 'Frog 1', difficulty: 'Unknown', topics: [], url: 'https://atcoder.jp/contests/dp/tasks/dp_a' };
   const library = [problem, { ...problem, platform: 'leetcode', key: 'leetcode:frog' }];
-  assert.deepEqual(filterLibrary(library, { query: 'dp_a' }), [problem]);
-  assert.deepEqual(filterLibrary(library, { platform: 'atcoder' }), [problem]);
+  assert.deepEqual(filterLibrary(library, { query: 'dp_a' }), []);
+  assert.deepEqual(filterLibrary(library, { accounts: { atcoder: {} }, query: 'dp_a' }), [problem]);
+  assert.deepEqual(filterLibrary(library, { accounts: { atcoder: {} }, platform: 'atcoder' }), [problem]);
   const workspace = { [problem.key]: { ...problem, done: true, doneAt: Date.parse('2026-10-09T12:00:00Z'), listIds: ['saved'] } };
-  assert.deepEqual(filterLibrary(library, { workspace, status: 'starred' }), [problem]);
-  const done = doneQuestions({}, { workspace, platform: 'atcoder', from: '2026-10-09', to: '2026-10-09' });
+  assert.deepEqual(filterLibrary(library, { accounts: { atcoder: {} }, workspace, status: 'starred' }), [problem]);
+  assert.equal(doneQuestions({}, { workspace }).total, 0);
+  const done = doneQuestions({ atcoder: {} }, { workspace, platform: 'atcoder', from: '2026-10-09', to: '2026-10-09' });
   assert.equal(done.records[0].key, problem.key);
   assert.equal(acceptedToday({}, '2026-10-09', 'UTC'), 0);
   workspace[problem.key].done = false;

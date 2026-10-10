@@ -1,5 +1,5 @@
 import { STORAGE_KEY, normalizeState } from './core.mjs';
-import { CONTEST_KEY, CONTEST_SOURCES, REFRESH_ALARM, REMINDER_PREFIX, normalizeContests, normalizeCodeforcesContests, activeContests, reminderPlan, reminderName, contestPlatform, sourceCache, sourceIsFresh, safeContestUrl, retainContests } from './contests.mjs';
+import { CONTEST_KEY, CONTEST_SOURCES, REFRESH_ALARM, REMINDER_PREFIX, normalizeContests, normalizeCodeforcesContests, normalizeCodechefContests, normalizeAtcoderContests, normalizeGfgContests, normalizeCode360Contests, activeContests, reminderPlan, reminderName, contestPlatform, sourceCache, sourceIsFresh, safeContestUrl, retainContests } from './contests.mjs';
 
 let running;
 let clickListenerRegistered = false;
@@ -26,11 +26,37 @@ async function reconcile() {
   for (const item of plan) if (!existing.has(item.name)) await chrome.alarms.create(item.name, { when: Math.max(now + 1000, item.when) });
 }
 async function sourcePermissions() {
+  const accounts = normalizeState((await chrome.storage.local.get(STORAGE_KEY))[STORAGE_KEY]).accounts;
   return Object.fromEntries(await Promise.all(Object.entries(CONTEST_SOURCES).map(async ([platform, source]) =>
-    [platform, await chrome.permissions.contains({ origins: [source.origin] })])));
+    [platform, Boolean(accounts[platform]) && await chrome.permissions.contains({ origins: [source.origin] })])));
 }
 async function fetchSchedule(platform) {
   const options = { credentials: 'omit', signal: AbortSignal.timeout(20000) };
+  const request = async url => {
+    const response = await fetch(url, options);
+    if (!response.ok) throw new Error('Schedule request failed.');
+    return response;
+  };
+  if (platform === 'codechef') return { items: normalizeCodechefContests(await (await request('https://www.codechef.com/api/list/contests/all')).json()), limited: false };
+  if (platform === 'atcoder') return { items: normalizeAtcoderContests(await (await request('https://atcoder.jp/contests/?lang=en')).text()), limited: false };
+  if (platform === 'geeksforgeeks' || platform === 'code360') {
+    const items = [];
+    let more = true;
+    for (let page = 1; page <= 20 && more; page++) {
+      if (platform === 'geeksforgeeks') {
+        const data = await (await request(`https://practiceapi.geeksforgeeks.org/api/vr/events/?page_number=${page}&sub_type=${page === 1 ? 'all' : 'upcoming'}&type=contest`)).json();
+        items.push(...normalizeGfgContests(data));
+        more = data.next_upcoming === true;
+      } else {
+        const data = await (await request(`https://www.naukri.com/code360/api/v3/public_section/contest_list?page=${page}`)).json();
+        const batch = normalizeCode360Contests(data);
+        items.push(...batch);
+        // The official listing puts upcoming events before its paginated history.
+        more = page < Number(data.data.total_pages) && batch.some(item => item.end > Date.now());
+      }
+    }
+    return { items, limited: more };
+  }
   if (platform === 'codeforces') {
     const response = await fetch('https://codeforces.com/api/contest.list?gym=false', options);
     if (!response.ok) throw new Error('Schedule request failed.');
@@ -86,6 +112,7 @@ export async function deliverReminder(name, now = Date.now()) {
   if (cache.sent?.[name]) return;
   const contest = activeContests(cache.items, now).find(item => [60, 10].some(minutes => reminderName(item, minutes) === name));
   if (!contest || contest.start <= now || !safeContestUrl(contest) || !sourceIsFresh(cache, contestPlatform(contest), now) ||
+    !(await sourcePermissions())[contestPlatform(contest)] ||
     !await chrome.permissions.contains({ origins: [CONTEST_SOURCES[contestPlatform(contest)].origin] })) return;
   const minutes = name.endsWith(':60') ? 60 : 10;
   const due = contest.start - minutes * 60000;
@@ -110,7 +137,9 @@ export function registerContests() {
   chrome.storage.onChanged.addListener((changes, area) => {
     if (area === 'local' && changes[STORAGE_KEY]) {
       const before = normalizeState(changes[STORAGE_KEY].oldValue).settings, after = normalizeState(changes[STORAGE_KEY].newValue).settings;
-      if (before.contestsEnabled !== after.contestsEnabled || before.contestReminders !== after.contestReminders) serialized(refresh).catch(console.error);
+      const previousAccounts = Object.keys(changes[STORAGE_KEY].oldValue?.accounts || {}).sort().join(',');
+      const nextAccounts = Object.keys(changes[STORAGE_KEY].newValue?.accounts || {}).sort().join(',');
+      if (previousAccounts !== nextAccounts || before.contestsEnabled !== after.contestsEnabled || before.contestReminders !== after.contestReminders) serialized(refresh).catch(console.error);
     }
   });
   chrome.permissions.onRemoved.addListener(() => serialized(refresh).catch(console.error));

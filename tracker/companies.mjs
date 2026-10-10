@@ -1,4 +1,5 @@
 import { filterLibrary } from './library.mjs';
+import { collapseQuestions } from './question-catalog.mjs';
 import { canonicalCompanyId, splitCode360Tags, COMPANY_DISPLAY_NAMES } from './code360-companies.mjs';
 
 // Editorial directory groups, independent of source company tags.
@@ -46,7 +47,7 @@ export function buildCompanyIndex(data, library) {
 }
 
 export function companyQuestions(company, window = 'all', platform = 'all') {
-  return (company.windows[window] || []).filter(p => platform === 'all' || platform === p.platform);
+  return collapseQuestions((company.windows[window] || []).filter(p => platform === 'all' || platform === p.platform));
 }
 
 export function companyCounts(company, window = 'all', platform = 'all') {

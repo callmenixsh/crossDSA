@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { filterLibrary } from '../tracker/library.mjs';
+import { orderedPlatformIds } from '../tracker/core.mjs';
 import { readFile } from 'node:fs/promises';
 
 const library = [
@@ -10,6 +11,15 @@ const library = [
 ];
 const accounts = { leetcode: {}, codeforces: {} };
 const keys = options => filterLibrary(library, { accounts, ...options }).map(p => p.key);
+
+test('platform order removes invalid duplicates, fills missing entries and orders default results', () => {
+  const order = orderedPlatformIds({ platformOrder: ['codeforces', 'invalid', 'codeforces', 'leetcode'] });
+  assert.deepEqual(order.slice(0, 2), ['codeforces', 'leetcode']);
+  assert.equal(new Set(order).size, 7);
+  assert.deepEqual(orderedPlatformIds({ platformOrder: null }, ['leetcode', 'codeforces']), ['leetcode', 'codeforces']);
+  assert.deepEqual(keys({ platformOrder: order }), ['cf:1', 'lc:1', 'lc:2']);
+  assert.equal(keys({ platformOrder: order, query: 'Two Sum' })[0], 'lc:1', 'Search relevance remains meaningful');
+});
 
 test('library scope respects connected platforms and platform filter', () => {
   assert.deepEqual(keys({ accounts: {} }), []);

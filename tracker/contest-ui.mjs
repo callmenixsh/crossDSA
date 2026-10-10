@@ -4,12 +4,23 @@ import { createContestCalendar } from './contest-calendar.mjs';
 
 export async function mountContestStrip(host) {
   if (!host) return;
-  let prefs = normalizeState().settings, cache = {};
+  let prefs = normalizeState().settings, accounts = {}, cache = {};
+  function connectedCache() {
+    const sources = Object.fromEntries(Object.entries(cache.sources || {}).filter(([id]) => accounts[id]));
+    const connected = Object.keys(CONTEST_SOURCES).filter(id => accounts[id]);
+    return { ...cache, sources, items: (cache.items || []).filter(item => accounts[contestPlatform(item)]),
+      needsAccess: connected.length > 0 && connected.every(id => sources[id]?.needsAccess),
+      error: Object.values(sources).some(source => source.error) ? 'Contest schedule unavailable' : null };
+  }
   const dashboard = location.pathname.endsWith('/dashboard.html');
-  const calendar = dashboard ? createContestCalendar({ host: document.getElementById('contestCalendar'), getSettings: () => prefs, getCache: () => cache, makeCard: card }) : null;
+  const calendar = dashboard ? createContestCalendar({ host: document.getElementById('contestCalendar'), getSettings: () => prefs, getCache: connectedCache, getAccounts: () => accounts, makeCard: card }) : null;
   function platformIcon(contest) {
     const icon = document.createElement('span'); icon.className = 'contest-platform-icon';
     const platform = contestPlatform(contest); icon.title = CONTEST_SOURCES[platform].name; icon.setAttribute('aria-label', icon.title);
+    if (!['leetcode', 'codeforces'].includes(platform)) {
+      icon.textContent = { codechef: 'CC', atcoder: 'AC', geeksforgeeks: 'GfG', code360: '360' }[platform];
+      return icon;
+    }
     icon.innerHTML = platform === 'codeforces'
       ? '<svg width="13" height="13" viewBox="0 0 16 16" aria-hidden="true"><path fill="currentColor" d="M1 8h3v7H1zm5-7h3v14H6zm5 4h3v10h-3z"/></svg>'
       : '<svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="m10 1-6 6a3 3 0 0 0 0 4l3 3a3 3 0 0 0 4 0M4 8h10"/></svg>';
@@ -48,13 +59,14 @@ export async function mountContestStrip(host) {
     a.append(dot, icon, title, time); return a;
   }
   function render() {
-    host.replaceChildren(); host.hidden = !dashboard && !prefs.contestsEnabled;
+    host.replaceChildren(); host.hidden = !Object.keys(CONTEST_SOURCES).some(id => accounts[id]) || !dashboard && !prefs.contestsEnabled;
     calendar?.update();
     if (host.hidden) return;
-    if (cache.needsAccess) { host.append(anchor('Enable contest schedule access \u2197', chrome.runtime.getURL('dashboard.html#contests'), 'contest-empty')); return; }
-    const contests = activeContests(cache.items);
+    const scoped = connectedCache();
+    if (scoped.needsAccess) { host.append(anchor('Enable contest schedule access \u2197', chrome.runtime.getURL('dashboard.html#contests'), 'contest-empty')); return; }
+    const contests = activeContests(cache.items).filter(item => accounts[contestPlatform(item)]);
     if (!contests.length) {
-      host.append(anchor(cache.error ? 'Contest schedule unavailable \u2197' : cache.updatedAt ? 'No upcoming contests \u2197' : 'Loading contests\u2026', chrome.runtime.getURL('dashboard.html#contests'), 'contest-empty'), calendarLink()); return;
+      host.append(anchor(scoped.error ? 'Contest schedule unavailable \u2197' : cache.updatedAt ? 'No upcoming contests \u2197' : 'Loading contests\u2026', chrome.runtime.getURL('dashboard.html#contests'), 'contest-empty'), calendarLink()); return;
     }
     host.append(row(contests[0]));
     const more = calendarLink(contests.length > 1 ? `+${contests.length - 1}` : 'Calendar', 'contest-more');
@@ -66,12 +78,12 @@ export async function mountContestStrip(host) {
   }
   chrome.storage.onChanged.addListener((changes, area) => {
     if (area !== 'local') return;
-    if (changes[STORAGE_KEY]) prefs = normalizeState(changes[STORAGE_KEY].newValue).settings;
+    if (changes[STORAGE_KEY]) { const state = normalizeState(changes[STORAGE_KEY].newValue); prefs = state.settings; accounts = state.accounts; }
     if (changes[CONTEST_KEY]) cache = changes[CONTEST_KEY].newValue || {};
     if (changes[STORAGE_KEY] || changes[CONTEST_KEY]) render();
   });
   const stored = await chrome.storage.local.get([STORAGE_KEY, CONTEST_KEY]);
-  prefs = normalizeState(stored[STORAGE_KEY]).settings; cache = stored[CONTEST_KEY] || {}; render();
+  const state = normalizeState(stored[STORAGE_KEY]); prefs = state.settings; accounts = state.accounts; cache = stored[CONTEST_KEY] || {}; render();
   const refresh = () => { if (dashboard || prefs.contestsEnabled) chrome.runtime.sendMessage({ action: 'contests:refresh' }).catch(() => {}); };
   refresh();
   setInterval(() => { if (!document.hidden) { render(); refresh(); } }, 60000);

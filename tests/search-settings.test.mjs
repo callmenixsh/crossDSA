@@ -26,7 +26,7 @@ test('search settings reject unauthorized writes and malformed values', async ()
   for (const value of [null, '', false, '0.5junk', -1, 0, 1.1, Infinity]) {
     assert.equal((await h.send({ action: 'setSimilarityThreshold', value })).success, false);
   }
-  for (const platforms of [null, [], ['unknown'], ['leetcode', 'unknown']]) {
+  for (const platforms of [null, ['unknown'], ['leetcode', 'unknown']]) {
     assert.equal((await h.send({ action: 'setPreferredPlatforms', platforms })).success, false);
   }
   const message = { action: 'setSimilarityThreshold', value: 0.7 };
@@ -62,23 +62,8 @@ test('search settings normalize legacy preferences and ignore unrelated messages
   assert.equal(await h.send({ action: 'tracker:get' }), undefined);
 });
 
-test('popup reset persists both preferences together and reports failed saves accurately', async () => {
-  const popup = await readFile(new URL('../popup.js', import.meta.url), 'utf8');
-  for (const fails of [false, true]) {
-    let handler;
-    const writes = [], messages = [];
-    const context = vm.createContext({
-      resetLink: { addEventListener: (_event, fn) => { handler = fn; } },
-      selectedPlatforms: ['codechef'], DEFAULT_PLATFORMS: ['leetcode', 'codeforces'], matchThreshold: 0.8,
-      similaritySlider: { value: '0.8' }, similarityValue: { textContent: '0.8' }, renderChips() {},
-      showStatus: (message, type) => messages.push({ message, type }),
-      chrome: { storage: { local: { set: async value => { writes.push(value); if (fails) throw new Error('Full'); } } } },
-    });
-    vm.runInContext(popup.slice(popup.indexOf('  resetLink.addEventListener'), popup.indexOf('  // ---- Load persisted state')), context);
-    await handler({ preventDefault() {} });
-    assert.equal(writes.length, 1);
-    assert.equal(writes[0]['dsa-helper-similarity-threshold'], 0.4);
-    assert.equal(context.matchThreshold, fails ? 0.8 : 0.4);
-    assert.equal(messages[0].type, fails ? 'error' : 'success');
-  }
+test('an empty search selection persists without restoring default platforms', async () => {
+  const h = settings();
+  assert.equal((await h.send({ action: 'setPreferredPlatforms', platforms: [] })).success, true);
+  assert.deepEqual(Array.from((await h.send({ action: 'getPreferredPlatforms' })).platforms), []);
 });

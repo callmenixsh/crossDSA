@@ -58,7 +58,7 @@
   },
   "web_accessible_resources": [
     {
-      "resources": ["data/leetcode-data.json", "data/geeksforgeeks-data.json", "data/codeforces-data.json", "data/codechef-data.json", "data/code360-data.json", "data/atcoder-data.json"],
+      "resources": ["data/leetcode-data.json", "data/geeksforgeeks-data.json", "data/codeforces-data.json", "data/codechef-data.json", "data/code360-data.json", "data/atcoder-data.json", "data/normalized/runtime.json", "tracker/question-catalog.mjs"],
       "matches": [
         "https://takeuforward.org/*",
         "https://leetcode.com/*",

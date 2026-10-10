@@ -7,6 +7,7 @@
   <title>Your workspace · crossDSA</title>
   <link rel="icon" href="icons/cDSA-32.png">
   <link rel="stylesheet" href="dashboard.css">
+  <link rel="stylesheet" href="tracker/counts.css">
   <link rel="stylesheet" href="tracker/contests.css">
   <link rel="stylesheet" href="tracker/companies.css">
 </head>
@@ -24,7 +25,7 @@
     </nav>
   </aside>
   <main>
-    <header class="topbar"><div class="breadcrumbs">Workspace <span>/</span> <strong id="breadcrumb">Overview</strong></div><div class="topbar-right"><div id="contestStrip" class="contest-strip" aria-label="Upcoming contests" hidden></div><span id="todayLabel"></span><button class="button ghost" id="connectTop">＋ Connect platforms</button></div></header>
+    <header class="topbar"><div class="breadcrumbs">Workspace <span>/</span> <strong id="breadcrumb">Overview</strong></div><div class="topbar-right"><div id="contestStrip" class="contest-strip" aria-label="Upcoming contests" hidden></div><span id="todayLabel"></span></div></header>
     <div class="page">
       <section id="view-overview" class="view">
         <div class="page-heading"><div><h1>Overview</h1></div><div class="sync-controls"><button class="button" id="syncAll">↻ Sync activity</button><p id="syncSummary" class="small muted" role="status" hidden></p></div></div>
@@ -56,7 +57,7 @@
         </div>
       </section>
       <section id="view-questions" class="view" hidden>
-        <div class="page-heading"><div><h1>Question library</h1></div><button class="button" id="randomQuestion">↗ Random problem</button></div>
+        <div class="page-heading"><div><h1>Question library</h1><p id="catalogSummary" class="catalog-summary" role="status">Loading catalog totals…</p></div><button class="button" id="randomQuestion">↗ Random problem</button></div>
         <div class="panel library-panel">
           <div class="library-search"><input type="search" id="questionSearch" placeholder="Search titles, IDs or topics…" aria-label="Search questions"><button class="button ghost" id="resetQuestions">Clear filters</button></div>
           <div class="filters library-filters">
@@ -106,11 +107,10 @@
       </section>
       <section id="view-settings" class="view" hidden>
         <div class="page-heading"><div><h1>Settings</h1></div></div>
-        <div class="settings-grid"><form id="contestSettingsForm" class="panel"><h2>Contest notifications</h2><label class="check-field"><input id="contestsEnabled" type="checkbox"> Show upcoming contests in popup</label><label class="check-field"><input id="contestReminders" type="checkbox"> Desktop reminders</label><p class="small muted">LeetCode and Codeforces contests. Reminders arrive 1 hour and 10 minutes before, while Chrome is running.</p><button class="button primary" type="submit">Save contest settings</button></form><form id="settingsForm" class="panel"><h2>Goals &amp; activity</h2><label class="field">Daily goal<input id="dailyGoal" type="number" min="1" max="50" required></label><label class="field">Timezone<input id="timeZone" required placeholder="Asia/Kolkata"></label><label class="check-field"><input id="autoSync" type="checkbox"> Auto-refresh activity every 30 minutes</label><button class="button primary" type="submit">Save settings</button></form><article class="panel"><h2>Your data</h2><p>Stored in this browser.</p><button class="button" id="exportData">↓ Export my data</button></article></div>
+        <div class="settings-grid"><article class="panel connections-panel" aria-labelledby="connectionsHeading"><h2 id="connectionsHeading" tabindex="-1">Connect platforms</h2><div id="connectionForms"></div></article><form id="contestSettingsForm" class="panel"><h2>Contest notifications</h2><label class="check-field"><input id="contestsEnabled" type="checkbox"> Show upcoming contests in popup</label><label class="check-field"><input id="contestReminders" type="checkbox"> Desktop reminders</label><p class="small muted">Contests from your connected platforms. Reminders arrive 1 hour and 10 minutes before, while Chrome is running.</p><button class="button primary" type="submit">Save contest settings</button></form><form id="settingsForm" class="panel"><h2>Goals &amp; activity</h2><label class="field">Daily goal<input id="dailyGoal" type="number" min="1" max="50" required></label><label class="field">Timezone<input id="timeZone" required placeholder="Asia/Kolkata"></label><label class="check-field"><input id="autoSync" type="checkbox"> Auto-refresh activity every 30 minutes</label><button class="button primary" type="submit">Save settings</button></form><article class="panel"><h2>Your data</h2><p>Stored in this browser.</p><button class="button" id="exportData">↓ Export my data</button></article></div>
       </section>
     </div>
   </main>
-  <dialog id="connectionsDialog"><div class="dialog-heading"><div><h2>Connect platforms</h2></div><button class="icon-button" data-close="connectionsDialog" aria-label="Close connections">×</button></div><div id="connectionForms"></div></dialog>
   <dialog id="practiceDialog" aria-labelledby="listPickerTitle"><form id="practiceForm">
     <div class="dialog-heading"><h2 id="listPickerTitle">Add to list</h2><button class="icon-button" type="button" data-close="practiceDialog" aria-label="Close list selection">&times;</button></div>
     <div class="list-picker-problem"><span id="practicePlatform" class="eyebrow"></span><h3 id="practiceTitle"></h3><a id="practiceLink" class="text-link" target="_blank" rel="noopener noreferrer">Open problem ↗</a></div>

@@ -1,13 +1,16 @@
 import { mountContestStrip } from './tracker/contest-ui.mjs';
+import { appendTodayIncrease, solvedToday } from './tracker/count-ui.mjs';
 import { CONTEST_ORIGINS } from './tracker/contests.mjs';
 import { ratingSeries } from './tracker/ratings.mjs';
 import { filterLibrary, libraryPlatformEnabled } from './tracker/library.mjs';
+import { attachQuestionCatalog, collapseQuestions, sourceDigest } from './tracker/question-catalog.mjs';
 import { mountCompanies } from './tracker/company-ui.mjs';
 import { splitCode360Tags } from './tracker/code360-companies.mjs';
-import { STORAGE_KEY, PLATFORMS, QUESTION_PLATFORMS, emptyState, normalizeState, cleanHandle, problemKey, dateKey, shiftDay, dailyActivity, streaks, acceptedToday, practiceOverview, safeProblemUrl, doneQuestions, questionIsDone } from './tracker/core.mjs';
+import { STORAGE_KEY, PLATFORMS, QUESTION_PLATFORMS, orderedPlatformIds, emptyState, normalizeState, cleanHandle, problemKey, dateKey, shiftDay, dailyActivity, streaks, acceptedToday, practiceOverview, safeProblemUrl, doneQuestions, questionIsDone } from './tracker/core.mjs';
 
 const $ = id => document.getElementById(id);
 let state = emptyState(), library = [], filtered = [], page = 0, activeProblem = null, indexReady = false;
+let libraryByKey = new Map();
 const PAGE_SIZE = 50;
 let toastTimer;
 let donePage = 0;
@@ -67,6 +70,7 @@ function render() {
   $('solvedTotal').textContent = snapshots.length ? `${snapshots.some(a => a.snapshot.totalIsLowerBound) ? '≥ ' : ''}${format(snapshots.reduce((sum, a) => sum + a.snapshot.totalSolved, 0))}` : '—';
   $('solvedTotal').title = 'Total across platforms';
   const accepted = acceptedToday(state.accounts, today(), state.settings.timeZone);
+  appendTodayIncrease($('solvedTotal'), accepted, Boolean(practiceOverview(state).warning));
   const activityWarning = practiceOverview(state).warning;
   $('goalCount').textContent = activityWarning ? accepted ? `${accepted}+` : '—' : accepted;
   $('goalRing').title = activityWarning || 'Accepted problems today, including browser-observed accepts';
@@ -97,7 +101,7 @@ function render() {
 }
 function updateProgressPlatforms() {
   const select = $('progressPlatform'), selected = select.value;
-  const connected = Object.keys(PLATFORMS).filter(id => state.accounts[id]);
+  const connected = orderedPlatformIds(state.settings).filter(id => state.accounts[id]);
   const options = connected.map(id => option(id, PLATFORMS[id].name));
   if (connected.length > 1) options.unshift(option('all', 'All connected'));
   if (!connected.length) options.push(option('all', 'No platforms'));
@@ -106,37 +110,43 @@ function updateProgressPlatforms() {
   select.disabled = connected.length < 2;
 }
 function updateQuestionPlatforms() {
-  const connected = Object.keys(QUESTION_PLATFORMS).filter(id => libraryPlatformEnabled(id, state.accounts));
+  const connected = orderedPlatformIds(state.settings, Object.keys(QUESTION_PLATFORMS)).filter(id => libraryPlatformEnabled(id, state.accounts));
   for (const id of ['questionPlatform', 'donePlatform']) {
     const select = $(id), selected = select.value;
-    select.replaceChildren(option('all', 'All available'), ...connected.map(id => option(id, QUESTION_PLATFORMS[id].name)));
+    select.replaceChildren(option('all', connected.length ? 'All connected' : 'No platforms'), ...connected.map(id => option(id, QUESTION_PLATFORMS[id].name)));
     select.value = connected.includes(selected) ? selected : 'all';
     select.disabled = !connected.length;
   }
 }
 function questionActions(problem) {
   const key = problem.key || problemKey(problem.platform, problem.url);
-  const entry = { ...defaultPractice(problem), key }, actions = el('div', 'question-actions');
-  const starred = Boolean(state.workspace[key]?.listIds?.includes('saved'));
+  const versions = problem.versions || [problem], primary = versions.find(v => v.key === key) || problem;
+  const actions = el('div', 'question-actions');
+  const starred = versions.some(v => state.workspace[v.key]?.listIds?.includes('saved'));
   const star = button(starred ? '★' : '☆', `question-star${starred ? ' active' : ''}`, () => update({ starred: !starred }));
   star.setAttribute('aria-label', `${starred ? 'Unstar' : 'Star'} ${problem.title}`);
   star.setAttribute('aria-pressed', String(starred));
   star.title = starred ? 'Unstar' : 'Star';
   const label = el('label', 'question-done'), checkbox = el('input');
-  checkbox.type = 'checkbox'; checkbox.checked = questionIsDone(state.accounts, state.workspace, key);
+  checkbox.type = 'checkbox'; checkbox.checked = versions.some(v => questionIsDone(state.accounts, state.workspace, v.key));
   checkbox.setAttribute('aria-label', `Mark ${problem.title} as done`);
   checkbox.addEventListener('change', () => update({ done: checkbox.checked }));
   label.append(checkbox);
   label.title = 'Mark as done';
-  const customCount = (state.workspace[key]?.listIds || []).filter(id => id !== 'saved').length;
-  const add = button('+ Add to list', `question-list-button${customCount ? ' has-lists' : ''}`, () => editProblem(problem));
+  const customCount = new Set(versions.flatMap(v => state.workspace[v.key]?.listIds || []).filter(id => id !== 'saved')).size;
+  const listTarget = versions.find(v => state.workspace[v.key]?.listIds?.some(id => id !== 'saved')) || primary;
+  const add = button('+ Add to list', `question-list-button${customCount ? ' has-lists' : ''}`, () => editProblem(listTarget));
   if (customCount) add.append(el('span', 'selected-list-count', customCount));
   add.setAttribute('aria-label', `Add ${problem.title} to list`);
   actions.append(star, add);
   async function update(patch) {
     star.disabled = true; checkbox.disabled = true;
-    try { await rpc('question-state', { entry, patch }); render(); }
-    catch (error) { checkbox.checked = questionIsDone(state.accounts, state.workspace, key); toast(error.message, true); }
+    try {
+      const existing = patch.starred === false ? versions.filter(v => state.workspace[v.key]?.listIds?.includes('saved')) : patch.done === false ? versions.filter(v => state.workspace[v.key]?.done) : [];
+      for (const target of existing.length ? existing : [primary]) await rpc('question-state', { entry: defaultPractice(target), patch });
+      render();
+    }
+    catch (error) { checkbox.checked = versions.some(v => questionIsDone(state.accounts, state.workspace, v.key)); toast(error.message, true); }
     finally { star.disabled = false; checkbox.disabled = false; }
   }
   return { done: label, actions };
@@ -170,7 +180,8 @@ function renderHeatmap() {
 const hiddenRatingSeries = new Set();
 function renderRatings() {
   const selected = $('progressPlatform').value;
-  const series = ratingSeries(state.accounts, Number($('progressYear').value), state.settings.timeZone, selected);
+  const order = orderedPlatformIds(state.settings);
+  const series = ratingSeries(state.accounts, Number($('progressYear').value), state.settings.timeZone, selected).sort((a, b) => order.indexOf(a.id) - order.indexOf(b.id));
   const isScore = selected === 'geeksforgeeks' || (series.length > 0 && series.every(s => s.score));
   const hasScore = series.some(s => s.score);
   $('ratingsTitle').textContent = isScore ? 'Coding score' : hasScore ? 'Rating & coding score' : 'Rating over time';
@@ -229,7 +240,7 @@ function renderRatings() {
 }
 function renderPlatforms() {
   const cards = document.createDocumentFragment();
-  for (const [id, platform] of Object.entries(PLATFORMS)) {
+  for (const [id, platform] of orderedPlatformIds(state.settings).map(id => [id, PLATFORMS[id]])) {
     const account = state.accounts[id], snapshot = account?.snapshot;
     if (!account) continue;
     const card = el('article', 'platform-card'); card.style.setProperty('--platform', platform.color);
@@ -248,7 +259,9 @@ function renderPlatforms() {
         const stats = el('div', 'platform-stats');
         for (const [value, label] of [[`${snapshot.totalIsLowerBound ? '≥ ' : ''}${format(snapshot.totalSolved)}`, 'SOLVED'], [id === 'geeksforgeeks' ? snapshot.score == null ? '—' : format(snapshot.score) : snapshot.rating == null ? null : format(Math.round(snapshot.rating)), id === 'geeksforgeeks' ? 'CODING SCORE' : 'CONTEST RATING'], [snapshot.rank ? `#${format(snapshot.rank)}` : id === 'geeksforgeeks' ? '—' : null, id === 'geeksforgeeks' ? 'INSTITUTE RANK' : 'RANK']]) {
           if (value === null) continue;
-          const stat = el('div', 'platform-stat'); stat.append(el('strong', '', value), el('span', '', label)); stats.append(stat);
+          const stat = el('div', 'platform-stat'), total = el('strong', '', value);
+          if (label === 'SOLVED') appendTodayIncrease(total, solvedToday({ [id]: account }, state.settings.timeZone), Boolean(snapshot.activityWarning));
+          stat.append(total, el('span', '', label)); stats.append(stat);
         }
         card.append(stats);
         const breakdown = el('div', 'breakdown');
@@ -305,8 +318,11 @@ function renderDone() {
   donePage = Math.max(0, Math.min(donePage, pages - 1));
   const fragment = document.createDocumentFragment();
   for (const r of records.slice(donePage * PAGE_SIZE, (donePage + 1) * PAGE_SIZE)) {
-    const row = el('div', 'recent-row'), copy = el('div');
-    copy.append(link(r.title, r.url));
+    const row = el('div', 'recent-row'), copy = el('div', 'done-copy'), heading = el('div', 'done-title-line');
+    heading.append(link(r.title, r.url, 'done-title'));
+    const versions = libraryByKey.get(r.key)?.catalogVersions || [];
+    if (versions.some(v => v.platform !== r.platform)) heading.append(createSolveLinks(versions, { label: 'Also on', excludePlatform: r.platform }));
+    copy.append(heading);
     if (r.pending) copy.append(el('div', 'rating-caption', 'Accepted in browser · verification pending'));
     if (r.source === 'manual') copy.append(el('div', 'rating-caption', 'Marked done'));
     appendQuestionRow(row, r, copy, el('span', '', QUESTION_PLATFORMS[r.platform].name), el('time', '', r.day || displayDate(r.timestamp)));
@@ -320,18 +336,22 @@ function renderDone() {
   $('doneNext').disabled = donePage >= pages - 1;
 }
 function updateLibraryCount() {
-  const total = library.filter(p => libraryPlatformEnabled(p.platform, state.accounts)).length;
+  const total = collapseQuestions(library.filter(p => libraryPlatformEnabled(p.platform, state.accounts))).length;
   $('libraryCount').textContent = format(total);
   return total;
 }
 function getFilteredQuestions(topics = [...selectedTopics]) {
-  return filterLibrary(library, { accounts: state.accounts, workspace: state.workspace, solved: solvedKeys(), query: $('questionSearch').value, platform: $('questionPlatform').value, difficulty: $('questionDifficulty').value, topics, status: $('questionStatus').value, access: $('questionAccess').value, sort: $('questionSort').value });
+  return filterLibrary(library, { platformOrder: state.settings.platformOrder, accounts: state.accounts, workspace: state.workspace, solved: solvedKeys(), query: $('questionSearch').value, platform: $('questionPlatform').value, difficulty: $('questionDifficulty').value, topics, status: $('questionStatus').value, access: $('questionAccess').value, sort: $('questionSort').value });
 }
 function renderQuestionFilters() {
   const focusedTopic = document.activeElement?.dataset.topic;
   const scope = library.filter(p => libraryPlatformEnabled(p.platform, state.accounts) && ($('questionPlatform').value === 'all' || p.platform === $('questionPlatform').value));
   const counts = new Map();
-  for (const p of scope) counts.set(p.difficulty, (counts.get(p.difficulty) || 0) + 1);
+  const counted = new Set();
+  for (const p of scope) {
+    const key = `${p.canonicalId || p.key}:${p.difficulty}`;
+    if (!counted.has(key)) { counts.set(p.difficulty, (counts.get(p.difficulty) || 0) + 1); counted.add(key); }
+  }
   const select = $('questionDifficulty'), current = select.value;
   select.replaceChildren(option('all', 'Any difficulty'), ...[...new Set([...counts.keys(), ...(current !== 'all' ? [current] : [])])].sort().map(v => option(v, `${v} (${format(counts.get(v))})`)));
   select.value = current;
@@ -362,13 +382,28 @@ function renderQuestionFilters() {
   $('activeQuestionFilters').replaceChildren(chips);
 }
 function solvedKeys() { return new Set(doneQuestions(state.accounts, { workspace: state.workspace }).records.map(r => r.key)); }
+function createSolveLinks(versions, { label = 'Solve on', excludePlatform, matchedVersions = [] } = {}) {
+  const solve = el('div', 'solve-on'); solve.append(el('span', 'solve-on-label', label));
+  const platforms = orderedPlatformIds(state.settings, [...new Set(versions.map(v => v.platform))]);
+  for (const platform of platforms) {
+    if (platform === excludePlatform) continue;
+    const candidates = versions.filter(v => v.platform === platform), target = matchedVersions.find(v => v.platform === platform) || candidates[0];
+    const done = candidates.some(v => questionIsDone(state.accounts, state.workspace, v.key));
+    const anchor = link(`${QUESTION_PLATFORMS[platform].name}${done ? ' ✓' : ''}`, target.url, `solve-on-link${done ? ' is-solved' : ''}`);
+    anchor.dataset.platform = platform;
+    anchor.title = `${target.title} · ${target.difficulty}${target.isPremium ? ' · Premium' : ''}${target.contract?.notes ? '\n' + target.contract.notes : ''}${done ? '\nSolved on this platform' : ''}`;
+    solve.append(anchor);
+  }
+  return solve;
+}
 function createLibraryRow(p, { open = false, frequency = false, onTopic = topic => { selectedTopics.add(topic); page = 0; renderQuestions(); } } = {}) {
-  const row = el('div', 'question-row'), copy = el('div', 'question-copy'); row.dataset.key = p.key;
+  const versions = p.versions || [p];
+  const row = el('div', 'question-row catalog-row'), copy = el('div', 'question-copy'); row.dataset.key = p.canonicalId || p.key;
   const heading = el('div', 'question-heading');
-  if (p.id) heading.append(el('span', 'question-id', `#${p.id}`));
+  if (p.id && versions.length === 1) heading.append(el('span', 'question-id', `#${p.id}`));
   heading.append(link(p.title, p.url, 'question-title')); copy.append(heading);
   const tags = el('div', 'question-tags');
-  if (questionIsDone(state.accounts, state.workspace, p.key)) tags.append(el('span', 'tag solved-tag', 'Solved'));
+  if (versions.some(v => questionIsDone(state.accounts, state.workspace, v.key))) tags.append(el('span', 'tag solved-tag', 'Solved'));
   if (p.isPremium) tags.append(el('span', 'tag', 'Premium'));
   if (p.platform === 'atcoder' && Number.isFinite(p.estimatedDifficulty)) {
     const estimate = el('span', 'tag', `Estimated difficulty: ${p.estimatedDifficulty}`);
@@ -380,14 +415,37 @@ function createLibraryRow(p, { open = false, frequency = false, onTopic = topic 
   }
   copy.append(tags);
   if (frequency) {
-    tags.append(el('span', 'tag company-platform-tag', p.platform === 'code360' ? 'Code360' : 'LeetCode'));
-    if (Number.isFinite(p.frequency)) tags.append(el('span', 'tag company-frequency-tag', `Frequency ${p.frequency}%`));
+    if (Number.isFinite(p.frequency)) {
+      const tag = el('span', 'tag company-frequency-tag', `Frequency ${p.frequency}%`);
+      tag.title = (p.frequencySources || [{ platform: p.platform, frequency: p.frequency }]).map(v => `${QUESTION_PLATFORMS[v.platform].name}: ${v.frequency}% in the selected company snapshot`).join('\n');
+      tags.append(tag);
+    }
   }
   const details = el('details', 'question-details'); details.open = open; details.append(el('summary', '', 'Read question'));
-  details.append(el('p', 'question-statement', p.description || 'A question statement is not available in the local index. Open the problem to read it on the platform.'));
-  if (p.constraints) details.append(el('h3', '', 'Constraints / input'), el('p', 'question-statement', p.constraints));
-  details.append(link('Open problem ↗', p.url, 'text-link')); copy.append(details);
-  appendQuestionRow(row, p, copy, frequency && Number.isFinite(p.frequency) ? el('span', 'muted company-frequency', `${p.frequency}%`) : el('span', 'muted', QUESTION_PLATFORMS[p.platform].short), el('span', `difficulty ${p.difficulty.toLowerCase()}`, p.difficulty)); return row;
+  const body = el('div', 'question-version-body');
+  const primary = versions.find(v => v.key === p.key) || versions[0];
+  function showVersion(version) {
+    body.replaceChildren(el('h3', '', `${QUESTION_PLATFORMS[version.platform].name} · ${version.title}`), el('p', 'muted', `${version.difficulty}${version.isPremium ? ' · Premium' : ''}`));
+    if (version.contract?.notes) body.append(el('p', 'question-version-note', version.contract.notes));
+    body.append(el('p', 'question-statement', version.description || 'A question statement is not available in the local index. Open the problem to read it on the platform.'));
+    if (version.constraints) body.append(el('h3', '', 'Constraints / input'), el('p', 'question-statement', version.constraints));
+    body.append(link('Open problem ↗', version.url, 'text-link'));
+    if (versions.length > 1) {
+      const controls = questionActions(version), actions = el('div', 'question-version-actions');
+      actions.append(el('span', 'muted', 'On this platform'), controls.done, controls.actions); body.append(actions);
+    }
+  }
+  if (versions.length > 1) {
+    const label = el('label', 'question-version-picker', 'Platform version '), select = el('select');
+    select.setAttribute('aria-label', `Platform version of ${p.title}`);
+    select.append(...versions.map(v => option(v.key, `${QUESTION_PLATFORMS[v.platform].name} · ${v.title} (#${v.id})`))); select.value = primary.key;
+    select.addEventListener('change', () => showVersion(versions.find(v => v.key === select.value)));
+    label.append(select); details.append(label);
+  }
+  showVersion(primary); details.append(body); copy.append(details);
+  const solve = createSolveLinks(versions, { matchedVersions: p.matchedVersions });
+  const difficulty = el('span', `difficulty ${p.difficulty.toLowerCase()}`, p.difficulty); difficulty.title = `${QUESTION_PLATFORMS[p.platform].name} difficulty; other platforms may differ.`;
+  appendQuestionRow(row, p, copy, solve, difficulty); return row;
 }
 function renderQuestions() {
   if (!indexReady) { $('questionList').replaceChildren(el('div', 'loading-note', 'Loading the local question index…')); return; }
@@ -396,9 +454,12 @@ function renderQuestions() {
   filtered = getFilteredQuestions(); page = Math.min(page, Math.max(0, Math.ceil(filtered.length / PAGE_SIZE) - 1));
   const fragment = document.createDocumentFragment();
   for (const p of filtered.slice(page * PAGE_SIZE, (page + 1) * PAGE_SIZE)) {
-    fragment.append(createLibraryRow(p, { open: openQuestions.has(p.key) }));
+    fragment.append(createLibraryRow(p, { open: openQuestions.has(p.canonicalId || p.key) }));
   }
-  if (!filtered.length) fragment.append(empty('No matching questions. Try removing a filter or clearing your search.'));
+  if (!filtered.length) {
+    fragment.append(empty(Object.keys(state.accounts).length ? 'No matching questions. Try removing a filter or clearing your search.' : 'Connect a platform in Settings to browse questions.'));
+    if (!Object.keys(state.accounts).length) fragment.append(button('Connect platforms', 'button', () => showConnections()));
+  }
   $('questionList').replaceChildren(fragment);
   const total = updateLibraryCount();
   $('questionMeta').textContent = `${format(filtered.length)} of ${format(total)} questions · Showing ${filtered.length ? format(page * PAGE_SIZE + 1) : 0}–${format(Math.min((page + 1) * PAGE_SIZE, filtered.length))}`;
@@ -461,14 +522,51 @@ function renderListChoices() {
 }
 async function persistPractice(entry) { await rpc('workspace', { entry, customListsOnly: true }); render(); }
 function showConnections(platform) {
-  updateConnectionResults(); $('connectionsDialog').showModal();
-  if (platform) $(`handle-${platform}`).focus();
+  location.hash = 'settings';
+  route();
+  updateConnectionResults();
+  const target = platform ? $(`handle-${platform}`) : $('connectionsHeading');
+  target.focus({ preventScroll: true });
+  target.scrollIntoView({ block: 'center', behavior: 'smooth' });
+}
+let draggedPlatform = null;
+let savingPlatformOrder = false;
+async function movePlatform(id, target) {
+  if (savingPlatformOrder || id === target) return;
+  const order = orderedPlatformIds(state.settings);
+  const index = typeof target === 'number' ? order.indexOf(id) + target : order.indexOf(target);
+  if (index < 0 || index >= order.length) return;
+  order.splice(order.indexOf(id), 1); order.splice(index, 0, id);
+  savingPlatformOrder = true;
+  try {
+    await rpc('platform-order', { order }); render();
+    document.querySelector(`.connection-form[data-platform="${id}"] .order-handle`)?.focus();
+  } catch (error) { toast(error.message, true); }
+  finally { savingPlatformOrder = false; }
+}
+function connectionOrderControls(id) {
+  const controls = el('div', 'connection-order');
+  const handle = button('\u283f', 'order-handle', () => {});
+  handle.title = 'Drag to reorder (keyboard: Alt + Up/Down)'; handle.draggable = true;
+  handle.setAttribute('aria-label', `Reorder ${PLATFORMS[id].name}`);
+  handle.setAttribute('aria-keyshortcuts', 'Alt+ArrowUp Alt+ArrowDown');
+  handle.addEventListener('dragstart', event => { draggedPlatform = id; event.dataTransfer.setData('text/plain', id); event.dataTransfer.effectAllowed = 'move'; });
+  handle.addEventListener('dragend', () => { draggedPlatform = null; document.querySelectorAll('.drop-target').forEach(node => node.classList.remove('drop-target')); });
+  handle.addEventListener('keydown', event => { if (event.altKey && ['ArrowUp', 'ArrowDown'].includes(event.key)) { event.preventDefault(); movePlatform(id, event.key === 'ArrowUp' ? -1 : 1); } });
+  controls.append(handle); return controls;
 }
 function updateConnectionResults() {
+  const order = orderedPlatformIds(state.settings), forms = $('connectionForms');
+  for (const [index, id] of order.entries()) {
+    const form = forms.querySelector(`[data-platform="${id}"]`);
+    if (!form) continue;
+    if (forms.children[index] !== form) forms.insertBefore(form, forms.children[index] || null);
+  }
   for (const id of Object.keys(PLATFORMS)) {
     const result = $(`connection-result-${id}`), input = $(`handle-${id}`), account = state.accounts[id];
     if (!result) continue;
     result.textContent = account ? account.status === 'syncing' ? 'Syncing…' : account.error || account.snapshot?.activityWarning || timeAgo(account.syncedAt) : '';
+    result.closest('.connection-form').classList.toggle('connection-warning', Boolean(account?.error || account?.snapshot?.activityWarning));
     if (input !== document.activeElement && !input.value && account) input.value = account.handle;
     $(`connect-${id}`).disabled = account?.status === 'syncing';
     $(`connect-${id}`).textContent = account?.status === 'syncing' ? 'Syncing…' : account ? 'Refresh' : 'Connect';
@@ -477,13 +575,27 @@ function updateConnectionResults() {
 }
 function setupConnections() {
   const fragment = document.createDocumentFragment();
-  for (const [id, p] of Object.entries(PLATFORMS)) {
+  for (const [id, p] of orderedPlatformIds(state.settings).map(id => [id, PLATFORMS[id]])) {
     const form = el('form', 'connection-form'), label = el('label', '', p.name); label.htmlFor = `handle-${id}`;
-    const controls = el('div', 'connection-inputs'), input = el('input'); input.id = `handle-${id}`; input.required = true; input.maxLength = 300; input.placeholder = id === 'code360' ? 'Public profile ID or profile URL' : 'Username or public profile URL'; input.autocomplete = 'off'; input.spellcheck = false;
+    const controls = el('div', 'connection-inputs'), input = el('input'); input.id = `handle-${id}`; input.required = true; input.maxLength = 300; input.placeholder = id === 'code360' ? 'Username, profile ID or profile URL' : 'Username or public profile URL'; input.autocomplete = 'off'; input.spellcheck = false;
     const connect = el('button', 'button', 'Connect / refresh'); connect.id = `connect-${id}`; connect.type = 'submit'; const disconnect = button('Disconnect', 'button ghost', () => disconnectPlatform(id)); disconnect.id = `disconnect-${id}`; disconnect.hidden = true; disconnect.setAttribute('aria-label', `Disconnect ${p.name} account`); controls.append(input, connect, disconnect); form.append(label, controls);
-    const note = el('div', 'connection-description', id === 'atcoder' ? 'Public profile and Algorithm ratings from AtCoder; submission history via AtCoder Problems may be delayed.' : id === 'tuf' ? 'Keep a TUF tab open to sync.' : id === 'leetcode' ? 'Sign in on LeetCode for private activity.' : id === 'code360' ? 'Totals only; no dated activity.' : '');
+    const note = el('div', 'connection-description', id === 'atcoder' ? 'Public profile and Algorithm ratings from AtCoder; submission history via AtCoder Problems may be delayed.' : id === 'tuf' ? 'Syncs from your public TUF profile.' : id === 'leetcode' ? 'Sign in on LeetCode for private activity.' : id === 'code360' ? 'Totals only; no dated activity.' : '');
     if (id === 'tuf') note.append(document.createTextNode(' '), link('Open TakeUForward ↗', 'https://takeuforward.org/', 'text-link'));
-    const result = el('div', 'connection-result'); result.id = `connection-result-${id}`; result.setAttribute('role', 'status'); if (note.childNodes.length) form.append(note); form.append(result);
+    const result = el('div', 'connection-result'); result.id = `connection-result-${id}`; result.setAttribute('role', 'status');
+    const heading = el('div', 'connection-heading');
+    heading.append(label);
+    form.prepend(heading);
+    if (note.childNodes.length) {
+      note.id = `connection-note-${id}`;
+      input.setAttribute('aria-describedby', note.id);
+      note.title = note.textContent;
+      heading.append(note);
+    }
+    heading.append(result, connectionOrderControls(id));
+    form.dataset.platform = id;
+    form.addEventListener('dragover', event => { if (draggedPlatform && draggedPlatform !== id) { event.preventDefault(); event.dataTransfer.dropEffect = 'move'; form.classList.add('drop-target'); } });
+    form.addEventListener('dragleave', () => form.classList.remove('drop-target'));
+    form.addEventListener('drop', event => { event.preventDefault(); form.classList.remove('drop-target'); if (draggedPlatform) movePlatform(draggedPlatform, id); });
     form.addEventListener('submit', async event => {
       event.preventDefault();
       try {
@@ -496,7 +608,7 @@ function setupConnections() {
         if (state.accounts[id]?.status === 'error') toast(state.accounts[id].error, true);
         else if (state.accounts[id]?.snapshot?.activityWarning) toast(`${p.name} profile updated; recent activity unavailable.`, true);
         else toast(`${p.name} activity updated.`);
-      } catch (error) { result.textContent = error.message; toast(error.message, true); }
+      } catch (error) { form.classList.add('connection-warning'); result.textContent = error.message; toast(error.message, true); }
       finally { connect.disabled = false; }
     });
     fragment.append(form);
@@ -514,18 +626,31 @@ async function syncAccounts(platform) {
 }
 function option(value, text = value) { const o = el('option', '', text); o.value = value; return o; }
 async function loadLibrary() {
-  const sources = ['leetcode', 'geeksforgeeks', 'codeforces', 'codechef', 'code360', 'atcoder'], failures = [];
+  const sources = ['leetcode', 'geeksforgeeks', 'codeforces', 'codechef', 'code360', 'atcoder'], failures = [], hashes = {};
+  const catalogRequest = fetch(chrome.runtime.getURL('data/normalized/runtime.json')).then(response => { if (!response.ok) throw new Error(); return response.json(); }).then(data => ({ data }), () => ({ error: true }));
   const datasets = await Promise.all(sources.map(async platform => {
     try {
       const response = await fetch(chrome.runtime.getURL(`data/${platform}-data.json`));
       if (!response.ok) throw new Error();
-      const records = await response.json();
+      const text = await response.text(), records = JSON.parse(text);
+      hashes[platform] = await sourceDigest(text);
       return records.filter(p => p.title && safeProblemUrl(p.url, platform)).map(p => ({ key: problemKey(platform, p.url), platform, id: p.id, estimatedDifficulty: Number.isFinite(p.estimatedDifficulty) ? p.estimatedDifficulty : null, title: p.title, url: p.url, description: typeof p.description === 'string' ? p.description : '', constraints: typeof p.constraints === 'string' ? p.constraints : '', isPremium: Boolean(p.isPremium), difficulty: p.difficulty || 'Unknown', ...(platform === 'code360' ? splitCode360Tags(p) : { topics: Array.isArray(p.topics) ? [...new Set(p.topics.filter(v => typeof v === 'string'))] : [] }) }));
     } catch { failures.push(QUESTION_PLATFORMS[platform].name); return []; }
   }));
-  library = datasets.flat(); indexReady = true;
+  library = datasets.flat();
+  const catalog = await catalogRequest;
+  if (catalog.data) {
+    try { library = attachQuestionCatalog(library, catalog.data, hashes); }
+    catch { failures.push('shared question catalog'); }
+    if (catalog.data.inputs?.some(input => hashes[input.platform] && hashes[input.platform] !== input.sha256)) failures.push('out-of-date shared question catalog');
+  } else failures.push('shared question catalog');
+  libraryByKey = new Map(library.map(p => [p.key, p]));
+  const unique = collapseQuestions(library).length;
+  $('catalogSummary').textContent = `${failures.length ? 'Loaded catalog' : 'Full catalog'} · ${format(library.length)} platform questions → ${format(unique)} unique questions · ${format(library.length - unique)} duplicates combined`;
+  indexReady = true;
   companyPage.setLibrary(library);
   renderQuestions();
+  renderDone();
   if (failures.length) toast(`Some local indexes could not load: ${failures.join(', ')}. Reload the extension.`, true);
 }
 
@@ -548,7 +673,7 @@ async function init() {
   const year = new Date().getFullYear();
   for (let y = year; y >= year - 5; y--) $('progressYear').append(option(String(y)));
   window.addEventListener('hashchange', route);
-  for (const id of ['connectTop', 'connectCards']) $(id).addEventListener('click', () => showConnections());
+  $('connectCards').addEventListener('click', () => showConnections());
   $('syncAll').addEventListener('click', () => syncAccounts());
   $('progressPlatform').addEventListener('change', () => { hiddenRatingSeries.clear(); renderHeatmap(); renderRatings(); });
   $('progressYear').addEventListener('change', () => { renderHeatmap(); renderRatings(); });

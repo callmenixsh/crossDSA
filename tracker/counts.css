@@ -1,0 +1,14 @@
+.today-increase {
+  display: inline-block;
+  margin-left: 4px;
+  color: #0f766e;
+  font-size: 10px;
+  font-weight: 600;
+  line-height: 1;
+  vertical-align: super;
+  letter-spacing: 0;
+  white-space: nowrap;
+}
+@media (prefers-color-scheme: dark) {
+  .today-increase { color: #48df98; }
+}

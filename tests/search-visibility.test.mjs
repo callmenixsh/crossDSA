@@ -13,21 +13,21 @@ test('popup greys the card and disables settings while leaving its toggle usable
   const classList = { toggle: (name, enabled) => enabled ? classes.add(name) : classes.delete(name) };
   const card = { classList, querySelectorAll: () => controls };
   const state = {};
-  const grid = { setAttribute: (name, value) => { grid[name] = value; } };
+  const grid = { querySelectorAll: () => controls };
   const toggle = { classList, closest: () => card, querySelector: () => state,
     setAttribute: (name, value) => { toggle[name] = value; } };
   const context = vm.createContext({ document: { getElementById: id => id === 'toggleBtn' ? toggle : grid } });
   vm.runInContext(popup.slice(popup.indexOf('function updateToggleUI'), popup.indexOf('document.addEventListener')), context);
   context.updateToggleUI(false);
   assert.equal(classes.has('search-disabled'), true);
-  assert.equal(grid.inert, true);
+  assert.equal(grid.inert, undefined, 'POTD buttons remain usable');
   assert.ok(controls.every(control => control.disabled));
   assert.equal(toggle['aria-pressed'], 'false');
   assert.equal(state.textContent, 'Off');
   assert.ok(!toggle.disabled);
   context.updateToggleUI(true);
   assert.equal(classes.has('search-disabled'), false);
-  assert.equal(grid.inert, false);
+  assert.equal(grid.inert, undefined);
   assert.ok(controls.every(control => !control.disabled));
 });
 
@@ -39,7 +39,7 @@ test('popup toggle persists globally without contacting an active tab', async ()
   const context = vm.createContext({ toggleBtn: toggle, SEARCH_ENABLED_KEY: key,
     chrome: { storage: { local: { set: async value => writes.push(value) } } },
     updateToggleUI: value => states.push(value), showStatus: () => {} });
-  vm.runInContext(popup.slice(popup.indexOf('  toggleBtn.addEventListener("click"'), popup.indexOf('  // ---- Reset settings')), context);
+  vm.runInContext(popup.slice(popup.indexOf('  toggleBtn.addEventListener("click"'), popup.indexOf('  // ---- Load persisted state')), context);
   await handler();
   assert.equal(writes[0][key], false);
   assert.deepEqual(states, [false]);
@@ -56,6 +56,7 @@ function tab(readSettings) {
     loadProblemsData: () => new Promise(() => {}), removeTitleButton: () => {}, injectTitleButton: () => {},
   });
   vm.runInContext(content.slice(content.indexOf('function closeSearchResults()'), content.indexOf('function positionContainer')), context);
+  vm.runInContext(content.slice(content.indexOf('let platformPreferences'), content.indexOf('let problemsData')), context);
   const start = content.indexOf('async function init()');
   const end = content.indexOf('    // Schedule a public-data refresh', start);
   vm.runInContext(content.slice(start, end) + '\n}', context);

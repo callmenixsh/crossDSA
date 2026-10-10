@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { STORAGE_KEY, emptyState } from '../tracker/core.mjs';
+import { STORAGE_KEY, emptyState, normalizeState, orderedPlatformIds } from '../tracker/core.mjs';
 
 function event() { return { listeners: [], addListener(fn) { this.listeners.push(fn); } }; }
 async function harness(fetcher = async () => { throw new Error('Offline'); }) {
@@ -27,6 +27,55 @@ async function harness(fetcher = async () => { throw new Error('Offline'); }) {
 }
 const settings = { dailyGoal: 3, timeZone: 'Asia/Kolkata', autoSync: false };
 const entry = { key: 'leetcode:two-sum', platform: 'leetcode', title: 'Two Sum', url: 'https://leetcode.com/problems/two-sum/', topics: ['Array'], difficulty: 'Easy', listIds: ['saved'] };
+
+test('TUF syncs without a tab and Code360 totals survive a streak 404', async () => {
+  const frame = 'a:' + JSON.stringify({ dsaProgress: { byPlatform: { TUF: { platform: 'TUF', solved: 122 } } } }) + '\n';
+  const html = '<link rel="canonical" href="https://takeuforward.org/profile/sample"/><script>self.__next_f.push(' + JSON.stringify([1, frame]) + ')</script>';
+  const h = await harness(async url => {
+    if (url.includes('takeuforward.org/profile')) return { ok: true, text: async () => html };
+    if (url.includes('streaks')) return { ok: false, status: 404 };
+    return { ok: true, json: async () => ({ data: { dsa_domain_data: { problem_count_data: { total_count: 7 } } } }) };
+  });
+  const state = emptyState(); state.accounts = { tuf: { handle: 'sample', generation: 'tuf' }, code360: { handle: 'sample', generation: 'cn' } };
+  h.storage[STORAGE_KEY] = state;
+  const result = await h.send('sync');
+  assert.equal(result.state.accounts.tuf.status, 'ready');
+  assert.equal(result.state.accounts.tuf.snapshot.totalSolved, 122);
+  assert.equal(result.state.accounts.code360.status, 'ready');
+  assert.equal(result.state.accounts.code360.snapshot.totalSolved, 7);
+  assert.equal(result.state.accounts.code360.error, null);
+});
+
+test('Code360 links from legacy URLs and profile IDs with one successful request', async () => {
+  const requests = [];
+  const h = await harness(async url => {
+    requests.push(url);
+    return { ok: true, json: async () => ({ data: { dsa_domain_data: { problem_count_data: { total_count: 7 } } } }) };
+  });
+  for (const input of ['www.codingninjas.com/studio/profile/sample', 'https://www.naukri.com/code360/profile/1ccafe76-59cf-423a-8fe2-12c9deccb93f']) {
+    const result = await h.send('connect', { platform: 'code360', handle: input });
+    assert.equal(result.ok, true);
+    assert.equal(result.state.accounts.code360.status, 'ready');
+    assert.equal(result.state.accounts.code360.snapshot.totalSolved, 7);
+  }
+  assert.equal(requests.length, 2);
+  assert.ok(requests.every(url => url.includes('profile/user_details?uuid=')));
+});
+
+test('platform order persists independently and rejects invalid or popup writes', async () => {
+  const h = await harness();
+  const order = ['tuf', 'atcoder', 'code360', 'geeksforgeeks', 'codechef', 'codeforces', 'leetcode'];
+  assert.equal((await h.send('platform-order', { order })).ok, true);
+  assert.deepEqual(h.storage[STORAGE_KEY].settings.platformOrder, order);
+  assert.deepEqual(orderedPlatformIds(normalizeState(structuredClone(h.storage[STORAGE_KEY])).settings), order);
+  assert.equal((await h.send('platform-order', { order: [...order].reverse() }, { id: 'test-extension', url: 'chrome-extension://test-extension/popup.html' })).ok, false);
+  assert.equal((await h.send('settings', { settings })).ok, true);
+  assert.deepEqual(h.storage[STORAGE_KEY].settings.platformOrder, order);
+  for (const invalid of [[], order.slice(1), [...order.slice(1), 'unknown'], Array(7).fill('leetcode')]) {
+    assert.equal((await h.send('platform-order', { order: invalid })).ok, false);
+  }
+  assert.deepEqual(h.storage[STORAGE_KEY].settings.platformOrder, order);
+});
 
 test('AtCoder connects, imports activity and ratings, preserves cached accepts and disconnects', async () => {
   let activityOffline = false;

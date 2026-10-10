@@ -10,7 +10,7 @@ const [contest] = normalizeContests(payload);
 const cfRaw = { id: 2276, name: 'Educational Codeforces Round 195 (Rated for Div. 2)', phase: 'BEFORE', startTimeSeconds: start / 1000 - 7200, durationSeconds: 7200 };
 function event() { return { listeners: [], addListener(fn) { this.listeners.push(fn); } }; }
 async function harness(codeforcesItems = []) {
-  const state = emptyState(); state.settings.contestReminders = true;
+  const state = emptyState(); state.accounts = { leetcode: {}, codeforces: {} }; state.settings.contestReminders = true;
   const storage = { [STORAGE_KEY]: state }, alarms = new Map(), notifications = [];
   let allowed = true, offline = false, requests = 0;
   const sourceAllowed = {}, sourceOffline = {}, opened = [];
@@ -27,6 +27,21 @@ async function harness(codeforcesItems = []) {
   return { service, storage, alarms, notifications, opened, setAllowed: value => { allowed = value; }, setOffline: value => { offline = value; }, requests: () => requests,
     setSourceAllowed: (platform, value) => { sourceAllowed[platform] = value; }, setSourceOffline: (platform, value) => { sourceOffline[platform] = value; } };
 }
+
+test('disconnecting platforms stops schedule fetches and blocks cached reminder delivery', async () => {
+  const h = await harness();
+  await h.service.refreshContests();
+  const before = h.requests();
+  h.storage[STORAGE_KEY].accounts = {};
+  const name = reminderName(contest, 60);
+  await h.service.deliverReminder(name, contest.start - 60 * 60000);
+  assert.equal(h.notifications.length, 0);
+  await h.service.refreshContests();
+  assert.equal(h.requests(), before);
+  assert.deepEqual(h.storage[CONTEST_KEY].items, []);
+  assert.equal([...h.alarms.keys()].some(name => name.startsWith('crossdsa-contest:')), false);
+  assert.ok(h.storage[CONTEST_KEY].sources.leetcode.items.length, 'Saved schedules remain cached');
+});
 
 test('normalizes official times, deduplicates and rejects unsafe slugs and malformed responses', () => {
   assert.equal(contest.start, start); assert.equal(contest.end, start + 5400000);

@@ -273,6 +273,11 @@ export function registerTracker() {
           try { new Intl.DateTimeFormat('en', { timeZone: settings.timeZone }).format(); } catch { throw new Error('Enter a valid timezone, such as Asia/Kolkata.'); }
           return updateState(state => { state.settings = { ...state.settings, dailyGoal: settings.dailyGoal, timeZone: settings.timeZone, autoSync: Boolean(settings.autoSync) }; });
         }
+        case 'tracker:platform-order': {
+          const order = message.order;
+          if (!Array.isArray(order) || order.length !== Object.keys(PLATFORMS).length || new Set(order).size !== order.length || order.some(id => !Object.hasOwn(PLATFORMS, id))) throw new Error('Invalid platform order.');
+          return updateState(state => { state.settings = { ...state.settings, platformOrder: order.slice() }; });
+        }
         case 'tracker:question-state': {
           const entry = message.entry, patch = message.patch;
           if (!entry || !QUESTION_PLATFORMS[entry.platform] || !safeProblemUrl(entry.url, entry.platform) || entry.key !== problemKey(entry.platform, entry.url) || typeof entry.title !== 'string' || !patch || Object.keys(patch).length !== 1 || !['starred', 'done'].includes(Object.keys(patch)[0]) || typeof Object.values(patch)[0] !== 'boolean') throw new Error('Invalid question state.');

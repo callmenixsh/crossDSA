@@ -2,6 +2,10 @@ export const CONTEST_KEY = 'crossdsa-contests-v1';
 export const CONTEST_SOURCES = {
   leetcode: { name: 'LeetCode', origin: 'https://leetcode.com/*' },
   codeforces: { name: 'Codeforces', origin: 'https://codeforces.com/*' },
+  codechef: { name: 'CodeChef', origin: 'https://www.codechef.com/*' },
+  atcoder: { name: 'AtCoder', origin: 'https://atcoder.jp/*' },
+  geeksforgeeks: { name: 'GeeksforGeeks', origin: 'https://practiceapi.geeksforgeeks.org/*' },
+  code360: { name: 'Code 360', origin: 'https://www.naukri.com/*' },
 };
 export const CONTEST_ORIGINS = Object.values(CONTEST_SOURCES).map(source => source.origin);
 export const REFRESH_ALARM = 'crossdsa-contests-refresh';
@@ -36,6 +40,64 @@ export function normalizeCodeforcesContests(data) {
   return [...contests.values()].sort((a, b) => a.start - b.start);
 }
 
+function scheduleItems(platform, items) {
+  const contests = new Map();
+  for (const item of items) {
+    if (!item || typeof item.slug !== 'string' || !/^[a-zA-Z0-9_-]{1,150}$/.test(item.slug) ||
+      typeof item.title !== 'string' || !item.title.trim() || !Number.isFinite(item.start) || item.start <= 0 ||
+      !Number.isFinite(item.end) || item.end <= item.start || item.end - item.start > 14 * 86400000 || !Number.isFinite(new Date(item.end).getTime())) continue;
+    const paths = { codechef: `https://www.codechef.com/${item.slug}`, atcoder: `https://atcoder.jp/contests/${item.slug}`,
+      geeksforgeeks: `https://www.geeksforgeeks.org/contest/${item.slug}`, code360: `https://www.naukri.com/code360/contests/${item.slug}` };
+    const id = `${platform}-${item.slug}`;
+    contests.set(id, { id, platform, title: item.title.trim().slice(0, 150), start: item.start, end: item.end, url: paths[platform] });
+  }
+  if (items.length && !contests.size) throw new Error('Contest schedule unavailable.');
+  return [...contests.values()].sort((a, b) => a.start - b.start);
+}
+
+export function normalizeCodechefContests(data) {
+  if (data?.status !== 'success' || !Array.isArray(data.present_contests) || !Array.isArray(data.future_contests)) throw new Error('Contest schedule unavailable.');
+  return scheduleItems('codechef', [...data.present_contests, ...data.future_contests].map(item => ({ slug: item?.contest_code, title: item?.contest_name,
+    start: Date.parse(item?.contest_start_date_iso), end: Date.parse(item?.contest_end_date_iso) })));
+}
+
+export function normalizeCode360Contests(data) {
+  if (!Array.isArray(data?.data?.events)) throw new Error('Contest schedule unavailable.');
+  return scheduleItems('code360', data.data.events.filter(item => item?.event_category === 'CONTEST').map(item => ({ slug: item.slug, title: item.name,
+    start: typeof item.event_start_time === 'number' ? item.event_start_time * 1000 : NaN,
+    end: typeof item.event_end_time === 'number' ? item.event_end_time * 1000 : NaN })));
+}
+
+// GFG publishes local Indian times without an offset; never use the browser's timezone.
+function gfgTime(value) {
+  return typeof value === 'string' && /^\d{4}-\d\d-\d\dT\d\d:\d\d:\d\d(?:\.\d+)?$/.test(value) ? Date.parse(`${value}+05:30`) : NaN;
+}
+export function normalizeGfgContests(data) {
+  if (!Array.isArray(data?.results?.upcoming) || !Array.isArray(data?.results?.past)) throw new Error('Contest schedule unavailable.');
+  return scheduleItems('geeksforgeeks', [...data.results.upcoming, ...data.results.past].filter(item => item?.type === 3).map(item => ({ slug: item.slug,
+    title: item.name || item.title, start: gfgTime(item.start_time), end: gfgTime(item.end_time) })));
+}
+
+function htmlText(value) {
+  return value.replace(/<[^>]*>/g, '').replace(/&#(x[\da-f]+|\d+);/gi, (_, code) => {
+    const point = code[0].toLowerCase() === 'x' ? parseInt(code.slice(1), 16) : Number(code);
+    return point > 0 && point <= 0x10ffff ? String.fromCodePoint(point) : '';
+  }).replace(/&quot;/g, '"').replace(/&#39;|&apos;/g, "'").replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&amp;/g, '&').trim();
+}
+export function normalizeAtcoderContests(html) {
+  if (typeof html !== 'string' || !html.includes('contest-table-upcoming')) throw new Error('Contest schedule unavailable.');
+  const items = [];
+  for (const [, row] of html.matchAll(/<tr\b[^>]*>([\s\S]*?)<\/tr>/gi)) {
+    const time = row.match(/<time\b[^>]*>(\d{4}-\d\d-\d\d \d\d:\d\d:\d\d[+-]\d{4})<\/time>/i);
+    const link = row.match(/<a\b[^>]*href=["']\/contests\/([a-zA-Z0-9_-]+)["'][^>]*>([\s\S]*?)<\/a>/i);
+    const duration = row.match(/<td\b[^>]*>\s*(\d{1,3}):(\d\d)\s*<\/td>/i);
+    if (!time || !link || !duration) continue;
+    const start = Date.parse(time[1].replace(' ', 'T').replace(/([+-]\d\d)(\d\d)$/, '$1:$2'));
+    items.push({ slug: link[1], title: htmlText(link[2]), start, end: start + (Number(duration[1]) * 60 + Number(duration[2])) * 60000 });
+  }
+  return scheduleItems('atcoder', items);
+}
+
 export function contestPlatform(contest) { return contest.platform || 'leetcode'; }
 export function sourceCache(cache, platform) {
   if (cache.sources) return cache.sources[platform] || {};
@@ -46,8 +108,15 @@ export function sourceIsFresh(cache, platform, now = Date.now()) {
   return Boolean(source.updatedAt && now - source.updatedAt <= 6 * HOUR && !source.error && !source.needsAccess);
 }
 export function safeContestUrl(contest) {
-  return contestPlatform(contest) === 'codeforces' ? /^https:\/\/codeforces\.com\/contest\/[1-9]\d*$/.test(contest.url)
-    : contestPlatform(contest) === 'leetcode' && /^https:\/\/leetcode\.com\/contest\/[a-z0-9]+(?:-[a-z0-9]+)*\/$/.test(contest.url);
+  const patterns = {
+    leetcode: /^https:\/\/leetcode\.com\/contest\/[a-z0-9]+(?:-[a-z0-9]+)*\/$/,
+    codeforces: /^https:\/\/codeforces\.com\/contest\/[1-9]\d*$/,
+    codechef: /^https:\/\/www\.codechef\.com\/[a-zA-Z0-9_-]{1,150}$/,
+    atcoder: /^https:\/\/atcoder\.jp\/contests\/[a-zA-Z0-9_-]{1,150}$/,
+    geeksforgeeks: /^https:\/\/www\.geeksforgeeks\.org\/contest\/[a-zA-Z0-9_-]{1,150}$/,
+    code360: /^https:\/\/www\.naukri\.com\/code360\/contests\/[a-zA-Z0-9_-]{1,150}$/,
+  };
+  return patterns[contestPlatform(contest)]?.test(contest.url) || false;
 }
 export function retainContests(items, now = Date.now()) {
   return items.filter(item => safeContestUrl(item) && Number.isFinite(item.start) && Number.isFinite(item.end) && item.end > item.start && item.end >= now - 90 * 86400000);

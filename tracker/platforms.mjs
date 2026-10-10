@@ -1,5 +1,6 @@
 import { atcoder } from './atcoder.mjs';
 import { problemKey } from './core.mjs';
+import { parseTufProfile } from './tuf-profile.mjs';
 
 const num = value => Number.isFinite(Number(value)) ? Math.max(0, Number(value)) : 0;
 const required = (condition, message = 'The platform returned an unexpected response. Try again later.') => { if (!condition) throw new Error(message); };
@@ -145,20 +146,27 @@ async function code360(handle, ctx) {
   const data = await ctx.json(`https://www.naukri.com/code360/api/v3/public_section/profile/user_details?uuid=${encodeURIComponent(handle)}`);
   const counts = data.data?.dsa_domain_data?.problem_count_data;
   required(counts && counts.total_count !== undefined, 'Code 360 profile unavailable. Use the ID or handle from your public profile link.');
-  const streak = await ctx.json(`https://www.naukri.com/code360/api/v3/public_section/streaks/progress?uuid=${encodeURIComponent(handle)}`);
   return { totalSolved: num(counts.total_count), breakdown: Object.fromEntries((counts.difficulty_data || []).map(v => [v.level, num(v.count)])), rating: null, rank: null, badges: [], ratings: [], recent: [],
-    providerStreak: streak.data ? { current: num(streak.data.current_streak), longest: num(streak.data.longest_streak) } : null,
+    providerStreak: null,
     coverage: 'Public solved totals and streak statistics only. Dated submission history needs account access and is not imported; this platform is excluded from the combined heatmap and daily goal.', partial: true, activityKind: 'profile only' };
 }
 
 async function tuf(handle, ctx) {
   const prefix = `https://backend-go.takeuforward.org/api/v2/profile/${encodeURIComponent(handle)}`;
-  const data = await ctx.siteJson(prefix);
-  required(data.success && data.data?.learningProgress, data.message || 'TakeUForward profile unavailable.');
-  const progress = data.data.learningProgress.find(v => v.platform === 'TUF');
-  required(progress, 'No TUF progress found on this profile.');
-  const heatmap = await ctx.siteJson(`${prefix}/heatmap`);
-  required(heatmap.success && Array.isArray(heatmap.data?.heatmapData), 'TakeUForward activity unavailable.');
+  let progress, heatmap;
+  try {
+    const profile = parseTufProfile(await ctx.text(`https://takeuforward.org/profile/${encodeURIComponent(handle)}`), handle);
+    progress = profile.progress; heatmap = { data: profile.heatmap };
+  } catch (publicError) {
+    try {
+      const data = await ctx.siteJson(prefix);
+      required(data.success && data.data?.learningProgress, data.message || 'TakeUForward profile unavailable.');
+      progress = data.data.learningProgress.find(v => v.platform === 'TUF');
+      required(progress, 'No TUF progress found on this profile.');
+      heatmap = await ctx.siteJson(`${prefix}/heatmap`);
+      required(heatmap.success && Array.isArray(heatmap.data?.heatmapData), 'TakeUForward activity unavailable.');
+    } catch { throw new Error('TakeUForward profile unavailable. Check the handle in Settings or try again later.'); }
+  }
   // A TUF profile may aggregate connected external platforms. Request TUF alone.
   const filtered = (heatmap.data.availableFilters || []).filter(v => v !== 'All');
   let calendar = {};

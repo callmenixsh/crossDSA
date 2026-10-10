@@ -33,6 +33,19 @@ test('handles accept only the correct profile host/path and reject URL injection
   assert.throws(() => cleanHandle('leetcode', 'a") { injected }'));
 });
 
+test('Code360 accepts current and legacy profile links, usernames and UUIDs', () => {
+  for (const input of ['@sample', 'sample', 'https://www.naukri.com/code360/profile/sample?tab=stats',
+    'https://naukri.com/code360/profile/sample/', 'www.naukri.com/code360/profile/sample',
+    'https://www.codingninjas.com/studio/profile/sample', 'codingninjas.com/codestudio/profile/sample']) {
+    assert.equal(cleanHandle('code360', input), 'sample', input);
+  }
+  const uuid = '1ccafe76-59cf-423a-8fe2-12c9deccb93f';
+  assert.equal(cleanHandle('code360', `https://www.naukri.com/code360/profile/${uuid}`), uuid);
+  for (const url of ['https://www.naukri.com/code360/problems/sample', 'https://evil.example/code360/profile/sample',
+    'https://www.naukri.com.evil.example/code360/profile/sample', 'https://user:password@www.naukri.com/code360/profile/sample',
+    'https://www.naukri.com:8080/code360/profile/sample']) assert.throws(() => cleanHandle('code360', url));
+});
+
 test('problem identity stays platform-specific and canonicalizes contest paths', () => {
   assert.equal(problemKey('codeforces', 'https://codeforces.com/contest/123/problem/A'), problemKey('codeforces', 'https://codeforces.com/problemset/problem/123/A'));
   assert.equal(problemKey('codechef', 'https://www.codechef.com/START1/problems/ABC'), 'codechef:ABC');

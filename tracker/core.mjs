@@ -8,11 +8,12 @@ export const PLATFORMS = {
   atcoder: { name: 'AtCoder', short: 'AC', color: '#d4d4d4', origins: ['https://atcoder.jp/*', 'https://kenkoooo.com/*'], profile: h => `https://atcoder.jp/users/${encodeURIComponent(h)}` },
   tuf: { name: 'TakeUForward', short: 'TUF', color: '#f28291', origins: ['https://takeuforward.org/*', 'https://backend-go.takeuforward.org/*'], profile: h => `https://takeuforward.org/profile/${encodeURIComponent(h)}` },
 };
-// Question sources can be available before account tracking is implemented.
-export const QUESTION_PLATFORMS = {
-  ...PLATFORMS,
-  atcoder: { ...PLATFORMS.atcoder, libraryOnly: true },
-};
+export const QUESTION_PLATFORMS = { ...PLATFORMS };
+
+export function orderedPlatformIds(settings = {}, ids = Object.keys(PLATFORMS)) {
+  const saved = Array.isArray(settings.platformOrder) ? settings.platformOrder : [];
+  return [...new Set([...saved, ...Object.keys(PLATFORMS)])].filter(id => ids.includes(id) && Object.hasOwn(PLATFORMS, id));
+}
 
 export function emptyState() {
   return { version: 1, accounts: {}, disconnectedAccounts: {}, workspace: {}, lists: { saved: { id: 'saved', name: 'Starred' } }, settings: { dailyGoal: 2, timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC', autoSync: true, contestsEnabled: true, contestReminders: false } };
@@ -31,13 +32,21 @@ export function normalizeState(value) {
 export function cleanHandle(platform, input) {
   if (!PLATFORMS[platform]) throw new Error('Unknown platform.');
   let value = String(input || '').trim();
+  if (platform === 'code360' && /^(?:www\.)?(?:naukri\.com|codingninjas\.com)\//i.test(value)) value = `https://${value}`;
   if (/^https?:/i.test(value)) {
     const url = new URL(value);
     const expected = new URL(PLATFORMS[platform].profile('example')).hostname;
-    if (url.hostname !== expected) throw new Error(`Use a ${PLATFORMS[platform].name} profile link.`);
     const parts = url.pathname.split('/').filter(Boolean);
     const profileParts = new URL(PLATFORMS[platform].profile('example')).pathname.split('/').filter(Boolean);
-    if (parts.length !== profileParts.length || parts.slice(0, -1).join('/') !== profileParts.slice(0, -1).join('/')) throw new Error('Use a profile link, not a problem link.');
+    if (platform === 'code360') {
+      const host = url.hostname.replace(/^www\./, '');
+      if (url.username || url.password || url.port || !['naukri.com', 'codingninjas.com'].includes(host)) throw new Error('Use a Code 360 profile link.');
+      const paths = host === 'naukri.com' ? ['code360/profile'] : ['studio/profile', 'codestudio/profile'];
+      if (parts.length !== 3 || !paths.includes(parts.slice(0, -1).join('/'))) throw new Error('Use a profile link, not a problem link.');
+    } else {
+      if (url.hostname !== expected) throw new Error(`Use a ${PLATFORMS[platform].name} profile link.`);
+      if (parts.length !== profileParts.length || parts.slice(0, -1).join('/') !== profileParts.slice(0, -1).join('/')) throw new Error('Use a profile link, not a problem link.');
+    }
     value = decodeURIComponent(parts.at(-1));
   }
   value = value.replace(/^@/, '');
@@ -148,7 +157,7 @@ export function doneQuestions(accounts, { query = '', platform = 'all', from = '
   const unique = new Map();
   const recent = Object.values(accounts).flatMap(a => a.snapshot?.recent || []).sort((a, b) => b.timestamp - a.timestamp);
   for (const record of recent) if (workspace[record.key]?.done !== false && !unique.has(record.key)) unique.set(record.key, record);
-  for (const entry of Object.values(workspace)) if (entry.done && (accounts[entry.platform] || QUESTION_PLATFORMS[entry.platform]?.libraryOnly) && !unique.has(entry.key)) {
+  for (const entry of Object.values(workspace)) if (entry.done && accounts[entry.platform] && !unique.has(entry.key)) {
     unique.set(entry.key, { ...entry, timestamp: entry.doneAt || entry.updatedAt, source: 'manual' });
   }
   const terms = query.trim().toLowerCase().split(/\s+/).filter(Boolean);
