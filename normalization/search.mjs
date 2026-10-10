@@ -74,11 +74,12 @@ export function createQuestionSearch(database) {
 
 // Retrieval intentionally has higher recall than the equivalence policy. These
 // substitutions never affect identities, review pins, or automatic grouping.
-const synonyms = { loop: 'cycle', cyclic: 'cycle', detect: 'check', detection: 'check', checking: 'check', determine: 'check', largest: 'maximum', smallest: 'minimum', max: 'maximum', min: 'minimum', neighbouring: 'adjacent', neighboring: 'adjacent', consecutive: 'contiguous', duplicate: 'repeat', repeating: 'repeat', repeated: 'repeat', remove: 'delete', removal: 'delete' };
+const synonyms = { palindromic: 'palindrome', spirally: 'spiral', traversing: 'traversal', scrambled: 'scramble', interleaving: 'interleave', interleaved: 'interleave', loop: 'cycle', cyclic: 'cycle', detect: 'check', detection: 'check', checking: 'check', determine: 'check', largest: 'maximum', smallest: 'minimum', max: 'maximum', min: 'minimum', neighbouring: 'adjacent', neighboring: 'adjacent', consecutive: 'contiguous', duplicate: 'repeat', repeating: 'repeat', repeated: 'repeat', remove: 'delete', removal: 'delete' };
 const boilerplate = new Set('integer integers task test case cases format example examples sample print printed line lines space separated denoting denotes function implement already care taken first second third following contains containing consists consist length size array arr nums str string input output note need given return find'.split(' '));
 function retrievalTokens(text, statement = false) {
   const result = new Set();
-  for (let term of tokens(text)) {
+  for (let term of tokens(String(text).replace(/\b([234])sum\b/gi, '$1 sum'))) {
+    if (!statement) term = ({ '2': 'two', '3': 'three', '4': 'four' })[term] || term;
     if (term.length > 3 && term.endsWith('s') && !/(ss|us|is)$/.test(term)) term = term.slice(0, -1);
     term = synonyms[term] || term;
     if (/^\d+$/.test(term) || term.length < 2 || (statement && boilerplate.has(term))) continue;
@@ -123,7 +124,7 @@ export function duplicateCandidates(database, { blocked = new Set(), limit = 500
     const perPlatform = new Map();
     for (const [v, score] of votes) { if (!perPlatform.has(v.platform)) perPlatform.set(v.platform, []); perPlatform.get(v.platform).push([v, score]); }
     // Each destination platform gets its own quota; Codeforces cannot crowd out AtCoder/GFG.
-    for (const rows of perPlatform.values()) for (const [v] of rows.sort((x, y) => y[1] - x[1] || x[0].id.localeCompare(y[0].id)).slice(0, 16)) pool.add(v);
+    for (const rows of perPlatform.values()) for (const [v] of rows.sort((x, y) => y[1] - x[1] || x[0].id.localeCompare(y[0].id)).slice(0, 32)) pool.add(v);
     for (const b of pool) {
       const [left, right] = a.id < b.id ? [a, b] : [b, a], key = JSON.stringify([left.id, right.id]);
       if (a.questionId === b.questionId || seen.has(key) || blocked.has(key)) continue;
@@ -131,7 +132,7 @@ export function duplicateCandidates(database, { blocked = new Set(), limit = 500
       const other = features.get(b.id), titleSimilarity = overlap(own.title, other.title), body = weightedOverlap(own, other);
       const exactEvidence = a.fingerprint === b.fingerprint && a.descriptionRef && b.descriptionRef;
       const exactTitle = own.titleKey && own.titleKey === other.titleKey;
-      if (!exactEvidence && !exactTitle && !(titleSimilarity >= .6 && body.score >= .12) && !(body.score >= .38 && body.shared >= 4)) continue;
+      if (!exactEvidence && !exactTitle && !(titleSimilarity >= .5 && body.score >= .10) && !(body.score >= .32 && body.shared >= 4)) continue;
       const reasons = [];
       if (!a.descriptionRef || !b.descriptionRef) reasons.push('Missing statement: review originals');
       if (a.constraintsRef !== b.constraintsRef) reasons.push('Constraints differ: compare feasible solutions, not literal bounds');

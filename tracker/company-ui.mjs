@@ -80,7 +80,8 @@ export function mountCompanies(root, { getState, solvedKeys, createRow }) {
     $('companySource').textContent = 'LeetCode dataset';
     $('companySource').hidden = !getState().accounts.leetcode;
     $('companySnapshot').hidden = !getState().accounts.leetcode;
-    $('companySnapshot').textContent = `LeetCode snapshot: ${data.source.snapshotDate}; time windows and frequency refer to that snapshot. Code360 tags have no frequency or date data.`;
+    $('companySnapshot').textContent = `Snapshot: ${data.source.snapshotDate}`;
+    $('companySnapshot').title = 'LeetCode time windows and frequency use this snapshot. Code360 tags have no frequency or date data.';
     const requestedId = location.hash.split('/')[1] || '';
     const company = companies.find(c => c.id === requestedId);
     $('companyDirectory').hidden = Boolean(requestedId);
@@ -103,8 +104,7 @@ export function mountCompanies(root, { getState, solvedKeys, createRow }) {
     for (const chip of chips.children) chip.setAttribute('aria-pressed', String(chip.dataset.category === category));
     const visible = companies.filter(c => (category === 'all' || category === c.category) && [c.name, c.id, ...(c.aliases || [])].some(name => name.toLowerCase().includes(query)) && countsByCompany.get(c.id).total);
     const unique = new Set(companies.flatMap(c => companyQuestions(c, window, platform).map(p => p.canonicalId || p.key)));
-    const platformName = $('companyPlatform').selectedOptions[0].textContent;
-    $('companySummary').textContent = `${unique.size.toLocaleString()} ${platformName} questions across ${companies.filter(c => countsByCompany.get(c.id).total).length} companies`;
+    $('companySummary').textContent = `${unique.size.toLocaleString()} questions · ${companies.filter(c => countsByCompany.get(c.id).total).length.toLocaleString()} companies`;
     const fragment = document.createDocumentFragment();
     for (const group of COMPANY_CATEGORIES) {
       const members = visible.filter(c => c.category === group).sort((a, b) => countsByCompany.get(b.id).total - countsByCompany.get(a.id).total || a.name.localeCompare(b.name));

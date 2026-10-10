@@ -1,4 +1,16 @@
-import { acceptedToday, dateKey } from './core.mjs';
+import { acceptedToday, dateKey, tufActivityToday } from './core.mjs';
+export { tufActivityToday } from './core.mjs';
+
+export function appendTufActivityToday(element, account, now = Date.now()) {
+  const count = tufActivityToday(account, now);
+  if (!count) return;
+  const activity = document.createElement('sup');
+  activity.className = 'today-increase';
+  activity.textContent = `\u2191${count.toLocaleString()}`;
+  activity.title = 'TUF calendar activity for today (India time), as of the last profile sync. May include repeat activity.';
+  activity.setAttribute('aria-label', `${count} TUF activities today`);
+  element.append(activity);
+}
 
 export function solvedToday(accounts, timeZone, now = Date.now()) {
   return acceptedToday(accounts, dateKey(now, timeZone), timeZone);

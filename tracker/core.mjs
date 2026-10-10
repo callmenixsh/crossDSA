@@ -92,12 +92,19 @@ export function mergeSnapshot(previous, incoming, now = Date.now()) {
   for (const item of incoming.recent || []) records.set(item.id, item);
   const recent = [...records.values()].sort((a, b) => b.timestamp - a.timestamp).slice(0, 15000);
   const clipped = records.size > recent.length;
+  // Solved identities outlive the bounded activity feed. Imports may have no date.
+  const solved = { ...previous?.solved };
+  for (const item of [...Object.values(incoming.solved || {}), ...records.values()]) {
+    if (!item.key || !item.platform || !safeProblemUrl(item.url, item.platform)) continue;
+    const old = solved[item.key];
+    if (!old || (Number(item.timestamp) || 0) >= (Number(old.timestamp) || 0)) solved[item.key] = { ...old, ...item, source: item.source || 'provider', pending: item.pending || undefined };
+  }
   if (clipped && incoming.atcoderSync) incoming = { ...incoming, localHistoryTruncated: true };
   // GFG exposes a current coding score, so build an honest history from syncs.
   // Keep the latest observation per UTC day, bounded to 180 observed days.
   const scoreHistory = new Map((previous?.scoreHistory || []).map(point => [dateKey(point.timestamp, 'UTC'), point]));
   if (Number.isFinite(incoming.score)) scoreHistory.set(dateKey(now, 'UTC'), { timestamp: now, rating: incoming.score });
-  return { ...incoming, recent, ...(scoreHistory.size ? { scoreHistory: [...scoreHistory.values()].sort((a, b) => a.timestamp - b.timestamp).slice(-180) } : {}), ...(clipped ? { partial: true, ...(incoming.recent?.[0]?.platform === 'codeforces' ? { totalIsLowerBound: true } : {}), coverage: `${incoming.coverage || ''} Local history is limited to the newest 15,000 accepted records; older records are omitted.` } : {}) };
+  return { ...incoming, solved, recent, ...(scoreHistory.size ? { scoreHistory: [...scoreHistory.values()].sort((a, b) => a.timestamp - b.timestamp).slice(-180) } : {}), ...(clipped ? { partial: true, coverage: `${incoming.coverage || ''} Local history is limited to the newest 15,000 accepted records; older records are omitted.` } : {}) };
 }
 
 export function dailyActivity(accounts, timeZone, platform = 'all') {
@@ -148,22 +155,32 @@ export function acceptedToday(accounts, today, timeZone) {
   return keys.size;
 }
 
-export function questionIsDone(accounts, workspace, key) {
-  if (typeof workspace[key]?.done === 'boolean') return workspace[key].done;
-  return Object.values(accounts).some(a => a.snapshot?.recent?.some(r => r.key === key));
+export function tufActivityToday(account, now = Date.now()) {
+  const count = account?.snapshot?.calendar?.[dateKey(now, 'Asia/Kolkata')];
+  return Number.isFinite(count) && count > 0 ? count : 0;
 }
 
-export function doneQuestions(accounts, { query = '', platform = 'all', from = '', to = '', sort = 'newest', timeZone = 'UTC', workspace = {} } = {}) {
+export function practiceToday(accounts, timeZone, now = Date.now()) {
+  const individual = Object.fromEntries(Object.entries(accounts).filter(([platform]) => platform !== 'tuf'));
+  return acceptedToday(individual, dateKey(now, timeZone), timeZone) + tufActivityToday(accounts.tuf, now);
+}
+
+export function questionIsDone(accounts, key) {
+  return Object.values(accounts).some(a => a.snapshot?.solved?.[key] || a.snapshot?.recent?.some(r => r.key === key));
+}
+
+export function doneQuestions(accounts, { query = '', platform = 'all', from = '', to = '', sort = 'newest', timeZone = 'UTC' } = {}) {
   const unique = new Map();
-  const recent = Object.values(accounts).flatMap(a => a.snapshot?.recent || []).sort((a, b) => b.timestamp - a.timestamp);
-  for (const record of recent) if (workspace[record.key]?.done !== false && !unique.has(record.key)) unique.set(record.key, record);
-  for (const entry of Object.values(workspace)) if (entry.done && accounts[entry.platform] && !unique.has(entry.key)) {
-    unique.set(entry.key, { ...entry, timestamp: entry.doneAt || entry.updatedAt, source: 'manual' });
+  const tracked = Object.entries(accounts).filter(([platform]) => platform !== 'tuf').map(([, account]) => account);
+  const recent = tracked.flatMap(a => a.snapshot?.recent || []).sort((a, b) => b.timestamp - a.timestamp);
+  for (const record of recent) if (!unique.has(record.key)) unique.set(record.key, record);
+  for (const account of tracked) for (const record of Object.values(account.snapshot?.solved || {})) {
+    if (!unique.has(record.key)) unique.set(record.key, record);
   }
   const terms = query.trim().toLowerCase().split(/\s+/).filter(Boolean);
-  const records = [...unique.values()].sort((a, b) => b.timestamp - a.timestamp).filter(record => {
-    const day = record.day || dateKey(record.timestamp, timeZone);
-    return (platform === 'all' || record.platform === platform) && terms.every(term => record.title.toLowerCase().includes(term)) && (!from || day >= from) && (!to || day <= to);
+  const records = [...unique.values()].sort((a, b) => (Number(b.timestamp) || 0) - (Number(a.timestamp) || 0)).filter(record => {
+    const day = record.day || (record.timestamp ? dateKey(record.timestamp, timeZone) : null);
+    return (platform === 'all' || record.platform === platform) && terms.every(term => record.title.toLowerCase().includes(term)) && (!from || day && day >= from) && (!to || day && day <= to);
   });
   if (sort === 'oldest') records.reverse();
   return { total: unique.size, records };
@@ -186,10 +203,12 @@ export function practiceOverview(state, now = Date.now()) {
   const streakAccounts = leetcode?.snapshot ? { leetcode } : state.accounts;
   const current = streaks(dailyActivity(streakAccounts, state.settings.timeZone), today).current;
   return {
-    today: acceptedToday(state.accounts, today, state.settings.timeZone), goal: state.settings.dailyGoal,
+    today: practiceToday(state.accounts, state.settings.timeZone, now), goal: state.settings.dailyGoal,
     total: snapshots.length ? snapshots.reduce((sum, account) => sum + Number(account.snapshot.totalSolved || 0), 0) : null,
     lowerBound: snapshots.some(account => account.snapshot.totalIsLowerBound),
     streak: snapshots.length ? current : null, streakLabel: leetcode?.snapshot ? 'Streak - LeetCode' : 'Activity streak',
+    notice: snapshots.map(account => account.snapshot.activityNotice).filter(Boolean).join(' '),
+    cachedActivity: snapshots.some(account => account.snapshot.activityStatus === 'cached'),
     warning: snapshots.map(account => account.snapshot.activityWarning).filter(Boolean).join(' '),
     error: Object.values(state.accounts).map(account => account.error).filter(Boolean).join(' '),
     syncing: Object.values(state.accounts).some(account => account.status === 'syncing'),

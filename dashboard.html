@@ -41,7 +41,7 @@
             <section class="activity-panel" aria-labelledby="activityTitle"><div class="section-heading"><div><h3 id="activityTitle">Practice activity</h3><p id="activitySummary"></p></div></div><div class="heatmap-scroll"><div id="heatmap" class="heatmap" role="group" aria-label="Coding activity calendar"></div></div><div class="heatmap-footer"><div class="legend">Less <i></i><i class="level-1"></i><i class="level-2"></i><i class="level-3"></i><i class="level-4"></i> More</div></div></section>
             <section class="ratings-panel" aria-labelledby="ratingsTitle"><div class="section-heading"><h3 id="ratingsTitle">Rating over time</h3></div><div id="ratingLegend" class="rating-legend" aria-label="Chart series"></div><div id="ratingPlot" class="rating-plot"></div></section>
           </div>
-          <details class="coverage-details"><summary>About these numbers</summary><p>Activity may include repeat submissions. Goals count distinct accepted questions today, including browser-observed accepts awaiting sync. Totals come from platform profiles and count each platform separately; imported question history may be incomplete.</p></details>
+          <details class="coverage-details"><summary>About these numbers</summary><p>Daily progress combines distinct accepted questions with TUF calendar activity, which may include repeats. Totals count each platform separately. Saved history may be incomplete.</p></details>
         </article>
         <div class="platforms-section"><div><div class="section-heading outside"><div><h2>Platforms</h2></div><button class="text-button" id="connectCards">Manage ↗</button></div><div id="platformCards" class="platform-grid"></div></div></div>
         <article class="panel recent-panel"><div class="section-heading"><div><h2>Recent solves</h2></div><a class="text-link" href="#done">View all →</a></div><div id="recentList"></div></article>
@@ -50,8 +50,9 @@
       <section id="view-done" class="view" hidden>
         <div class="page-heading"><h1>Done Questions</h1></div>
         <div class="panel library-panel">
+          <button class="button" id="openSolvedImport" type="button">Import past solves</button>
           <div class="filters"><input type="search" id="doneSearch" placeholder="Search done questions…" aria-label="Search done questions"><select id="donePlatform" aria-label="Done questions platform"><option value="all">All platforms</option></select><input type="date" id="doneFrom" aria-label="Solved from date"><input type="date" id="doneTo" aria-label="Solved through date"><select id="doneSort" aria-label="Sort done questions"><option value="newest">Newest first</option><option value="oldest">Oldest first</option></select></div>
-          <p class="list-meta">Imported history may be incomplete. Dates show the latest recorded solve or manual Done date. Manual marks do not change submission counts.</p>
+          <p class="list-meta">Latest solve dates shown. Imported history may be incomplete or undated.</p>
           <div class="list-meta" id="doneMeta"></div><div id="doneList"></div>
           <div class="pagination"><button class="button ghost" id="donePrevious">← Previous</button><span id="donePageLabel"></span><button class="button ghost" id="doneNext">Next →</button></div>
         </div>
@@ -107,10 +108,33 @@
       </section>
       <section id="view-settings" class="view" hidden>
         <div class="page-heading"><div><h1>Settings</h1></div></div>
-        <div class="settings-grid"><article class="panel connections-panel" aria-labelledby="connectionsHeading"><h2 id="connectionsHeading" tabindex="-1">Connect platforms</h2><div id="connectionForms"></div></article><form id="contestSettingsForm" class="panel"><h2>Contest notifications</h2><label class="check-field"><input id="contestsEnabled" type="checkbox"> Show upcoming contests in popup</label><label class="check-field"><input id="contestReminders" type="checkbox"> Desktop reminders</label><p class="small muted">Contests from your connected platforms. Reminders arrive 1 hour and 10 minutes before, while Chrome is running.</p><button class="button primary" type="submit">Save contest settings</button></form><form id="settingsForm" class="panel"><h2>Goals &amp; activity</h2><label class="field">Daily goal<input id="dailyGoal" type="number" min="1" max="50" required></label><label class="field">Timezone<input id="timeZone" required placeholder="Asia/Kolkata"></label><label class="check-field"><input id="autoSync" type="checkbox"> Auto-refresh activity every 30 minutes</label><button class="button primary" type="submit">Save settings</button></form><article class="panel"><h2>Your data</h2><p>Stored in this browser.</p><button class="button" id="exportData">↓ Export my data</button></article></div>
+        <div class="settings-grid"><article class="panel connections-panel" aria-labelledby="connectionsHeading"><h2 id="connectionsHeading" tabindex="-1">Connect platforms</h2><div id="connectionForms"></div></article><form id="contestSettingsForm" class="panel"><h2>Contest notifications</h2><label class="check-field"><input id="contestsEnabled" type="checkbox"> Show upcoming contests in popup</label><label class="check-field"><input id="contestReminders" type="checkbox"> Desktop reminders</label><p class="small muted">Contests from your connected platforms. Reminders arrive 1 hour and 10 minutes before, while Chrome is running.</p><button class="button primary" type="submit">Save contest settings</button></form><form id="settingsForm" class="panel"><h2>Goals &amp; activity</h2><label class="field">Daily goal<input id="dailyGoal" type="number" min="1" max="50" required></label><label class="field">Timezone<input id="timeZone" required placeholder="Asia/Kolkata"></label><label class="check-field"><input id="autoSync" type="checkbox"> Auto-refresh activity every 30 minutes</label><button class="button primary" type="submit">Save settings</button></form><article class="panel" aria-labelledby="yourDataHeading">
+          <h2 id="yourDataHeading">Your data</h2>
+          <p>Back up your accounts, activity, lists and settings.</p>
+          <div class="data-actions">
+            <button class="button" id="exportData" type="button">&#8595; Export my data</button>
+            <button class="button" id="importData" type="button">&#8593; Import my data</button>
+            <input id="importDataFile" type="file" accept=".json,application/json" aria-label="Choose a crossDSA backup" hidden>
+            <button class="button danger" id="deleteData" type="button">Delete my data</button>
+          </div>
+          <p class="small muted">Import replaces saved data. Delete clears data and settings. Export first to keep a copy.</p>
+        </article></div>
       </section>
     </div>
   </main>
+  <dialog id="solvedImportDialog" aria-labelledby="solvedImportTitle">
+    <div class="dialog-heading"><h2 id="solvedImportTitle">Import past solves</h2><button id="closeSolvedImport" class="icon-button" type="button" aria-label="Close import">&times;</button></div>
+    <label class="field">Platform<select id="historyPlatform"></select></label>
+    <p id="historyImportStatus" role="status" class="small muted"></p>
+    <div class="dialog-actions"><button id="startHistoryImport" class="button" type="button">Scan history</button><button id="resumeHistoryImport" class="button" type="button" hidden>Resume</button><button id="cancelHistoryImport" class="button ghost" type="button" hidden>Pause</button></div>
+    <hr>
+    <p>Paste solved URLs or choose a CSV / JSON file.</p>
+    <details class="import-format-help"><summary>File format</summary><p>CSV: a <code>url</code> column; optional <code>title</code> and <code>platform</code>. JSON: an array of URLs or question objects. Connect the accounts in Settings first.</p></details>
+    <label class="field">Solved URLs<textarea id="solvedImportText" rows="5" maxlength="2000000" placeholder="https://leetcode.com/problems/two-sum/"></textarea></label>
+    <label class="field">CSV or JSON file<input id="solvedImportFile" type="file" accept=".csv,.json,.txt,text/csv,application/json,text/plain"></label>
+    <div id="solvedImportPreview" role="status"></div>
+    <div class="dialog-actions"><button id="previewSolvedImport" class="button" type="button">Preview import</button><button id="applySolvedImport" class="button primary" type="button" disabled>Import solved questions</button></div>
+  </dialog>
   <dialog id="practiceDialog" aria-labelledby="listPickerTitle"><form id="practiceForm">
     <div class="dialog-heading"><h2 id="listPickerTitle">Add to list</h2><button class="icon-button" type="button" data-close="practiceDialog" aria-label="Close list selection">&times;</button></div>
     <div class="list-picker-problem"><span id="practicePlatform" class="eyebrow"></span><h3 id="practiceTitle"></h3><a id="practiceLink" class="text-link" target="_blank" rel="noopener noreferrer">Open problem ↗</a></div>

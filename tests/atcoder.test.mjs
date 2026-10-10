@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 import { filterLibrary } from '../tracker/library.mjs';
-import { problemKey, safeProblemUrl, doneQuestions, acceptedToday, PLATFORMS } from '../tracker/core.mjs';
+import { problemKey, safeProblemUrl, doneQuestions, acceptedToday, PLATFORMS, normalizeState } from '../tracker/core.mjs';
 
 test('AtCoder task identity survives contest rehosting, query parameters and trailing slashes', () => {
   for (const url of [
@@ -23,7 +23,7 @@ test('AtCoder links reject foreign hosts, credentials and non-task routes', () =
   ]) assert.equal(safeProblemUrl(url, 'atcoder'), null, url);
 });
 
-test('AtCoder library requires a connection while saved Done history remains preserved', () => {
+test('AtCoder lists retain membership while Done requires detected history', () => {
   const problem = { key: 'atcoder:dp_a', platform: 'atcoder', id: 'dp_a', title: 'Frog 1', difficulty: 'Unknown', topics: [], url: 'https://atcoder.jp/contests/dp/tasks/dp_a' };
   const library = [problem, { ...problem, platform: 'leetcode', key: 'leetcode:frog' }];
   assert.deepEqual(filterLibrary(library, { query: 'dp_a' }), []);
@@ -31,12 +31,15 @@ test('AtCoder library requires a connection while saved Done history remains pre
   assert.deepEqual(filterLibrary(library, { accounts: { atcoder: {} }, platform: 'atcoder' }), [problem]);
   const workspace = { [problem.key]: { ...problem, done: true, doneAt: Date.parse('2026-10-09T12:00:00Z'), listIds: ['saved'] } };
   assert.deepEqual(filterLibrary(library, { accounts: { atcoder: {} }, workspace, status: 'starred' }), [problem]);
-  assert.equal(doneQuestions({}, { workspace }).total, 0);
-  const done = doneQuestions({ atcoder: {} }, { workspace, platform: 'atcoder', from: '2026-10-09', to: '2026-10-09' });
+  assert.equal(doneQuestions(normalizeState({ version: 1, accounts: {}, workspace }).accounts).total, 0);
+  assert.equal(doneQuestions(normalizeState({ version: 1, accounts: { atcoder: {} }, workspace }).accounts).total, 0, 'Legacy manual marks do not prove a solve');
+  const history = { atcoder: { snapshot: { recent: [{ ...problem, timestamp: Date.parse('2026-10-09T12:00:00Z') }] } } };
+  const done = doneQuestions(normalizeState({ version: 1, accounts: history, workspace }).accounts, { platform: 'atcoder', from: '2026-10-09', to: '2026-10-09' });
   assert.equal(done.records[0].key, problem.key);
   assert.equal(acceptedToday({}, '2026-10-09', 'UTC'), 0);
   workspace[problem.key].done = false;
-  assert.equal(doneQuestions({}, { workspace }).total, 0);
+  assert.equal(doneQuestions(normalizeState({ version: 1, accounts: history, workspace }).accounts).total, 1, 'Legacy unchecked marks cannot hide solves');
+  assert.equal(doneQuestions(normalizeState({ version: 1, accounts: {}, workspace }).accounts).total, 0);
 });
 
 test('bundled AtCoder metadata has unique stable IDs, safe URLs and explicit difficulty provenance', async () => {

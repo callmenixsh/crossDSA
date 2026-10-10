@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { emptyState, practiceOverview, normalizeState, cleanHandle, problemKey, safeProblemUrl, dateKey, dailyActivity, streaks, acceptedToday, mergeSnapshot } from '../tracker/core.mjs';
-import { collectors, parseCodeChefFeed } from '../tracker/platforms.mjs';
+import { collectors, parseCodeChefFeed, parseCodeChefCalendar } from '../tracker/platforms.mjs';
 
 const accepted = (id, key, timestamp, extra = {}) => ({ id, key, timestamp, ...extra });
 
@@ -92,6 +92,53 @@ test('CodeChef feed imports only accepted rows and preserves dates', () => {
   assert.equal(rows[0].key, 'codechef:ABC');
 });
 
+test('CodeChef calendar normalizes provider dates without shifting time zones', () => {
+  const calendar = parseCodeChefCalendar('<script>var userDailySubmissionsStats = [{"date":"2026-1-2","value":"7"},{"date":"2026-10-9","value":0}];</script>');
+  assert.deepEqual(calendar, { '2026-01-02': 7, '2026-10-09': 0 });
+  for (const zone of ['UTC', 'America/Los_Angeles', 'Asia/Kolkata']) {
+    assert.deepEqual(dailyActivity({ codechef: { snapshot: { calendar, recent: [] } } }, zone), { '2026-01-02': 7 });
+  }
+  assert.deepEqual(parseCodeChefCalendar('const userDailySubmissionsStats = [];'), {});
+  for (const entries of [[{ date: '2026-2-30', value: 1 }], [{ date: '2026-1-1', value: -1 }], [{ date: '2026-1-1', value: null }]]) {
+    assert.throws(() => parseCodeChefCalendar(`var userDailySubmissionsStats = ${JSON.stringify(entries)};`), /invalid/);
+  }
+  assert.throws(() => parseCodeChefCalendar('<html>No calendar</html>'), /unavailable/);
+});
+
+test('CodeChef heatmap uses its public calendar independently of truncated accepted history', async () => {
+  let pages = 0;
+  const snapshot = await collectors.codechef('sample', {
+    text: async () => 'Total Problems Solved: 200<script>var userDailySubmissionsStats = [{"date":"2026-1-2","value":8},{"date":"2026-10-9","value":5}];</script>',
+    json: async () => { pages++; return { max_page: 20, content: `<tr><td title='12:01 AM 09/10/26'></td><td><a href='/problems/ABC'>ABC</a></td><td><span title='accepted'></span></td><td><a href='/viewsolution/12345'>View</a></td></tr>` }; },
+    wait: async () => {},
+  });
+  assert.equal(pages, 10); assert.equal(snapshot.partial, true);
+  assert.deepEqual(dailyActivity({ codechef: { snapshot: mergeSnapshot(null, snapshot) } }, 'UTC'), { '2026-01-02': 8, '2026-10-09': 5 });
+  assert.equal(acceptedToday({ codechef: { snapshot } }, '2026-01-02', 'UTC'), 0);
+  assert.match(snapshot.coverage, /including unsuccessful attempts/);
+});
+
+test('CodeChef refreshes the calendar when the accepted feed fails and retains saved solves', async () => {
+  const previous = { recent: [accepted('old', 'codechef:ABC', 1)] };
+  const incoming = await collectors.codechef('sample', {
+    previous,
+    text: async () => 'Total Problems Solved: 1; var userDailySubmissionsStats = [{"date":"2026-10-9","value":3}];',
+    json: async () => { throw new Error('Feed down'); },
+  });
+  assert.equal(incoming.calendar['2026-10-09'], 3);
+  assert.match(incoming.activityWarning, /could not refresh/);
+  assert.equal(mergeSnapshot(previous, incoming).recent[0].id, 'old');
+});
+
+test('CodeChef retains cached calendars when missing and replaces them on a successful empty response', async () => {
+  const previous = { calendar: { '2026-10-08': 4 } };
+  const ctx = { previous, json: async () => ({ max_page: 1, content: '' }) };
+  const cached = await collectors.codechef('sample', { ...ctx, text: async () => 'Total Problems Solved: 1' });
+  assert.deepEqual(cached.calendar, previous.calendar); assert.match(cached.calendarWarning, /saved dates/);
+  const refreshed = await collectors.codechef('sample', { ...ctx, text: async () => 'Total Problems Solved: 1; var userDailySubmissionsStats = [];' });
+  assert.deepEqual(refreshed.calendar, {}); assert.equal(refreshed.calendarWarning, '');
+});
+
 test('LeetCode handles reject missing profiles instead of returning fake zero stats', async () => {
   await assert.rejects(collectors.leetcode('missing', { json: async () => ({ data: { matchedUser: null } }) }), /not found/);
 });
@@ -148,13 +195,16 @@ test('GFG missing institute rank remains unavailable', async () => {
 });
 
 test('TUF excludes aggregated external-platform calendars to avoid double-counting', async () => {
-  const ctx = { siteJson: async url => url.endsWith('/heatmap') ? { success: true, data: { availableFilters: ['All', 'TUF', 'LeetCode'], heatmapData: [{ date: '2026-10-09', count: 8 }] } } : { success: true, data: { learningProgress: [{ platform: 'TUF', totalSolved: 10, difficultyBreakdown: [] }] } } };
+  const ctx = { json: async url => {
+    if (url.includes('/heatmap')) throw new Error('Filtered calendar unavailable');
+    return { success: true, data: { learningProgress: [{ platform: 'TUF', totalSolved: 10, difficultyBreakdown: [] }] } };
+  } };
   const s = await collectors.tuf('sample', ctx);
   assert.deepEqual(s.calendar, {}); assert.equal(s.totalSolved, 10); assert.match(s.coverage, /double-counting/);
 });
 
 test('TUF-only dated activity imports while keeping daily accepted goals empty', async () => {
-  const s = await collectors.tuf('sample', { siteJson: async url => url.endsWith('/heatmap') ? { success: true, data: { availableFilters: ['All', 'TUF'], heatmapData: [{ date: '2026-10-09', count: 8 }] } } : { success: true, data: { learningProgress: [{ platform: 'TUF', totalSolved: 10 }] } } });
+  const s = await collectors.tuf('sample', { now: () => Date.parse('2026-10-10'), json: async url => url.includes('/heatmap?') ? { success: true, data: { selectedPlatform: 'TUF', heatmapData: [{ date: '2026-10-09', count: 8 }] } } : { success: true, data: { learningProgress: [{ platform: 'TUF', totalSolved: 10 }] } } });
   assert.equal(s.calendar['2026-10-09'], 8); assert.equal(s.recent.length, 0);
 });
 
@@ -201,4 +251,14 @@ test('popup overview combines solves and uses the LeetCode current streak', () =
   state.accounts.codeforces = { snapshot: { totalSolved: 9, recent: [] } };
   const summary = practiceOverview(state, Date.parse('2026-10-09T12:00:00Z'));
   assert.equal(summary.total, 308); assert.equal(summary.today, 1); assert.equal(summary.streak, 2); assert.equal(summary.streakLabel, 'Streak - LeetCode');
+});
+
+
+test('cached LeetCode history keeps progress available with a neutral coverage notice', () => {
+  const state = emptyState(); state.settings.timeZone = 'UTC';
+  state.accounts.leetcode = { snapshot: { totalSolved: 300, recent: [{ key: 'leetcode:two-sum', timestamp: Date.parse('2026-10-10T12:00:00Z') }], activityStatus: 'cached', activityWarning: '', activityNotice: 'Using saved submission history.' } };
+  const summary = practiceOverview(state, Date.parse('2026-10-10T13:00:00Z'));
+  assert.equal(summary.today, 1); assert.equal(summary.total, 300);
+  assert.equal(summary.warning, ''); assert.equal(summary.cachedActivity, true);
+  assert.match(summary.notice, /saved/);
 });

@@ -36,3 +36,41 @@ test('Code360 reads only the public profile and never calls the broken streak en
   assert.equal(snapshot.providerStreak, null);
   await assert.rejects(collectors.code360('missing', { json: async () => { throw new Error('Profile not found'); } }), /Profile not found/);
 });
+
+
+test('TUF fetches filtered calendar years in the background and retains unavailable years', async () => {
+  const requests = [];
+  const snapshot = await collectors.tuf('sample', { now: () => Date.parse('2026-10-10'), text: async () => profileHtml(), previous: { calendar: { '2024-03-01': 7 } }, json: async url => {
+    requests.push(url); if (url.includes('year=2024')) throw new Error('Offline');
+    const year = new URL(url).searchParams.get('year');
+    assert.equal(new URL(url).searchParams.get('platform'), 'TUF');
+    return { success: true, data: { selectedPlatform: 'TUF', availableFilters: ['All', 'TUF', 'LeetCode'], heatmapData: [{ date: `${year}-03-01`, count: 2 }, { date: '2020-01-01', count: 100 }] } };
+  } });
+  assert.equal(requests.length, 3);
+  assert.deepEqual(snapshot.calendar, { '2024-03-01': 7, '2025-03-01': 2, '2026-03-01': 2 });
+  assert.match(snapshot.calendarWarning, /cached/);
+  assert.equal(snapshot.calendar['2026-10-10'], undefined, 'Mixed public calendar must not leak into filtered data');
+});
+
+test('TUF API profile fallback works without a website tab', async () => {
+  const snapshot = await collectors.tuf('sample', { now: () => Date.parse('2026-10-10'), text: async () => { throw new Error('Unavailable'); }, json: async url => url.includes('/heatmap?') ? { success: true, data: { heatmapData: [{ date: '2026-10-10', count: 3 }] } } : { success: true, data: { learningProgress: [{ platform: 'TUF', totalSolved: 12 }] } }, siteJson: async () => { assert.fail('No tab required'); } });
+  assert.equal(snapshot.totalSolved, 12);
+  assert.equal(snapshot.calendar['2026-10-10'], 3);
+});
+
+
+test('TUF requests all calendar years together and never falls back to an open tab', async () => {
+  const pending = [];
+  const sync = collectors.tuf('sample', {
+    text: async () => profileHtml(),
+    json: url => new Promise((resolve, reject) => pending.push({ url, resolve, reject })),
+    siteJson: async () => assert.fail('Background sync must never depend on a website tab'),
+  });
+  await new Promise(resolve => setImmediate(resolve));
+  const count = pending.length;
+  for (const request of pending) request.reject(new Error('API unavailable'));
+  assert.equal(count, 3, 'All years start before any year finishes');
+  const snapshot = await sync;
+  assert.equal(snapshot.totalSolved, 122);
+  assert.match(snapshot.calendarWarning, /cached/);
+});

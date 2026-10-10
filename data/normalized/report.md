@@ -6,91 +6,123 @@ Generated offline from the six scraped datasets. The extension joins a compact r
 | --- | ---: |
 | rawRecords | 30,269 |
 | sourceVersions | 30,269 |
-| uniqueQuestions | 30,081 |
-| removedDuplicateEntries | 188 |
-| groupedQuestions | 148 |
-| exactGroups | 17 |
-| reviewedGroups | 131 |
+| uniqueQuestions | 29,248 |
+| removedDuplicateEntries | 1,021 |
+| groupedQuestions | 756 |
+| exactGroups | 14 |
+| reviewedGroups | 742 |
 | missingStatements | 2,702 |
 | rejectedRecords | 0 |
 | staleReviews | 0 |
 | sharedTexts | 54,162 |
-| coreTaskGroups | 11 |
-| crossPlatformGroups | 131 |
+| coreTaskGroups | 117 |
+| crossPlatformGroups | 684 |
 
-5000 of 60864 candidate pairs are included in review-report.json (55864 omitted). Similarity is a retrieval heuristic, not an equivalence probability. Candidates are never merged automatically.
+5000 of 272427 candidate pairs are included in review-report.json (267427 omitted). Similarity is a retrieval heuristic, not an equivalence probability. Candidates are never merged automatically.
 
 No rejected records or stale reviews.
 
 ## Example canonical questions
 
-- **Insert Interval** (q_07e816b4-3161-4e75-96ab-99d92bb0c648; reviewed): leetcode: Insert Interval / geeksforgeeks: Insert Interval / code360:  Insert Interval / code360: Insert Interval
-- **Median of Two Sorted Arrays** (q_0896954e-65fa-41fa-a5dc-19a1561c996d; reviewed): leetcode: Median of Two Sorted Arrays / code360: Median of two sorted arrays
-- **Word Pattern** (q_08b72aba-e6c6-46d9-a8b1-c42705a05372; reviewed): leetcode: Word Pattern / code360: Word Pattern
-- **Factorial Trailing Zeroes** (q_09513a79-c99c-4079-ae7e-4a18f7985583; reviewed): leetcode: Factorial Trailing Zeroes / geeksforgeeks: Trailing zeroes in factorial
-- **Course Schedule** (q_0d108f97-d0bf-425f-b0ad-c929f90acfdb; reviewed): leetcode: Course Schedule / code360: Course Schedule
-- **Sudoku Solver** (q_0de8e68e-e4ed-4d76-8814-1f8809cad047; reviewed): leetcode: Sudoku Solver / code360: Sudoku Solver
-- **Best Time to Buy and Sell Stock IV** (q_11d8bbca-1d35-4681-8f6d-9b82b804ce5d; reviewed): leetcode: Best Time to Buy and Sell Stock IV / code360: Best Time to Buy and Sell Stock IV
-- **Count Salary Categories** (q_13a881bc-5c5a-45c9-b8d1-ce6ae6770172; reviewed): leetcode: Count Salary Categories / code360: Count Salary Categories
-- **Reorder List** (q_13c909f9-15e8-4fbe-9d95-749491db93e9; reviewed): leetcode: Reorder List / geeksforgeeks: Reorder List
-- **Reformat Date** (q_1406b058-07d6-456a-bdd3-7b4bc5899cfb; reviewed): leetcode: Reformat Date / code360: Reformat Date
-- **Repeated DNA Sequences** (q_146584bf-7d2d-4b39-a86e-b185bd054e0d; reviewed): leetcode: Repeated DNA Sequences / code360: Repeated DNA Sequences
-- **Triangle** (q_14caacf1-470d-4f4c-8779-a2e81c83bc7a; reviewed): leetcode: Triangle / code360: Triangle
+- **Remove Nth Node From End of List** (q_00a2df6d-a3f2-4d8e-b3ab-72e1d58fe89a; reviewed): leetcode: Remove Nth Node From End of List / code360: Delete Kth Node From End
+- **Longest Balanced Subarray I** (q_00d13234-a857-49d7-921a-279c0fa9ef50; reviewed): leetcode: Longest Balanced Subarray I / leetcode: Longest Balanced Subarray II
+- **Maximum Number of Events That Can Be Attended** (q_01372328-81ce-4dc3-8b3c-62c34aba0f14; reviewed): leetcode: Maximum Number of Events That Can Be Attended / geeksforgeeks: Maximum Events to be Attended
+- **Split Array into Consecutive Subsequences** (q_013e5557-7227-4d53-ab9e-d487254f854d; reviewed): leetcode: Split Array into Consecutive Subsequences / code360: Split Array Into Increasing Subsequences
+- **Largest Substring Between Two Equal Characters** (q_02076dd5-92df-467a-afdd-f07f9338b8ea; reviewed): leetcode: Largest Substring Between Two Equal Characters / geeksforgeeks: Max Gap Between Two Same
+- **Maximal Rectangle** (q_0257a517-9f53-4a9d-9250-e44b273abde7; reviewed): leetcode: Maximal Rectangle / geeksforgeeks: Max  Rectangle
+- **Rearrange Words in a Sentence** (q_03785fe2-c4ac-41d9-9936-17e94fb87a57; reviewed): leetcode: Rearrange Words in a Sentence / code360: Rearrange words in a sentence
+- **Maximum of Absolute Value Expression** (q_039ef019-4252-4361-9097-298729ceb679; reviewed): leetcode: Maximum of Absolute Value Expression / code360: Maximum value of modulus expression
+- **Average of Levels in Binary Tree** (q_03a74cc4-a443-4683-bdf8-f8d5713c8bc1; reviewed): leetcode: Average of Levels in Binary Tree / code360: Level Average / code360: Averages Of Levels In Binary Tree
+- **Network Delay Time** (q_03c7888f-1cf2-449e-a649-3f01b5fc18c9; reviewed): leetcode: Network Delay Time / geeksforgeeks: Network Delay Time / code360: Network Delay Time
+- **Power of Two** (q_04ec75d6-cfef-43cb-9761-9fc13345e53e; reviewed): leetcode: Power of Two / geeksforgeeks: Power of 2 / code360: Power of Two
+- **Balanced Binary Tree** (q_04f23d15-7245-4450-9763-8ed3494f4f4f; reviewed): leetcode: Balanced Binary Tree / geeksforgeeks: Balanced Tree Check / code360: Is Height Balanced Binary Tree
 
 ## First review candidates
 
-- code360:9991 ( Median in a row-wise sorted Matrix) ↔ geeksforgeeks:704712 (Median in a Row-Wise Sorted Matrix): 0.9634; Constraints differ: compare feasible solutions, not literal bounds; Verify objective, output contract and edge cases
 - code360:10203 (Inverted Triangle Of Stars) ↔ geeksforgeeks:705563 (Inverted Triangle of Stars): 0.9549; Constraints differ: compare feasible solutions, not literal bounds; Verify objective, output contract and edge cases
-- code360:8263 (Number of Atoms) ↔ leetcode:726 (Number of Atoms): 0.9517; Constraints differ: compare feasible solutions, not literal bounds; Verify objective, output contract and edge cases
-- code360:9977 (Cyclically Rotate An Array By One) ↔ geeksforgeeks:703298 (Rotate Array by One): 0.95; Constraints differ: compare feasible solutions, not literal bounds; Verify objective, output contract and edge cases
-- code360:11625 (Delivering Boxes from Storage to Ports) ↔ leetcode:1687 (Delivering Boxes from Storage to Ports): 0.9384; Constraints differ: compare feasible solutions, not literal bounds; Verify objective, output contract and edge cases
 - code360:11006 (Redundant Connection - II) ↔ leetcode:685 (Redundant Connection II): 0.9301; Constraints differ: compare feasible solutions, not literal bounds; Verify objective, output contract and edge cases
-- code360:15294 (K-Palindrome) ↔ geeksforgeeks:704409 (K-Palindrome): 0.9281; Constraints differ: compare feasible solutions, not literal bounds; Verify objective, output contract and edge cases
-- code360:9074 (Sum Of Squares Of First N Natural Numbers) ↔ geeksforgeeks:887939 (Sum of Squares of First n Natural Numbers): 0.927; Constraints differ: compare feasible solutions, not literal bounds; Verify objective, output contract and edge cases
+- code360:16281 (Pair count.) ↔ geeksforgeeks:706296 (Count Pairs Divisible By K): 0.93; Constraints differ: compare feasible solutions, not literal bounds; Verify objective, output contract and edge cases
 - code360:14381 ( Consecutive Numbers) ↔ leetcode:180 (Consecutive Numbers): 0.9269; Verify objective, output contract and edge cases
-- code360:14409 ( Last Person to Fit in the Bus) ↔ leetcode:1204 (Last Person to Fit in the Bus): 0.9237; Verify objective, output contract and edge cases
-- code360:14511 (Department Top Three Salaries) ↔ leetcode:185 (Department Top Three Salaries): 0.9236; Constraints differ: compare feasible solutions, not literal bounds; Verify objective, output contract and edge cases
-- code360:14515 ( Recyclable and Low Fat Products) ↔ leetcode:1757 (Recyclable and Low Fat Products): 0.9234; Verify objective, output contract and edge cases
-- code360:9701 (Modular Exponentiation) ↔ geeksforgeeks:703909 (Modular Exponentiation): 0.9223; Constraints differ: compare feasible solutions, not literal bounds; Verify objective, output contract and edge cases
 - code360:9703 (Jumping Numbers) ↔ geeksforgeeks:705076 (Jumping Numbers): 0.9208; Constraints differ: compare feasible solutions, not literal bounds; Verify objective, output contract and edge cases
-- code360:10800 (The Skyline Problem) ↔ leetcode:218 (The Skyline Problem): 0.9134; Constraints differ: compare feasible solutions, not literal bounds; Verify objective, output contract and edge cases
-- code360:10285 (Rectangles In N x N Board) ↔ geeksforgeeks:704774 (Rectangles in  N*N Board): 0.9094; Constraints differ: compare feasible solutions, not literal bounds; Verify objective, output contract and edge cases
-- code360:12650 (Largest Zigzag Sequence) ↔ geeksforgeeks:705462 (Largest Zigzag Sequence): 0.8966; Constraints differ: compare feasible solutions, not literal bounds; Verify objective, output contract and edge cases
 - code360:9089 (Maximum sum path from the leaf to root) ↔ geeksforgeeks:706316 (Max Sum Leaf to Root Path): 0.8954; Constraints differ: compare feasible solutions, not literal bounds; Verify objective, output contract and edge cases
-- code360:14536 (Percentage of Users Attended a Contest) ↔ leetcode:1633 (Percentage of Users Attended a Contest): 0.886; Verify objective, output contract and edge cases
 - code360:10020 (Smallest Number With At least N Trailing Zeros In Factorial) ↔ geeksforgeeks:702829 (Smallest number with at least n trailing zeroes in factorial): 0.8847; Constraints differ: compare feasible solutions, not literal bounds; Verify objective, output contract and edge cases
+- code360:14408 (Product Price at a Given Date) ↔ leetcode:1164 (Product Price at a Given Date): 0.8792; Verify objective, output contract and edge cases
+- code360:10853 ( Unique Binary Search Trees) ↔ leetcode:95 (Unique Binary Search Trees II): 0.8753; Constraints differ: compare feasible solutions, not literal bounds; Verify objective, output contract and edge cases
+- atcoder:dp_e (Knapsack 2) ↔ code360:17789 (Knapsack 2): 0.8717; Constraints differ: compare feasible solutions, not literal bounds; Verify objective, output contract and edge cases
+- codeforces:470G (G. Hamming Distance) ↔ leetcode:461 (Hamming Distance): 0.8713; Constraints differ: compare feasible solutions, not literal bounds; Verify objective, output contract and edge cases
+- code360:8675 (Replace 0's) ↔ geeksforgeeks:705582 (Replace O's with X's): 0.8666; Constraints differ: compare feasible solutions, not literal bounds; Verify objective, output contract and edge cases
+- code360:13641 (Sum of Factors) ↔ geeksforgeeks:703650 (Factors Sum): 0.8614; Constraints differ: compare feasible solutions, not literal bounds; Verify objective, output contract and edge cases
+- code360:22885 (Best time to buy and sell stock) ↔ leetcode:121 (Best Time to Buy and Sell Stock): 0.8466; Constraints differ: compare feasible solutions, not literal bounds; Verify objective, output contract and edge cases
+- code360:7861 (Odd even level) ↔ geeksforgeeks:700261 (Odd even level difference): 0.8422; Constraints differ: compare feasible solutions, not literal bounds; Verify objective, output contract and edge cases
+- code360:11952 (Amicable Pair) ↔ geeksforgeeks:704198 (Amicable Pair): 0.8416; Constraints differ: compare feasible solutions, not literal bounds; Verify objective, output contract and edge cases
+- code360:10503 (Rotate array) ↔ leetcode:189 (Rotate Array): 0.8402; Constraints differ: compare feasible solutions, not literal bounds; Verify objective, output contract and edge cases
+- code360:10336 (First Repeated Character) ↔ geeksforgeeks:703146 (Repeated Character): 0.839; Constraints differ: compare feasible solutions, not literal bounds; Verify objective, output contract and edge cases
+- code360:22899 (House Robber) ↔ leetcode:213 (House Robber II): 0.824; Constraints differ: compare feasible solutions, not literal bounds; Verify objective, output contract and edge cases
+- geeksforgeeks:700005 (Reverse a Linked List) ↔ leetcode:92 (Reverse Linked List II): 0.8234; Constraints differ: compare feasible solutions, not literal bounds; Verify objective, output contract and edge cases
 
 ## Retrieval coverage
 
-32,750 candidate pairs cross platform boundaries. 11,452 pairs were discovered through statements despite low title overlap. These counts include unverified similarities and are not duplicate counts.
+161,491 candidate pairs cross platform boundaries. 37,208 pairs were discovered through statements despite low title overlap. These counts include unverified similarities and are not duplicate counts.
 
 | Platform pair | Candidates | Included for review |
 | --- | ---: | ---: |
-| atcoder/atcoder | 1420 | 100 |
-| atcoder/code360 | 431 | 100 |
-| atcoder/codechef | 1234 | 100 |
-| atcoder/codeforces | 2094 | 100 |
-| atcoder/geeksforgeeks | 359 | 100 |
-| atcoder/leetcode | 213 | 100 |
-| code360/code360 | 3667 | 100 |
-| code360/codechef | 1399 | 100 |
-| code360/codeforces | 2515 | 118 |
-| code360/geeksforgeeks | 5691 | 1318 |
-| code360/leetcode | 4430 | 996 |
-| codechef/codechef | 4529 | 100 |
-| codechef/codeforces | 5875 | 245 |
-| codechef/geeksforgeeks | 964 | 100 |
-| codechef/leetcode | 887 | 100 |
-| codeforces/codeforces | 11306 | 100 |
-| codeforces/geeksforgeeks | 1614 | 110 |
-| codeforces/leetcode | 1386 | 100 |
-| geeksforgeeks/geeksforgeeks | 3824 | 100 |
-| geeksforgeeks/leetcode | 3658 | 713 |
-| leetcode/leetcode | 3368 | 100 |
+| atcoder/atcoder | 3307 | 100 |
+| atcoder/code360 | 2059 | 100 |
+| atcoder/codechef | 6613 | 100 |
+| atcoder/codeforces | 9746 | 100 |
+| atcoder/geeksforgeeks | 1671 | 100 |
+| atcoder/leetcode | 1263 | 100 |
+| code360/code360 | 11626 | 100 |
+| code360/codechef | 10305 | 100 |
+| code360/codeforces | 15105 | 156 |
+| code360/geeksforgeeks | 17291 | 1505 |
+| code360/leetcode | 13027 | 707 |
+| codechef/codechef | 26770 | 100 |
+| codechef/codeforces | 44077 | 319 |
+| codechef/geeksforgeeks | 6274 | 100 |
+| codechef/leetcode | 5382 | 100 |
+| codeforces/codeforces | 48960 | 100 |
+| codeforces/geeksforgeeks | 8933 | 146 |
+| codeforces/leetcode | 7641 | 100 |
+| geeksforgeeks/geeksforgeeks | 10916 | 100 |
+| geeksforgeeks/leetcode | 12104 | 667 |
+| leetcode/leetcode | 9357 | 100 |
 
 ## Reviewed-overlap regression benchmark
 
-Retrieval found 223 of 224 reviewed core-question pairs (203 of 204 across platforms). This checks the existing curated labels, not independent semantic accuracy. Precision over the unlabeled corpus is unknown.
+Retrieval found 1319 of 1352 reviewed core-question pairs (1171 of 1190 across platforms). This checks the existing curated labels, not independent semantic accuracy. Precision over the unlabeled corpus is unknown.
 
 Missed pairs:
+- geeksforgeeks:701331 / code360:7891
 - leetcode:53 / geeksforgeeks:701215
+- geeksforgeeks:702078 / code360:366
+- geeksforgeeks:703092 / code360:23516
+- code360:1565 / code360:17201
+- code360:7289 / geeksforgeeks:700688
+- code360:8854 / code360:9620
+- leetcode:239 / geeksforgeeks:701349
+- code360:9177 / geeksforgeeks:701349
+- leetcode:2829 / leetcode:2834
+- leetcode:2965 / leetcode:645
+- geeksforgeeks:702678 / leetcode:645
+- code360:8409 / leetcode:645
+- leetcode:3175 / leetcode:1535
+- leetcode:3790 / leetcode:1015
+- code360:10217 / leetcode:1015
+- code360:15886 / geeksforgeeks:702887
+- code360:17195 / code360:12155
+- leetcode:455 / leetcode:2410
+- geeksforgeeks:712384 / leetcode:2410
+- leetcode:1081 / leetcode:316
+- code360:12461 / leetcode:316
+- leetcode:1296 / leetcode:846
+- code360:10504 / leetcode:846
+- leetcode:1577 / code360:12541
+- leetcode:1615 / code360:11115
+- leetcode:2220 / leetcode:461
+- code360:8843 / code360:16332
+- code360:8843 / leetcode:461
+- code360:16332 / leetcode:461
+- leetcode:2429 / geeksforgeeks:713153
+- leetcode:2870 / leetcode:2244
+- leetcode:2615 / leetcode:2121

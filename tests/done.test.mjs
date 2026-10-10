@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { doneQuestions, questionIsDone, acceptedToday } from '../tracker/core.mjs';
+import { doneQuestions, questionIsDone, acceptedToday, normalizeState } from '../tracker/core.mjs';
 
 const records = [
   { id: '1', key: 'leetcode:two-sum', platform: 'leetcode', title: 'Two Sum', timestamp: Date.parse('2026-10-08T12:00:00Z') },
@@ -26,17 +26,17 @@ test('done question filters combine title, platform and inclusive local dates', 
   assert.equal(doneQuestions({}).total, 0);
 });
 
-test('manual done status works without submissions and can override imported done status', () => {
+test('legacy manual marks cannot create or hide automatically detected solves', () => {
   const connected = { leetcode: { snapshot: { recent: records.slice(0, 2) } } };
   const workspace = {
     'leetcode:two-sum': { done: false },
     'leetcode:manual': { key: 'leetcode:manual', platform: 'leetcode', title: 'Manual Question', done: true, doneAt: Date.parse('2026-10-10T12:00:00Z') },
     'codechef:offline': { key: 'codechef:offline', platform: 'codechef', title: 'Disconnected', done: true, doneAt: Date.now() },
   };
-  assert.equal(questionIsDone(connected, {}, 'leetcode:two-sum'), true);
-  assert.equal(questionIsDone(connected, workspace, 'leetcode:two-sum'), false);
-  assert.equal(questionIsDone(connected, workspace, 'leetcode:manual'), true);
-  const result = doneQuestions(connected, { workspace });
-  assert.equal(result.total, 1); assert.equal(result.records[0].source, 'manual');
+  const state = normalizeState({ version: 1, accounts: connected, workspace });
+  assert.equal(questionIsDone(state.accounts, 'leetcode:two-sum'), true);
+  assert.equal(questionIsDone(state.accounts, 'leetcode:manual'), false);
+  const result = doneQuestions(state.accounts);
+  assert.equal(result.total, 1); assert.equal(result.records[0].key, 'leetcode:two-sum');
   assert.equal(acceptedToday(connected, '2026-10-10', 'UTC'), 0, 'Manual done status never creates accepted activity');
 });

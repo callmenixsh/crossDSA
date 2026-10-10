@@ -1,0 +1,321 @@
+{
+  "range": [
+    1501,
+    2750
+  ],
+  "reviewedAt": "2026-10-10",
+  "entries": [
+    {
+      "leetcodeId": "leetcode:1521",
+      "outcome": "confirmed-equivalent",
+      "notes": "Code360 official editorial explicitly computes bitwise AND over nonempty contiguous subarrays. LeetCode official hints identify the same AND function. Minimize absolute difference to target in both; distinct ending-subarray AND sets handle LC n<=1e5 and C360 n<=1000.",
+      "equivalents": [
+        {
+          "id": "code360:11604",
+          "notes": "Code360 official editorial explicitly computes bitwise AND over nonempty contiguous subarrays. LeetCode official hints identify the same AND function. Minimize absolute difference to target in both; distinct ending-subarray AND sets handle LC n<=1e5 and C360 n<=1000."
+        }
+      ],
+      "rejected": [],
+      "evidence": [
+        "https://www.naukri.com/code360/problem-details/strange-function_1382135",
+        "https://leetcode.com/problems/find-a-value-of-a-mysterious-function-closest-to-target/"
+      ]
+    },
+    {
+      "leetcodeId": "leetcode:1579",
+      "outcome": "confirmed-equivalent",
+      "notes": "Recovered official output contract returns -1 when either traveler cannot traverse the entire graph. Both maximize removals with types1,2,3 supporting the respective travelers; shared-edge-first DSU serves both bounds.",
+      "equivalents": [
+        {
+          "id": "code360:9599",
+          "notes": "Recovered official output contract returns -1 when either traveler cannot traverse the entire graph. Both maximize removals with types1,2,3 supporting the respective travelers; shared-edge-first DSU serves both bounds."
+        }
+      ],
+      "rejected": [],
+      "evidence": [
+        "https://www.naukri.com/code360/problem-details/remove-maximum-edges_1062723"
+      ]
+    },
+    {
+      "leetcodeId": "leetcode:1617",
+      "outcome": "confirmed-equivalent",
+      "notes": "Official examples give a two-city connected subset diameter1 and a three-city chain diameter2, resolving ambiguous distance wording as edge count. Both return diameter histograms for connected induced vertex subsets; both n<=15 permit subset enumeration.",
+      "equivalents": [
+        {
+          "id": "code360:10608",
+          "notes": "Official examples give a two-city connected subset diameter1 and a three-city chain diameter2, resolving ambiguous distance wording as edge count. Both return diameter histograms for connected induced vertex subsets; both n<=15 permit subset enumeration."
+        }
+      ],
+      "rejected": [],
+      "evidence": [
+        "https://www.naukri.com/code360/problems/ninja-and-cities_1235223"
+      ]
+    },
+    {
+      "leetcodeId": "leetcode:1638",
+      "outcome": "confirmed-equivalent",
+      "notes": "Official example S=aa,T=bb returns4 and enumerates repeated character occurrence pairs separately. Both count equal-length substring occurrence pairs differing at exactly one position; quadratic DP handles LC length100 and C360 length200.",
+      "equivalents": [
+        {
+          "id": "code360:11195",
+          "notes": "Official example S=aa,T=bb returns4 and enumerates repeated character occurrence pairs separately. Both count equal-length substring occurrence pairs differing at exactly one position; quadratic DP handles LC length100 and C360 length200."
+        }
+      ],
+      "rejected": [],
+      "evidence": [
+        "https://www.naukri.com/code360/problems/substrings-differ-by-one_1380955"
+      ]
+    },
+    {
+      "leetcodeId": "leetcode:1663",
+      "outcome": "confirmed-equivalent",
+      "notes": "Official editorial explicitly constructs the lexicographically smallest string with given length and sum of alphabet positions, resolving omitted optimization wording. Both allow length1e5 and n<=value<=26n; right-to-left greedy serves both.",
+      "equivalents": [
+        {
+          "id": "code360:12267",
+          "notes": "Official editorial explicitly constructs the lexicographically smallest string with given length and sum of alphabet positions, resolving omitted optimization wording. Both allow length1e5 and n<=value<=26n; right-to-left greedy serves both."
+        }
+      ],
+      "rejected": [],
+      "evidence": [
+        "https://www.naukri.com/code360/problem-details/smallest-string-with-a-given-numeric-value_1404649"
+      ]
+    },
+    {
+      "leetcodeId": "leetcode:1675",
+      "outcome": "confirmed-equivalent",
+      "notes": "Recovered full official statement allows halving even elements and doubling odd elements any number of times, minimizing the maximum pairwise difference. Same deviation objective and max-heap normalization solve both; C360 length5000 versus LC1e5.",
+      "equivalents": [
+        {
+          "id": "code360:12070",
+          "notes": "Recovered full official statement allows halving even elements and doubling odd elements any number of times, minimizing the maximum pairwise difference. Same deviation objective and max-heap normalization solve both; C360 length5000 versus LC1e5."
+        }
+      ],
+      "rejected": [],
+      "evidence": [
+        "https://www.naukri.com/code360/problems/minimize-the-difference_1402922"
+      ]
+    },
+    {
+      "leetcodeId": "leetcode:1680",
+      "outcome": "confirmed-equivalent",
+      "notes": "Official output contract explicitly takes modulo1000000007. Both concatenate binary representations1..N and return that residue; incremental shift-and-append serves C360 N3000 and LC N1e5.",
+      "equivalents": [
+        {
+          "id": "code360:12526",
+          "notes": "Official output contract explicitly takes modulo1000000007. Both concatenate binary representations1..N and return that residue; incremental shift-and-append serves C360 N3000 and LC N1e5."
+        }
+      ],
+      "rejected": [],
+      "evidence": [
+        "https://www.naukri.com/code360/problem-details/concatenation-of-consecutive-binary-numbers_1463979"
+      ]
+    },
+    {
+      "leetcodeId": "leetcode:1721",
+      "outcome": "rejected",
+      "notes": "LC explicitly swaps node values; C360 explicitly forbids value swapping and requires changing node identities/pointers. The structural mutation requirement is different, so keep separate.",
+      "equivalents": [],
+      "rejected": [
+        {
+          "id": "code360:15244",
+          "reason": "LC explicitly swaps node values; C360 explicitly forbids value swapping and requires changing node identities/pointers. The structural mutation requirement is different, so keep separate."
+        }
+      ],
+      "evidence": [
+        {
+          "url": "https://www.naukri.com/code360/problems/swapping-nodes_2425460",
+          "access": "Full local statement compared with LeetCode statement."
+        }
+      ]
+    },
+    {
+      "leetcodeId": "leetcode:1765",
+      "outcome": "rejected",
+      "notes": "Highest Peak permits any valid height assignment maximizing the global maximum; 01Matrix requires each exact nearest-zero distance after binary inversion. For water at indices0 and4 in a seven-cell row, heights[0,1,2,1,0,0,0] are valid and globally maximize height2 but differ from exact distances[0,1,2,1,0,1,2]. Explicit same-question annotation does not establish identical output contracts.",
+      "equivalents": [],
+      "rejected": [
+        {
+          "id": "leetcode:542",
+          "reason": "Highest Peak permits any valid height assignment maximizing the global maximum; 01Matrix requires each exact nearest-zero distance after binary inversion. For water at indices0 and4 in a seven-cell row, heights[0,1,2,1,0,0,0] are valid and globally maximize height2 but differ from exact distances[0,1,2,1,0,1,2]. Explicit same-question annotation does not establish identical output contracts."
+        }
+      ],
+      "evidence": [
+        {
+          "url": "https://leetcode.com/problems/01-matrix",
+          "access": "Full local statement compared with LeetCode statement."
+        }
+      ]
+    },
+    {
+      "leetcodeId": "leetcode:1761",
+      "outcome": "external-blocker",
+      "notes": "The minimum external triangle-degree objective agrees, but no-triangle sentinel remains unverified. No merge proposed.",
+      "equivalents": [],
+      "rejected": [],
+      "evidence": [
+        {
+          "url": "https://www.naukri.com/code360/problems/minimum-degree_1381715",
+          "access": "2026-10-10: original /problems and /problem-details endpoints failed with access/fetch errors; indexed primary interview excerpt repeats only the truncated task and provides no sentinel."
+        }
+      ]
+    },
+    {
+      "leetcodeId": "leetcode:1766",
+      "outcome": "confirmed-equivalent",
+      "notes": "Recovered official examples refute the note claiming root value0: first sample NODES[0]=8 and returns ancestor0 for node1 value7; second sample NODES[0]=2 and returns ancestor0 for node3 value7. Root identifier0 is intended; actual root value comes from NODES. Both return closest strict coprime ancestor, -1 absent. Per-value depth stacks serve C360 n<=2000, values<=20 and LC n<=1e5, values<=50.",
+      "equivalents": [
+        {
+          "id": "code360:12543",
+          "notes": "Recovered official examples refute the note claiming root value0: first sample NODES[0]=8 and returns ancestor0 for node1 value7; second sample NODES[0]=2 and returns ancestor0 for node3 value7. Root identifier0 is intended; actual root value comes from NODES. Both return closest strict coprime ancestor, -1 absent. Per-value depth stacks serve C360 n<=2000, values<=20 and LC n<=1e5, values<=50.",
+          "contract": {
+            "variant": "root-index-zero",
+            "notes": "Code360 note says root value zero, but its constraints, examples and editorial use the supplied root value and root index0. Interpret the defective note using those authoritative examples."
+          }
+        }
+      ],
+      "rejected": [],
+      "evidence": [
+        "https://www.naukri.com/code360/problems/closest-coprime-ancestor_1464025"
+      ]
+    },
+    {
+      "leetcodeId": "leetcode:1976",
+      "outcome": "external-blocker",
+      "notes": "Official indexed statement recovered complete examples and V<=200 bounds, but still omits modulus or a guarantee the shortest-path count fits an integer. Counts can be exponential at these bounds; LC explicitly returns modulo1e9+7. Numeric contract remains unverified.",
+      "equivalents": [],
+      "rejected": [],
+      "evidence": [
+        {
+          "url": "https://www.geeksforgeeks.org/problems/number-of-ways-to-arrive-at-destination/1",
+          "access": "2026-10-10: direct original renders navigation only. Search-indexed official original returned task/examples/bounds and int signature, with no modulo/overflow rule."
+        }
+      ]
+    },
+    {
+      "leetcodeId": "leetcode:2172",
+      "outcome": "confirmed-equivalent",
+      "notes": "Official examples explicitly describe the maximum AND sum, and editorial uses maximizing base3 occupancy DP. Both assign numbers to slots1..S, capacity2 per slot, to maximize sum(number AND slot), with S<=9 and number<=15.",
+      "equivalents": [
+        {
+          "id": "code360:19725",
+          "notes": "Official examples explicitly describe the maximum AND sum, and editorial uses maximizing base3 occupancy DP. Both assign numbers to slots1..S, capacity2 per slot, to maximize sum(number AND slot), with S<=9 and number<=15."
+        }
+      ],
+      "rejected": [],
+      "evidence": [
+        "https://www.naukri.com/code360/problems/icarus-and-maxsum_4530833"
+      ]
+    },
+    {
+      "leetcodeId": "leetcode:2320",
+      "outcome": "confirmed-equivalent",
+      "notes": "The official GFG editorial links this exact practice problem and explicitly permits houses on both opposing plots for N=1 (answer4); it squares independent one-side counts. This resolves contradictory scraped wording. Both count arrangements avoiding same-side neighbors modulo1e9+7; linear Fibonacci DP serves GFG N1e5 and LC N1e4.",
+      "equivalents": [
+        {
+          "id": "geeksforgeeks:704629",
+          "notes": "The official GFG editorial links this exact practice problem and explicitly permits houses on both opposing plots for N=1 (answer4); it squares independent one-side counts. This resolves contradictory scraped wording. Both count arrangements avoiding same-side neighbors modulo1e9+7; linear Fibonacci DP serves GFG N1e5 and LC N1e4.",
+          "contract": {
+            "variant": "same-side-adjacency",
+            "notes": "GFG scraped sentence about opposite-side adjacency is defective; linked official editorial examples and recurrence allow opposite plots simultaneously, matching LC."
+          }
+        }
+      ],
+      "rejected": [],
+      "evidence": [
+        "https://www.geeksforgeeks.org/dsa/count-possible-ways-to-construct-buildings/",
+        "https://www.geeksforgeeks.org/problems/count-possible-ways-to-construct-buildings5007/1"
+      ]
+    },
+    {
+      "leetcodeId": "leetcode:2342",
+      "outcome": "external-blocker",
+      "notes": "Local statement agrees on maximum pair sum with equal digit sums, but the no-valid-pair sentinel remains unverified; no merge proposed.",
+      "equivalents": [],
+      "rejected": [],
+      "evidence": [
+        {
+          "url": "https://www.geeksforgeeks.org/problems/ruling-pair--141631/1",
+          "access": "2026-10-10: direct original returns navigation only; primary-source searches did not recover this exact task output examples. Related digit-sum-divisible-by-K article is a different task and was not used as evidence."
+        }
+      ]
+    },
+    {
+      "leetcodeId": "leetcode:2488",
+      "outcome": "rejected",
+      "notes": "GFG permits arbitrary arrays containing repeated median values and requires a modular result; LC guarantees a permutation with exactly one occurrence of K. GFG requires handling duplicate thresholds rather than the specialized single-pivot LC balance algorithm. This structural input guarantee changes the algorithm; keep separate.",
+      "equivalents": [],
+      "rejected": [
+        {
+          "id": "geeksforgeeks:714133",
+          "reason": "GFG permits arbitrary arrays containing repeated median values and requires a modular result; LC guarantees a permutation with exactly one occurrence of K. GFG requires handling duplicate thresholds rather than the specialized single-pivot LC balance algorithm. This structural input guarantee changes the algorithm; keep separate."
+        }
+      ],
+      "evidence": [
+        {
+          "url": "https://www.geeksforgeeks.org/problems/median-of-the-subarrays--170647/1",
+          "access": "Full local statement compared with LeetCode statement."
+        }
+      ]
+    },
+    {
+      "leetcodeId": "leetcode:2643",
+      "outcome": "rejected",
+      "notes": "C360 explicitly guarantees every row sorted and returns only a row index; LC permits arbitrary binary rows and returns index plus count. Sorted-row guarantees change the intended search algorithm. Contradictory C360 zero sentinel need not be resolved to reject this mapping.",
+      "equivalents": [],
+      "rejected": [
+        {
+          "id": "code360:9975",
+          "reason": "C360 explicitly guarantees every row sorted and returns only a row index; LC permits arbitrary binary rows and returns index plus count. Sorted-row guarantees change the intended search algorithm. Contradictory C360 zero sentinel need not be resolved to reject this mapping."
+        }
+      ],
+      "evidence": [
+        {
+          "url": "https://www.naukri.com/code360/problems/row-with-maximum-1-s_1112656",
+          "access": "Full local statement compared with LeetCode statement."
+        }
+      ]
+    }
+  ],
+  "spotChecks": [
+    {
+      "leetcodeId": "leetcode:1928",
+      "outcome": "needs-source-verification",
+      "notes": "Current C36042413 mapping says unique visited-city fees versus LC per-visit fees. Under nonnegative travel times and fees, deleting a repeated-vertex cycle never worsens feasibility/cost, so both have an optimal simple path and identical minimum values. This is a mathematical justification, not a source verification. C360 local bounds are absent and original is inaccessible; nonnegative fees/time and feasible algorithm bounds remain unverified. Recommend defer the accepted mapping until bounds recovered.",
+      "evidence": [
+        {
+          "url": "https://www.naukri.com/code360/problems/minimum-cost-to-reach-destination-in-time_20536679",
+          "access": "2026-10-10 original failed; complete local statement lacks constraints."
+        }
+      ]
+    },
+    {
+      "leetcodeId": "leetcode:2035",
+      "outcome": "needs-source-verification",
+      "notes": "GFG710349 objective and balanced odd/even cardinalities agree with documented contract; negative values confirmed by its official related article. However original judge bounds remain absent, so shared meet-in-the-middle feasibility is unverified. A separate GFG equal-size partition article states exactly LC bounds, but is not proven to describe this native judge entry. Recommend defer accepted mapping until original bounds recovered.",
+      "evidence": [
+        "https://www.geeksforgeeks.org/dsa/partition-into-two-halves-with-minimum-sum-diff/",
+        "https://www.geeksforgeeks.org/dsa/partition-array-into-two-arrays-of-equal-size-to-minimize-sum-difference/",
+        "https://www.geeksforgeeks.org/problems/partition-a-set-into-two-subsets-such-that-the-difference-of-subset-sums-is-minimum-set-2/1"
+      ]
+    },
+    {
+      "leetcodeId": "leetcode:1547",
+      "outcome": "passed",
+      "notes": "All three grouped entries require every interior cut and charge current segment length. GFG bound100 cuts matches LC; C3601000 cuts remains feasible with Knuth-optimized interval DP O(C^2). Interval weight length satisfies quadrangle inequality and monotonicity. No semantic error found.",
+      "evidence": []
+    },
+    {
+      "leetcodeId": "leetcode:1648",
+      "outcome": "passed",
+      "notes": "Exact-profit contract is sound: C360 N<=1000 and each inventory<=1000 bound maximum total revenue at1000*(1000*1001/2)=500500000, below1e9+7. Descending inventory batching solves both. No error found.",
+      "evidence": []
+    },
+    {
+      "leetcodeId": "leetcode:1857",
+      "outcome": "passed",
+      "notes": "Both C360 variants and LC maximize color frequency on directed paths and signal cycles/unbounded path value with-1. One-based variant9734 is documented;16490 uses zero-based nodes and connected graphs as a restricted domain. Topological color DP solves all bounds. No error found.",
+      "evidence": []
+    }
+  ]
+}

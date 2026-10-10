@@ -28,6 +28,73 @@ async function harness(fetcher = async () => { throw new Error('Offline'); }) {
 const settings = { dailyGoal: 3, timeZone: 'Asia/Kolkata', autoSync: false };
 const entry = { key: 'leetcode:two-sum', platform: 'leetcode', title: 'Two Sum', url: 'https://leetcode.com/problems/two-sum/', topics: ['Array'], difficulty: 'Easy', listIds: ['saved'] };
 
+test('backup restore replaces data, renews account generations and pauses scans', async () => {
+  const h = await harness();
+  const backup = emptyState();
+  backup.settings = { ...backup.settings, ...settings };
+  backup.accounts.leetcode = { handle: 'sample', generation: 'old', status: 'syncing', historyImport: { id: 'scan', status: 'running' }, snapshot: { totalSolved: 1, recent: [], solved: { [entry.key]: entry } } };
+  backup.workspace[entry.key] = entry;
+  h.storage[STORAGE_KEY] = { ...emptyState(), lists: { saved: { id: 'saved', name: 'Starred' }, extra: { id: 'extra', name: 'Old list' } } };
+  const result = await h.send('import-data', { data: backup });
+  assert.equal(result.ok, true);
+  assert.equal(result.state.accounts.leetcode.status, 'idle');
+  assert.notEqual(result.state.accounts.leetcode.generation, 'old');
+  assert.equal(result.state.accounts.leetcode.historyImport.status, 'paused');
+  assert.equal(result.state.accounts.leetcode.snapshot.solved[entry.key].title, 'Two Sum');
+  assert.equal(result.state.lists.extra, undefined);
+  assert.deepEqual(result.state.workspace[entry.key].listIds, ['saved']);
+  const saved = structuredClone(h.storage[STORAGE_KEY]);
+  for (const data of [{}, [], { ...backup, version: 2 }, { ...backup, accounts: { unknown: {} } }, { ...backup, settings: { ...settings, timeZone: 'Invalid/Zone' } }, { ...backup, workspace: { invalid: entry } }]) {
+    assert.equal((await h.send('import-data', { data })).ok, false);
+    assert.deepEqual(h.storage[STORAGE_KEY], saved);
+  }
+});
+
+test('delete resets connected and archived data and clears tracking jobs; data writes require dashboard access', async () => {
+  const h = await harness();
+  const state = emptyState();
+  state.accounts.leetcode = { handle: 'sample', generation: 'old' };
+  state.disconnectedAccounts.codeforces = { handle: 'archived' };
+  state.workspace[entry.key] = entry;
+  h.storage[STORAGE_KEY] = state;
+  h.scheduled.set('crossdsa-history:leetcode', {});
+  h.scheduled.set('crossdsa-verify:leetcode', {});
+  for (const action of ['delete-data', 'import-data']) for (const sender of [
+    { id: 'test-extension', url: 'chrome-extension://test-extension/popup.html' },
+    { id: 'test-extension', url: 'https://leetcode.com/' },
+  ]) assert.equal((await h.send(action, { data: emptyState() }, sender)).ok, false);
+  assert.deepEqual(h.storage[STORAGE_KEY], state);
+  const result = await h.send('delete-data');
+  assert.equal(result.ok, true);
+  assert.deepEqual(result.state, emptyState());
+  assert.equal(h.scheduled.has('crossdsa-history:leetcode'), false);
+  assert.equal(h.scheduled.has('crossdsa-verify:leetcode'), false);
+});
+
+test('in-flight sync cannot restore deleted data or overwrite an imported account', async () => {
+  for (const action of ['delete-data', 'import-data']) {
+    let finish, started;
+    const requested = new Promise(resolve => { started = resolve; });
+    const h = await harness(async () => {
+      started();
+      await new Promise(resolve => { finish = resolve; });
+      return { ok: true, json: async () => ({ data: { dsa_domain_data: { problem_count_data: { total_count: 99 } } } }) };
+    });
+    const state = emptyState();
+    state.settings.autoSync = false;
+    state.accounts.code360 = { handle: 'sample', generation: 'original' };
+    h.storage[STORAGE_KEY] = state;
+    const sync = h.send('sync', { platform: 'code360' });
+    await requested;
+    const backup = structuredClone(state);
+    backup.accounts.code360.snapshot = { totalSolved: 7, recent: [] };
+    assert.equal((await h.send(action, { data: backup })).ok, true);
+    finish(); await sync;
+    if (action === 'delete-data') assert.deepEqual(h.storage[STORAGE_KEY].accounts, {});
+    else assert.equal(h.storage[STORAGE_KEY].accounts.code360.snapshot.totalSolved, 7);
+  }
+});
+
 test('TUF syncs without a tab and Code360 totals survive a streak 404', async () => {
   const frame = 'a:' + JSON.stringify({ dsaProgress: { byPlatform: { TUF: { platform: 'TUF', solved: 122 } } } }) + '\n';
   const html = '<link rel="canonical" href="https://takeuforward.org/profile/sample"/><script>self.__next_f.push(' + JSON.stringify([1, frame]) + ')</script>';
@@ -108,16 +175,16 @@ test('AtCoder connects, imports activity and ratings, preserves cached accepts a
   assert.equal(h.storage[STORAGE_KEY].disconnectedAccounts.atcoder.snapshot.recent.length, 1);
 });
 
-test('AtCoder supports Done, Starred and custom lists before connecting an account', async () => {
+test('AtCoder supports Starred and custom lists before connecting an account', async () => {
   const h = await harness();
   const question = { ...entry, key: 'atcoder:dp_a', platform: 'atcoder', title: 'Frog 1', url: 'https://atcoder.jp/contests/dp/tasks/dp_a', topics: [], listIds: [] };
-  assert.equal((await h.send('question-state', { entry: question, patch: { done: true } })).ok, true);
+  assert.equal((await h.send('question-state', { entry: question, patch: { done: true } })).ok, false);
   assert.equal((await h.send('question-state', { entry: question, patch: { starred: true } })).ok, true);
   await h.send('list:create', { name: 'DP practice' });
   const state = h.storage[STORAGE_KEY], list = Object.values(state.lists).find(p => p.name === 'DP practice');
   assert.equal((await h.send('workspace', { entry: { ...question, listIds: [list.id] }, customListsOnly: true })).ok, true);
   const saved = h.storage[STORAGE_KEY].workspace[question.key];
-  assert.equal(saved.done, true);
+  assert.equal(saved.done, undefined);
   assert.deepEqual(saved.listIds, [list.id, 'saved']);
   assert.deepEqual(h.storage[STORAGE_KEY].accounts, {});
 });
@@ -180,27 +247,19 @@ test('service restricts tracker messages to the extension dashboard', async () =
   assert.equal(result.ok, false); assert.match(result.error, /Dashboard/);
 });
 
-test('question star and done patches preserve custom lists, notes and each other', async () => {
-  const h = await harness();
-  const initial = emptyState();
+test('question stars preserve lists and notes while manual Done writes are rejected', async () => {
+  const h = await harness(); const initial = emptyState();
   initial.lists.custom = { id: 'custom', name: 'Custom' };
   initial.workspace[entry.key] = { ...entry, listIds: ['custom'], notes: 'Keep this note' };
   h.storage[STORAGE_KEY] = initial;
-  await Promise.all([
-    h.send('question-state', { entry, patch: { starred: true } }),
-    h.send('question-state', { entry, patch: { done: true } }),
-  ]);
+  assert.equal((await h.send('question-state', { entry, patch: { starred: true } })).ok, true);
+  for (const done of [true, false]) assert.equal((await h.send('question-state', { entry, patch: { done } })).ok, false);
   let saved = h.storage[STORAGE_KEY].workspace[entry.key];
-  assert.deepEqual(saved.listIds, ['custom', 'saved']); assert.equal(saved.done, true);
-  assert.equal(saved.notes, 'Keep this note'); assert.ok(saved.doneAt);
-  const doneAt = saved.doneAt;
-  await h.send('workspace', { entry: { ...entry, listIds: ['saved', 'custom'] } });
-  assert.equal(h.storage[STORAGE_KEY].workspace[entry.key].doneAt, doneAt);
-  await h.send('question-state', { entry, patch: { starred: false } });
-  await h.send('question-state', { entry, patch: { done: false } });
-  saved = h.storage[STORAGE_KEY].workspace[entry.key];
-  assert.deepEqual(saved.listIds, ['custom']); assert.equal(saved.done, false); assert.equal(saved.doneAt, null);
+  assert.deepEqual(saved.listIds, ['custom', 'saved']); assert.equal(saved.done, undefined);
   assert.equal(saved.notes, 'Keep this note');
+  await h.send('question-state', { entry, patch: { starred: false } });
+  saved = h.storage[STORAGE_KEY].workspace[entry.key];
+  assert.deepEqual(saved.listIds, ['custom']); assert.equal(saved.notes, 'Keep this note');
 });
 
 test('question state rejects invalid patches and website or popup mutations', async () => {
@@ -492,7 +551,12 @@ test('activity freshness and cached accepts survive closed tabs, expired session
     assert.ok(account.profileSyncedAt > 123);
     assert.equal(account.activitySyncedAt, 100);
     assert.deepEqual(account.snapshot.recent, [saved]);
-    assert.ok(account.snapshot.activityWarning);
+    assert.ok(account.calendarSyncedAt > 123);
+    if (result === null) {
+      assert.equal(account.snapshot.activityWarning, '');
+      assert.equal(account.snapshot.activityStatus, 'cached');
+      assert.match(account.snapshot.activityNotice, /saved submission history/);
+    } else assert.ok(account.snapshot.activityWarning);
   }
 });
 
@@ -558,4 +622,281 @@ test('sync all starts independent platforms together and preserves per-platform 
   const result = await syncing;
   assert.equal(result.state.accounts.leetcode.status, 'ready');
   assert.equal(result.state.accounts.code360.status, 'error');
+});
+
+
+async function waitForHistory(h, platform, status) {
+  for (let i = 0; i < 600; i++) {
+    if (h.storage[STORAGE_KEY].accounts[platform]?.historyImport?.status === status) return;
+    await new Promise(resolve => setTimeout(resolve, 5));
+  }
+  assert.fail(`History did not reach ${status}`);
+}
+
+test('Code360 history checkpoints, resumes after failures and retains imported data on profile refresh', async () => {
+  const h = await harness(async () => response({ data: { dsa_domain_data: { problem_count_data: { total_count: 9 } } } }));
+  const state = emptyState(); state.settings.autoSync = false;
+  state.accounts.code360 = { handle: 'sample', generation: '360', snapshot: { totalSolved: 9, recent: [] } };
+  h.storage[STORAGE_KEY] = state;
+  chrome.tabs.query = async () => [{ id: 7 }];
+  let fail = true; const pages = [];
+  chrome.tabs.sendMessage = async (_id, message) => {
+    pages.push(message.page);
+    if (message.page === 2 && fail) return { ok: false, error: 'Session expired' };
+    return { ok: true, handles: ['sample'], page: message.page, totalPages: 2, rows: [{
+      link: `/code360/problems/question_${message.page}`, title: `Question ${message.page}`,
+      solvedAt: message.page === 1 ? '2026-01-01T12:00:00Z' : null,
+    }] };
+  };
+  await h.send('history', { platform: 'code360', command: 'start' });
+  chrome.alarms.onAlarm.listeners[0]({ name: 'crossdsa-history:code360' });
+  await waitForHistory(h, 'code360', 'error');
+  assert.equal(h.storage[STORAGE_KEY].accounts.code360.historyImport.cursor.page, 2);
+  assert.equal(h.storage[STORAGE_KEY].accounts.code360.snapshot.recent.length, 1);
+  fail = false;
+  await h.send('history', { platform: 'code360', command: 'resume' });
+  chrome.alarms.onAlarm.listeners[0]({ name: 'crossdsa-history:code360' });
+  await waitForHistory(h, 'code360', 'complete');
+  assert.deepEqual(pages, [1, 2, 2]);
+  await h.send('sync', { platform: 'code360' });
+  assert.deepEqual(pages, [1, 2, 2, 1], 'Normal refresh reads the newest signed-in solved page');
+  const snapshot = h.storage[STORAGE_KEY].accounts.code360.snapshot;
+  assert.equal(snapshot.totalSolved, 9);
+  assert.equal(Object.keys(snapshot.solved).length, 2);
+  assert.equal(snapshot.recent.length, 1);
+  assert.equal(snapshot.historyComplete, true);
+  assert.match(snapshot.coverage, /MCQ activity is excluded/);
+});
+
+test('Code360 closed-tab imports wait and resume on tab navigation with auto sync disabled', async () => {
+  const h = await harness(); const state = emptyState(); state.settings.autoSync = false;
+  state.accounts.code360 = { handle: 'sample', generation: '360', snapshot: { totalSolved: 9, recent: [] } };
+  h.storage[STORAGE_KEY] = state;
+  await h.send('history', { platform: 'code360', command: 'start' });
+  chrome.alarms.onAlarm.listeners[0]({ name: 'crossdsa-history:code360' });
+  await waitForHistory(h, 'code360', 'waiting-tab');
+  chrome.tabs.query = async () => [{ id: 7 }];
+  chrome.tabs.sendMessage = async () => ({ ok: true, handles: ['sample'], page: 1, totalPages: 0, rows: [] });
+  chrome.tabs.onUpdated.listeners[0](7, { status: 'complete' }, { url: 'https://www.naukri.com/code360/home' });
+  await waitForHistory(h, 'code360', 'running');
+  chrome.alarms.onAlarm.listeners[0]({ name: 'crossdsa-history:code360' });
+  await waitForHistory(h, 'code360', 'complete');
+  assert.equal(h.storage[STORAGE_KEY].accounts.code360.snapshot.totalSolved, 9);
+});
+
+test('popup persists verified Code360 POTD completion and retains it with the tab closed', async () => {
+  const h = await harness(); const state = emptyState();
+  state.accounts.code360 = { handle: 'sample', generation: '360' };
+  h.storage[STORAGE_KEY] = state;
+  chrome.tabs.query = async () => [{ id: 7 }];
+  chrome.tabs.sendMessage = async (_id, message) => {
+    assert.equal(message.action, 'code360:daily');
+    return { ok: true, handles: ['sample'], day: message.day, done: true };
+  };
+  const popup = { id: 'test-extension', url: 'chrome-extension://test-extension/popup.html' };
+  const result = await h.send('daily-status', { platform: 'code360' }, popup);
+  assert.equal(result.ok, true); assert.equal(result.state.done, true);
+  const saved = structuredClone(h.storage[STORAGE_KEY]);
+  assert.equal(saved.accounts.code360.dailyHistory[result.state.day].done, true);
+  chrome.tabs.query = async () => [];
+  const cached = await h.send('daily-status', { platform: 'code360' }, popup);
+  assert.equal(cached.state.done, true); assert.equal(cached.state.cached, true);
+  assert.deepEqual(h.storage[STORAGE_KEY], saved);
+  chrome.tabs.query = async () => [{ id: 7 }];
+  assert.equal((await h.send('daily-status', { platform: 'code360' }, { id: 'test-extension', url: 'https://www.naukri.com/code360/home' })).ok, false);
+  for (const invalid of [{ handles: ['other'], done: true }, { handles: ['sample'], done: 'true' }, { handles: ['sample'], done: true, day: '2000-01-01' }]) {
+    chrome.tabs.sendMessage = async (_id, message) => ({ ok: true, day: message.day, ...invalid });
+    assert.equal((await h.send('daily-status', { platform: 'code360' }, popup)).ok, false);
+  }
+  chrome.tabs.sendMessage = async (_id, message) => {
+    h.storage[STORAGE_KEY].accounts.code360.generation = 'replaced';
+    return { ok: true, handles: ['sample'], day: message.day, done: true };
+  };
+  assert.equal((await h.send('daily-status', { platform: 'code360' }, popup)).ok, false);
+});
+
+test('TUF has automatic popup POTD status but rejects Done observations and imports', async () => {
+  const h = await harness(); const state = emptyState();
+  state.accounts.tuf = { handle: 'sample', generation: 'tuf', snapshot: { totalSolved: 9, recent: [] } };
+  h.storage[STORAGE_KEY] = state;
+  chrome.tabs.query = async query => { assert.equal(query.url, 'https://takeuforward.org/*'); return [{ id: 7 }]; };
+  chrome.tabs.sendMessage = async (_id, message) => {
+    assert.equal(message.action, 'tuf:daily');
+    return { ok: true, handles: ['sample'], day: message.day, done: true };
+  };
+  const result = await h.send('daily-status', { platform: 'tuf' }, { id: 'test-extension', url: 'chrome-extension://test-extension/popup.html' });
+  assert.equal(result.ok, true); assert.equal(result.state.done, true);
+  const saved = structuredClone(h.storage[STORAGE_KEY]);
+  assert.equal(saved.accounts.tuf.dailyHistory[result.state.day].done, true);
+  assert.deepEqual(saved.accounts.tuf.snapshot, state.accounts.tuf.snapshot);
+  chrome.tabs.query = async () => [];
+  const cached = await h.send('daily-status', { platform: 'tuf' });
+  assert.equal(cached.state.done, true); assert.equal(cached.state.cached, true);
+  const url = 'https://takeuforward.org/practice/dsa/two-sum';
+  assert.equal((await h.send('solved-observed', { entry: { platform: 'tuf', url }, handle: 'sample', generation: 'tuf', evidence: 'accepted' }, { id: 'test-extension', tab: { id: 7 }, url })).ok, false);
+  assert.equal((await h.send('import-solved', { records: [{ platform: 'tuf', url }], generations: { tuf: 'tuf' } })).ok, false);
+  assert.deepEqual(h.storage[STORAGE_KEY], saved);
+});
+
+test('bulk solved imports are account-bound, atomic and leave activity/totals unchanged', async () => {
+  const h = await harness(); const state = emptyState();
+  state.accounts.leetcode = { handle: 'sample', generation: 'one', snapshot: { totalSolved: 40, recent: [] } };
+  h.storage[STORAGE_KEY] = state;
+  assert.equal((await h.send('import-solved', { records: [entry], generations: { leetcode: 'old' } })).ok, false);
+  assert.equal((await h.send('import-solved', { records: [entry, { ...entry, url: 'https://evil.test/' }], generations: { leetcode: 'one' } })).ok, false);
+  assert.equal(h.storage[STORAGE_KEY].accounts.leetcode.snapshot.solved, undefined);
+  assert.equal((await h.send('import-solved', { records: [entry], generations: { leetcode: 'one' } })).ok, true);
+  const snapshot = h.storage[STORAGE_KEY].accounts.leetcode.snapshot;
+  assert.equal(snapshot.totalSolved, 40); assert.equal(snapshot.recent.length, 0);
+  assert.equal(snapshot.solved[entry.key].timestamp, undefined);
+  assert.equal((await h.send('import-solved', { records: [], generations: {} }, { id: 'test-extension', tab: { id: 1 }, url: entry.url })).ok, false);
+});
+
+test('history import checkpoints before errors, resumes and clears completion alarms', async () => {
+  let offline = true; const requests = [];
+  const h = await harness(async url => {
+    requests.push(url);
+    if (url.endsWith('page=1') && offline) throw new Error('Offline');
+    return response({ max_page: 2, content: '<tr><td title="accepted"><a href="/problems/FLOW001">A</a>01:00 PM 10/10/26</td></tr>' });
+  });
+  const state = emptyState(); state.accounts.codechef = { handle: 'sample', generation: 'cc', snapshot: { totalSolved: 2, recent: [] } }; h.storage[STORAGE_KEY] = state;
+  assert.equal((await h.send('history', { platform: 'codechef', command: 'start' })).ok, true);
+  chrome.alarms.onAlarm.listeners[0]({ name: 'crossdsa-history:codechef' });
+  await waitForHistory(h, 'codechef', 'error');
+  let account = h.storage[STORAGE_KEY].accounts.codechef;
+  assert.equal(account.historyImport.cursor.offset, 1);
+  assert.equal(account.snapshot.recent.length, 1);
+  offline = false;
+  await h.send('history', { platform: 'codechef', command: 'resume' });
+  chrome.alarms.onAlarm.listeners[0]({ name: 'crossdsa-history:codechef' });
+  await waitForHistory(h, 'codechef', 'complete');
+  await new Promise(resolve => setTimeout(resolve, 10));
+  account = h.storage[STORAGE_KEY].accounts.codechef;
+  assert.equal(account.historyImport.cursor.offset, 2);
+  assert.equal(account.snapshot.recent.length, 1);
+  assert.equal(requests.filter(url => url.endsWith('page=0')).length, 1);
+  assert.equal(h.scheduled.has('crossdsa-history:codechef'), false);
+});
+
+test('pausing in-flight history prevents its response from changing stored records', async () => {
+  let release, started;
+  const ready = new Promise(resolve => { started = resolve; });
+  const h = await harness(() => { started(); return new Promise(resolve => { release = resolve; }); });
+  const state = emptyState(); state.accounts.codeforces = { handle: 'sample', generation: 'cf', snapshot: { totalSolved: 0, recent: [] } }; h.storage[STORAGE_KEY] = state;
+  await h.send('history', { platform: 'codeforces', command: 'start' });
+  chrome.alarms.onAlarm.listeners[0]({ name: 'crossdsa-history:codeforces' });
+  await ready;
+  await h.send('history', { platform: 'codeforces', command: 'cancel' });
+  release(response({ status: 'OK', result: [{ id: 1, verdict: 'OK', creationTimeSeconds: 1, problem: { contestId: 1, index: 'A', name: 'A' } }] }));
+  await new Promise(resolve => setTimeout(resolve, 10));
+  assert.equal(h.storage[STORAGE_KEY].accounts.codeforces.snapshot.recent.length, 0);
+  assert.equal(h.storage[STORAGE_KEY].accounts.codeforces.historyImport.status, 'cancelled');
+  assert.equal(h.scheduled.has('crossdsa-history:codeforces'), false);
+});
+
+test('page observations are scoped to the account and question and never create activity', async () => {
+  const h = await harness(); const state = emptyState();
+  state.accounts.codechef = { handle: 'sample', generation: 'one', snapshot: { totalSolved: 40, recent: [] } }; h.storage[STORAGE_KEY] = state;
+  const url = 'https://www.codechef.com/problems/TWOSUM';
+  const payload = { handle: 'sample', generation: 'one', evidence: 'accepted', entry: { platform: 'codechef', title: 'Two Sum', url } };
+  const sender = { id: 'test-extension', tab: { id: 1 }, url };
+  for (const invalid of [{ ...payload, evidence: 'submitted' }, { ...payload, handle: 'other' }, { ...payload, generation: 'old' }, { ...payload, entry: { ...payload.entry, url: url + '-different' } }]) assert.equal((await h.send('solved-observed', invalid, sender)).ok, false);
+  assert.equal((await h.send('solved-observed', payload, sender)).ok, true);
+  const snapshot = h.storage[STORAGE_KEY].accounts.codechef.snapshot;
+  assert.equal(snapshot.recent.length, 0); assert.equal(snapshot.totalSolved, 40);
+  assert.equal(snapshot.solved['codechef:TWOSUM'].timestamp, undefined);
+});
+
+
+test('Code360 SPA observations validate the current top-level tab URL', async () => {
+  const h = await harness(); const state = emptyState();
+  state.accounts.code360 = { handle: 'sample', generation: 'one', snapshot: { totalSolved: 1, recent: [] } }; h.storage[STORAGE_KEY] = state;
+  const url = 'https://www.naukri.com/code360/problems/two-sum_839653';
+  const payload = { handle: 'sample', generation: 'one', evidence: 'accepted', entry: { platform: 'code360', title: 'Two Sum', url } };
+  const sender = { id: 'test-extension', frameId: 0, url: 'https://www.naukri.com/code360/home', tab: { id: 1, url } };
+  for (const invalid of [{ ...sender, frameId: 1 }, { ...sender, url: 'https://evil.example/code360/home' }, { ...sender, tab: { id: 1, url: url + '-other' } }]) {
+    assert.equal((await h.send('solved-observed', payload, invalid)).ok, false);
+  }
+  assert.equal((await h.send('solved-observed', payload, sender)).ok, true);
+  assert.ok(h.storage[STORAGE_KEY].accounts.code360.snapshot.solved['code360:/code360/problems/two-sum_839653']);
+});
+
+test('automatic successful refresh resumes failed history at its cursor and preserves paused jobs', async () => {
+  const h = await harness(async url => url.includes('/users/') ? { ok: true, text: async () => 'Total Problems Solved: 5' } : response({ max_page: 1, content: '' }));
+  const state = emptyState(); state.accounts.codechef = { handle: 'sample', generation: 'cc', historyImport: { id: 'job', status: 'error', cursor: { offset: 40 }, pages: 40, error: 'Offline' }, snapshot: { totalSolved: 5, recent: [] } }; h.storage[STORAGE_KEY] = state;
+  await h.send('sync', { platform: 'codechef' });
+  let job = h.storage[STORAGE_KEY].accounts.codechef.historyImport;
+  assert.equal(job.status, 'running'); assert.equal(job.id, 'job'); assert.equal(job.cursor.offset, 40);
+  assert.ok(h.scheduled.has('crossdsa-history:codechef'));
+  await h.send('history', { platform: 'codechef', command: 'cancel' });
+  await h.send('sync', { platform: 'codechef' });
+  job = h.storage[STORAGE_KEY].accounts.codechef.historyImport;
+  assert.equal(job.status, 'cancelled'); assert.equal(h.scheduled.has('crossdsa-history:codechef'), false);
+});
+
+
+test('closed LeetCode pauses history without errors and keeps its cursor', async () => {
+  const h = await harness(); const state = emptyState(); state.settings.autoSync = false;
+  state.accounts.leetcode = { handle: 'sample', generation: 'lc', snapshot: { totalSolved: 3, recent: [] }, historyImport: { id: 'job', status: 'cancelled', cursor: { offset: 40 }, pages: 2 } };
+  h.storage[STORAGE_KEY] = state;
+  await h.send('history', { platform: 'leetcode', command: 'resume' });
+  chrome.alarms.onAlarm.listeners[0]({ name: 'crossdsa-history:leetcode' });
+  await waitForHistory(h, 'leetcode', 'waiting-tab');
+  await new Promise(resolve => setTimeout(resolve, 10));
+  const job = h.storage[STORAGE_KEY].accounts.leetcode.historyImport;
+  assert.equal(job.error, null); assert.equal(job.cursor.offset, 40); assert.equal(job.pages, 2);
+  assert.equal(h.scheduled.has('crossdsa-history:leetcode'), false);
+});
+
+test('waiting history resumes only for a matching LeetCode tab, including with auto sync disabled', async () => {
+  for (const username of ['other', 'sample']) {
+    const h = await harness(); const state = emptyState(); state.settings.autoSync = false;
+    state.accounts.leetcode = { handle: 'sample', generation: 'lc', snapshot: { totalSolved: 3, recent: [] }, historyImport: { id: 'job', status: 'waiting-tab', cursor: { offset: 40 }, pages: 2 } }; h.storage[STORAGE_KEY] = state;
+    chrome.tabs.query = async () => [{ id: 7 }];
+    chrome.tabs.sendMessage = async () => ({ ok: true, username, submissions: [] });
+    chrome.tabs.onUpdated.listeners[0](7, { status: 'complete' }, { url: 'https://leetcode.com/', status: 'complete' });
+    if (username === 'sample') await waitForHistory(h, 'leetcode', 'running');
+    await new Promise(resolve => setTimeout(resolve, 15));
+    const job = h.storage[STORAGE_KEY].accounts.leetcode.historyImport;
+    assert.equal(job.status, username === 'sample' ? 'running' : 'waiting-tab');
+    assert.equal(job.cursor.offset, 40);
+    assert.equal(h.scheduled.has('crossdsa-history:leetcode'), username === 'sample');
+  }
+});
+
+
+test('TUF configures background headers and completes API fallback with no website tabs', async () => {
+  const changes = [], signals = [];
+  const h = await harness(async (url, options) => {
+    signals.push(options.signal);
+    if (url.startsWith('https://takeuforward.org/')) throw new Error('Public page unavailable');
+    return { ok: true, json: async () => url.includes('/heatmap?')
+      ? { success: true, data: { selectedPlatform: 'TUF', heatmapData: [] } }
+      : { success: true, data: { learningProgress: [{ platform: 'TUF', totalSolved: 122 }] } } };
+  });
+  chrome.declarativeNetRequest = { updateSessionRules: async change => changes.push(change) };
+  chrome.tabs.query = async () => assert.fail('TUF must not query website tabs');
+  const state = emptyState(); state.settings.autoSync = false;
+  state.accounts.tuf = { handle: 'sample', generation: 'tuf' }; h.storage[STORAGE_KEY] = state;
+  await h.service.syncPlatform('tuf');
+  const account = h.storage[STORAGE_KEY].accounts.tuf;
+  assert.equal(account.status, 'ready');
+  assert.equal(account.snapshot.totalSolved, 122);
+  assert.equal(changes.length, 1);
+  assert.equal(changes[0].addRules[0].action.type, 'modifyHeaders');
+  assert.equal(signals.length, 5);
+  assert.ok(signals[0] instanceof AbortSignal);
+  assert.ok(signals.every(signal => signal === signals[0]), 'Every TUF request shares the sync deadline');
+});
+
+test('TUF request failure exits syncing and retains the last snapshot without a tab', async () => {
+  const h = await harness();
+  chrome.tabs.query = async () => assert.fail('TUF must not query website tabs');
+  const state = emptyState(); state.settings.autoSync = false;
+  state.accounts.tuf = { handle: 'sample', generation: 'tuf', snapshot: { totalSolved: 122, recent: [] } }; h.storage[STORAGE_KEY] = state;
+  await h.service.syncPlatform('tuf');
+  const account = h.storage[STORAGE_KEY].accounts.tuf;
+  assert.equal(account.status, 'error');
+  assert.equal(account.snapshot.totalSolved, 122);
+  assert.match(account.error, /profile unavailable/);
 });

@@ -4,6 +4,7 @@ import { readFile } from 'node:fs/promises';
 import { adaptDatasets, buildDatabase, cleanText, PLATFORMS, pairKey, hash } from '../normalization/catalog.mjs';
 import { createQuestionSearch, duplicateCandidates, selectCandidates } from '../normalization/search.mjs';
 import { evaluateRetrieval } from '../normalization/evaluation.mjs';
+import { auditCoverage } from '../normalization/audit.mjs';
 
 const statement = 'Given an array of integers, return the maximum sum of a nonempty contiguous subarray. Negative values are allowed in every input.';
 const row = (id, overrides = {}) => ({ id, title: 'Maximum Subarray', url: `https://leetcode.com/problems/task-${id}/`, description: statement, constraints: '1 <= n <= 100000', topics: ['arrays'], difficulty: 'Medium', ...overrides });
@@ -12,6 +13,30 @@ const adapt = rows => adaptDatasets(datasets(rows));
 const pins = (data, ids) => Object.fromEntries(ids.map(id => [id, data.byId.get(id).reviewFingerprint]));
 const group = (data, members, extra = {}) => ({ id: 'q_11111111111111111111111111111111', title: 'Maximum Subarray', members, fingerprints: pins(data, members), ...extra });
 const decide = (groups = [], pairs = []) => ({ schemaVersion: 1, groups, pairs });
+
+test('saved LeetCode audit flags new and changed statements after scraping', () => {
+  const data = adapt([row(1), row(2)]);
+  const audit = { entries: [{ leetcodeId: 'leetcode:1', fingerprint: data.byId.get('leetcode:1').reviewFingerprint, status: 'reviewed' }] };
+  assert.deepEqual(auditCoverage(data.versions, audit).pending, [{ id: 'leetcode:2', reason: 'new-source' }]);
+  const changed = adapt([row(1, { constraints: 'n <= 2' })]);
+  assert.deepEqual(auditCoverage(changed.versions, audit).pending, [{ id: 'leetcode:1', reason: 'changed-source' }]);
+  assert.throws(() => auditCoverage(data.versions, { entries: [...audit.entries, ...audit.entries] }), /Duplicate audit entry/);
+  const other = { ...data.versions[1], id: 'code360:2', platform: 'code360' };
+  const decisions = { groups: [{ members: ['leetcode:1', 'code360:2'], fingerprints: { 'leetcode:1': audit.entries[0].fingerprint, 'code360:2': 'old-fingerprint' } }] };
+  const drift = auditCoverage([data.versions[0], other], audit, { decisions });
+  assert.deepEqual(drift.pending, [{ id: 'leetcode:1', reason: 'changed-equivalent-source', sources: ['code360:2'] }]);
+  assert.equal(drift.accountedFor, 0);
+  assert.equal(drift.counts.reviewed, 0);
+});
+
+test('candidate retrieval accepts numeric title spelling and inflections without merging', () => {
+  const data = adapt([row(1, { title: '3Sum', description: 'Return the unique triples whose sum is zero.' }), row(2, { title: 'Three Sum', description: 'Enumerate triples adding to zero.' }), row(3, { title: 'Palindromic Partitioning', description: 'Split the word into valid pieces.' }), row(4, { title: 'Palindrome Partitioning', description: 'Produce partitions of the string.' })]);
+  const candidates = duplicateCandidates({ questions: data.versions.map(v => ({ id: v.id, versions: [v] })), texts: data.texts }, { limit: Infinity });
+  const pairs = new Set(candidates.candidates.map(p => pairKey(p.left, p.right)));
+  assert.ok(pairs.has(pairKey('leetcode:1', 'leetcode:2')));
+  assert.ok(pairs.has(pairKey('leetcode:3', 'leetcode:4')));
+  assert.equal(buildDatabase(data).database.questions.length, 4);
+});
 
 test('normalization cleans presentation while preserving operators, negation and mathematical case', () => {
   assert.equal(cleanText('<p>A &lt; B and x<sup>2</sup> is not x<sub>2</sub>.</p>'), 'A < B and x^(2) is not x_(2).');
@@ -152,6 +177,48 @@ test('review sampling reserves coverage for smaller platform pairs and is determ
   assert.equal(selectCandidates(crowded, 0).includedCandidates, 0);
 });
 
+test('reviewed Two Sum copies share core tasks while preserving tie rules and distinct objectives', async () => {
+  const db = JSON.parse(await readFile(new URL('../data/normalized/questions.json', import.meta.url), 'utf8'));
+  const search = createQuestionSearch(db);
+  const indices = search.resolve('leetcode:1'), existence = search.resolve('geeksforgeeks:703092');
+  assert.equal(search.resolve('code360:8546').id, indices.id);
+  assert.equal(search.resolve('code360:23516').id, existence.id);
+  assert.equal(search.resolve('q_a5e23ddeb1d15491e6185f82e20e8fa8').id, indices.id, 'the former LeetCode canonical ID redirects after merging');
+  assert.equal(search.resolve('q_911bce9ea3f2f2192940909d363d6c07').id, existence.id, 'the former Code360 canonical ID redirects after merging');
+  assert.notEqual(indices.id, existence.id, 'returning indices and deciding existence remain different tasks');
+  assert.notEqual(search.resolve('code360:8164').id, indices.id, 'enumerating all pairs remains a different task');
+  assert.notEqual(search.resolve('leetcode:167').id, indices.id, 'sorted input remains a different task');
+  const matches = search.matches('leetcode:1');
+  assert.ok(!matches.equivalent.some(m => m.version.id === 'code360:8546'));
+  const variant = matches.platformVariants.find(m => m.version.id === 'code360:8546');
+  assert.match(variant.evidence, /lexicographically smallest/);
+  assert.match(variant.evidence, /\[-1,-1\]/);
+  assert.ok(matches.related.some(m => m.question.id === existence.id));
+  assert.ok(search.search('2 Sum').some(m => m.question.id === indices.id));
+});
+
+test('reviewed renamed equivalents resolve by original titles and native URLs', async () => {
+  const db = JSON.parse(await readFile(new URL('../data/normalized/questions.json', import.meta.url), 'utf8'));
+  const search = createQuestionSearch(db);
+  for (const [left, right] of [
+    ['leetcode:869', 'code360:12447'],
+    ['leetcode:530', 'leetcode:783'],
+    ['leetcode:530', 'geeksforgeeks:712351'],
+    ['leetcode:721', 'geeksforgeeks:712507'],
+    ['leetcode:721', 'code360:9744'],
+    ['leetcode:930', 'geeksforgeeks:712151'],
+    ['leetcode:994', 'code360:22981'],
+  ]) {
+    const question = search.resolve(left), version = search.bySource.get(right).version;
+    assert.equal(search.resolve(right).id, question.id, `${left} / ${right}`);
+    assert.equal(search.resolve(version.url).id, question.id);
+    assert.ok(search.search(version.title).some(m => m.question.id === question.id));
+  }
+  const bridges = search.matches('leetcode:1192');
+  assert.ok(bridges.platformVariants.some(m => m.version.id === 'code360:17361'));
+  assert.ok(!bridges.equivalent.some(m => m.version.id === 'code360:17361'));
+});
+
 test('generated corpus retains every source, validates its manifest and meets the reviewed search/match examples', async () => {
   const base = new URL('../data/normalized/', import.meta.url);
   const manifest = JSON.parse(await readFile(new URL('manifest.json', base), 'utf8'));
@@ -164,6 +231,17 @@ test('generated corpus retains every source, validates its manifest and meets th
   const report = JSON.parse(await readFile(new URL('review-report.json', base), 'utf8'));
   const decisions = JSON.parse(await readFile(new URL('../normalization/decisions.json', import.meta.url), 'utf8'));
   const search = createQuestionSearch(db), seen = new Set();
+  const audit = JSON.parse(await readFile(new URL('../normalization/leetcode-audit.json', import.meta.url), 'utf8'));
+  const coverage = auditCoverage(db.questions.flatMap(q => q.versions), audit);
+  assert.deepEqual(coverage.pending, []);
+  assert.equal(coverage.accountedFor, coverage.total);
+  for (const entry of audit.entries) {
+    assert.ok(['reviewed', 'missing-statement', 'needs-source-verification'].includes(entry.status));
+    const version = search.bySource.get(entry.leetcodeId).version;
+    if (entry.status === 'missing-statement') assert.equal(version.descriptionRef, null);
+    for (const match of entry.equivalents) assert.equal(search.resolve(entry.leetcodeId).id, search.resolve(match.id).id);
+    for (const rejected of entry.rejected) assert.notEqual(search.resolve(entry.leetcodeId).id, search.resolve(rejected.id).id);
+  }
   for (const platform of PLATFORMS) {
     const raw = await readFile(new URL(`../data/${platform}-data.json`, import.meta.url), 'utf8');
     const rows = JSON.parse(raw);

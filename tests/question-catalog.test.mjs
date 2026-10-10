@@ -80,6 +80,12 @@ test('compact generated catalog matches current source snapshots and joins real 
   assert.equal(result.length, 1);
   assert.equal(result[0].title, 'Maximum Subarray');
   assert.deepEqual(new Set(result[0].versions.map(p => p.platform)), new Set(['leetcode', 'geeksforgeeks']));
+  const twoSum = filterLibrary(attached, { accounts: { leetcode: {}, code360: {} }, query: '2 Sum' });
+  const indices = twoSum.filter(row => row.versions?.some(v => v.platform === 'leetcode' && String(v.id) === '1'));
+  assert.equal(indices.length, 1, 'the index-returning copies appear as one library row');
+  assert.ok(indices[0].versions.some(v => v.platform === 'code360' && String(v.id) === '8546'));
+  assert.ok(!indices[0].versions.some(v => v.platform === 'code360' && String(v.id) === '8164'), 'all-pairs output stays separate');
+  assert.equal(indices[0].versions.find(v => v.platform === 'code360').contract.variant, 'lexicographically-smallest-or-missing');
   const compact = await readFile(new URL('../data/normalized/runtime.json', import.meta.url));
   assert.ok(compact.byteLength < 500000, 'the browser loads compact metadata rather than the offline statement corpus');
 });

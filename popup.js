@@ -1,7 +1,7 @@
 import { mountContestStrip } from './tracker/contest-ui.mjs';
 import { STORAGE_KEY, PLATFORMS, normalizeState, practiceOverview, orderedPlatformIds } from './tracker/core.mjs';
-import { appendTodayIncrease, solvedToday } from './tracker/count-ui.mjs';
-import { DAILY_PAGES, DAILY_DONE_PREFIX, dailyProblem, dailySolved, dailyDay, dailyDoneKey } from './tracker/daily.mjs';
+import { appendTodayIncrease, solvedToday, appendTufActivityToday } from './tracker/count-ui.mjs';
+import { DAILY_PAGES, dailyProblem, dailySolved, dailyDay, savedDailyStatus } from './tracker/daily.mjs';
 
 const DEFAULT_PLATFORMS = ["leetcode", "geeksforgeeks", "codeforces", "codechef", "code360", "atcoder"];
 const SEARCH_ENABLED_KEY = 'dsa-helper-visibility-enabled';
@@ -46,10 +46,26 @@ function updateToggleUI(isEnabled) {
 document.addEventListener("DOMContentLoaded", async () => {
   mountContestStrip(document.getElementById('contestStrip')).catch(console.error);
   let trackerState = normalizeState();
-  const dailyTargets = {}, dailyAttempts = new Set(), dailyDone = {}, loadedDailyDone = new Set();
+  const dailyTargets = {}, dailyAttempts = new Set();
+  const automaticDaily = {};
   function loadDailyStatus(platform) {
     const account = trackerState.accounts[platform];
     const day = dailyDay(platform), attempt = `${platform}:${day}`;
+    if (['code360', 'tuf'].includes(platform)) {
+      const key = `${platform}:${account.generation}:${account.handle}:${day}`;
+      if (!dailyAttempts.has(key)) {
+        dailyAttempts.add(key);
+        chrome.runtime.sendMessage({ action: 'tracker:daily-status', platform }).then(result => {
+          if (trackerState.accounts[platform]?.generation !== account.generation || trackerState.accounts[platform]?.handle !== account.handle || day !== dailyDay(platform)) return;
+          automaticDaily[key] = result?.ok ? result.state : { ...savedDailyStatus(platform, trackerState.accounts[platform]), error: result?.error || `Could not check ${PLATFORMS[platform].name} POTD.` };
+          renderChips();
+        }).catch(() => {
+          if (trackerState.accounts[platform]?.generation !== account.generation || trackerState.accounts[platform]?.handle !== account.handle || day !== dailyDay(platform)) return;
+          automaticDaily[key] = { ...savedDailyStatus(platform, trackerState.accounts[platform]), error: `Open ${PLATFORMS[platform].name} signed in as the connected account to check POTD.` }; renderChips();
+        });
+      }
+      return;
+    }
     if (['leetcode', 'geeksforgeeks'].includes(platform) && !dailyAttempts.has(attempt)) {
       dailyAttempts.add(attempt);
       (async () => {
@@ -59,23 +75,6 @@ document.addEventListener("DOMContentLoaded", async () => {
         renderChips();
       })().catch(() => {});
     }
-    const key = dailyDoneKey(platform, account.handle);
-    if (!loadedDailyDone.has(key)) {
-      loadedDailyDone.add(key);
-      chrome.storage.local.get(key).then(values => { dailyDone[key] = values[key]; renderChips(); }).catch(() => {});
-    }
-  }
-  async function toggleDailyDone(platform, button) {
-    const account = trackerState.accounts[platform];
-    if (!account) return;
-    const key = dailyDoneKey(platform, account.handle), day = dailyDay(platform);
-    const value = { day, done: !(dailyDone[key]?.day === day && dailyDone[key].done) };
-    button.disabled = true;
-    try {
-      await chrome.storage.local.set({ [key]: value });
-      dailyDone[key] = value; renderChips();
-    } catch { dailyStatus.textContent = 'Could not save POTD completion. Try again.'; }
-    finally { button.disabled = false; }
   }
   let selectedPlatforms = [...DEFAULT_PLATFORMS];
   let matchThreshold = 0.4;
@@ -87,11 +86,11 @@ document.addEventListener("DOMContentLoaded", async () => {
   function renderOverview() {
     const summary = practiceOverview(trackerState);
     const number = value => Number(value).toLocaleString();
-    document.getElementById('overviewToday').textContent = summary.warning ? (summary.today ? `${number(summary.today)}+` : '\u2014') : number(summary.today);
+    document.getElementById('overviewToday').textContent = number(summary.today);
     document.getElementById('overviewGoal').textContent = `OF ${summary.goal} TODAY`;
     document.getElementById('overviewRing').style.setProperty('--progress', `${Math.min(100, summary.today / summary.goal * 100)}%`);
     document.getElementById('overviewTotal').textContent = summary.total == null ? '\u2014' : `${summary.lowerBound ? '\u2265 ' : ''}${number(summary.total)}`;
-    appendTodayIncrease(document.getElementById('overviewTotal'), summary.today, Boolean(summary.warning));
+    appendTodayIncrease(document.getElementById('overviewTotal'), summary.today, Boolean(summary.warning || summary.cachedActivity));
     renderChips();
     document.getElementById('overviewStreak').textContent = summary.streak == null ? '\u2014' : `${number(summary.streak)}d`;
     document.getElementById('overviewStreakLabel').textContent = summary.streakLabel.toUpperCase();
@@ -99,10 +98,10 @@ document.addEventListener("DOMContentLoaded", async () => {
     const oldest = Math.min(...accounts.map(account => account.syncedAt || 0));
     const failed = Object.entries(trackerState.accounts).filter(([, account]) => account.error).map(([id]) => PLATFORMS[id].name);
     const status = document.getElementById('overviewStatus');
-    status.textContent = summary.syncing ? 'Refreshing...' : failed.length ? `Sync issue: ${failed.join(', ')}` : summary.warning ? 'Activity needs attention' : (accounts.length ? `Updated ${oldest ? new Date(oldest).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'never'}` : 'Connect a platform.');
-    status.title = summary.error || summary.warning || status.textContent;
+    status.textContent = summary.syncing ? 'Refreshing...' : failed.length ? `Sync issue: ${failed.join(', ')}` : summary.warning ? 'Activity needs attention' : summary.cachedActivity ? 'Using saved submission history' : (accounts.length ? `Updated ${oldest ? new Date(oldest).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'never'}` : 'Connect a platform.');
+    status.title = summary.error || summary.warning || summary.notice || status.textContent;
     refresh.disabled = summary.syncing || !accounts.length;
-    document.getElementById('openDashboard').title = summary.error || summary.warning || 'Open your DSA dashboard';
+    document.getElementById('openDashboard').title = summary.error || summary.warning || summary.notice || 'Open your DSA dashboard';
   }
   async function refreshActivity(manual = false) {
     refresh.disabled = true;
@@ -116,7 +115,16 @@ document.addEventListener("DOMContentLoaded", async () => {
       renderOverview();
     } catch (error) { renderOverview(); document.getElementById('overviewStatus').textContent = 'Could not refresh activity'; document.getElementById('overviewStatus').title = error.message; }
   }
-  refresh.addEventListener('click', () => refreshActivity(true));
+  refresh.addEventListener('click', () => {
+    for (const platform of ['code360', 'tuf']) {
+      const account = trackerState.accounts[platform];
+      if (!account) continue;
+      const key = `${platform}:${account.generation}:${account.handle}:${dailyDay(platform)}`;
+      dailyAttempts.delete(key); delete automaticDaily[key];
+    }
+    renderChips();
+    refreshActivity(true);
+  });
   setInterval(renderOverview, 60000);
   const dailyStatus = document.getElementById('dailyStatus');
   async function openDaily(platform, button) {
@@ -138,10 +146,6 @@ document.addEventListener("DOMContentLoaded", async () => {
     } finally { button.disabled = false; }
   }
   chrome.storage.onChanged.addListener((changes, area) => {
-    if (area === 'local') {
-      for (const [key, change] of Object.entries(changes)) if (key.startsWith(DAILY_DONE_PREFIX)) dailyDone[key] = change.newValue;
-      if (Object.keys(changes).some(key => key.startsWith(DAILY_DONE_PREFIX))) renderChips();
-    }
     if (area === 'local' && changes[STORAGE_KEY]) { trackerState = normalizeState(changes[STORAGE_KEY].newValue); renderOverview(); }
     if (area === 'local' && changes['dsa-preferred-platforms']) {
       selectedPlatforms = Array.isArray(changes['dsa-preferred-platforms'].newValue) ? changes['dsa-preferred-platforms'].newValue.filter(id => DEFAULT_PLATFORMS.includes(id)) : [...DEFAULT_PLATFORMS];
@@ -252,11 +256,6 @@ document.addEventListener("DOMContentLoaded", async () => {
           daily.id = id === 'geeksforgeeks' ? 'gfgDaily' : `${id}Daily`;
           daily.textContent = 'POTD \u2197'; daily.setAttribute('aria-label', `Open ${PLATFORMS[id].name} problem of the day`);
           daily.addEventListener('click', () => openDaily(id, daily)); row.append(daily);
-          if (['tuf', 'code360'].includes(id)) {
-            const complete = document.createElement('button'); complete.className = 'daily-completion'; complete.type = 'button';
-            complete.textContent = '\u2713';
-            complete.addEventListener('click', () => toggleDailyDone(id, complete)); row.append(complete);
-          }
         }
         const total = document.createElement('strong'); total.className = 'platform-total'; row.append(total); grid.append(row);
       }
@@ -269,25 +268,25 @@ document.addEventListener("DOMContentLoaded", async () => {
       const daily = row.querySelector('.daily-button');
       if (daily) {
         loadDailyStatus(id);
-        const manual = dailyDone[dailyDoneKey(id, account.handle)];
-        const done = dailySolved(id, trackerState, dailyTargets[id]) || Boolean(manual?.day === dailyDay(id) && manual.done);
+        const usesAutomatic = ['code360', 'tuf'].includes(id);
+        const automatic = usesAutomatic ? automaticDaily[`${id}:${account.generation}:${account.handle}:${dailyDay(id)}`] || savedDailyStatus(id, account) : null;
+        const done = usesAutomatic ? automatic?.day === dailyDay(id) && automatic.done === true : dailySolved(id, trackerState, dailyTargets[id]);
         daily.classList.toggle('is-done', done);
         daily.textContent = done ? 'POTD \u2713' : 'POTD \u2197';
         daily.title = done ? 'Today\'s POTD is done' : 'Open today\'s problem of the day';
+        if (id === 'code360') daily.title = automatic?.error || (done ? 'At least one of today\'s coding POTDs is complete (verified on Code360).' : automatic ? 'No coding POTD completed today (verified on Code360).' : 'Checking today\'s Code360 coding POTDs…');
+        if (id === 'tuf') daily.title = automatic?.error || (done ? 'Today\'s DSA POTD is solved (verified on TakeUForward).' : automatic ? 'Today\'s DSA POTD is not solved yet (verified on TakeUForward).' : 'Checking today\'s TakeUForward DSA POTD…');
+        if (usesAutomatic && done && automatic?.error) daily.title = `Today’s POTD is done (saved verification). ${automatic.error}`;
         daily.setAttribute('aria-label', `Open ${PLATFORMS[id].name} problem of the day${done ? ' (done)' : ''}`);
-        const complete = row.querySelector('.daily-completion');
-        if (complete) {
-          complete.setAttribute('aria-pressed', String(done));
-          complete.title = done ? 'Mark POTD incomplete' : 'Mark today\'s POTD done';
-          complete.setAttribute('aria-label', `${done ? 'Unmark' : 'Mark'} ${PLATFORMS[id].name} POTD done`);
-        }
+
       }
       const input = row.querySelector('input');
       if (input) { input.checked = selectedPlatforms.includes(id); input.disabled = document.getElementById('toggleBtn').getAttribute('aria-pressed') !== 'true'; }
       row.classList.toggle('checked', Boolean(input?.checked));
       total.textContent = account.snapshot ? `${account.snapshot.totalIsLowerBound ? '\u2265 ' : ''}${Number(account.snapshot.totalSolved || 0).toLocaleString()}` : '\u2014';
       total.title = account.error || account.snapshot?.activityWarning || 'Solved questions';
-      appendTodayIncrease(total, solvedToday({ [id]: account }, trackerState.settings.timeZone), Boolean(account.snapshot?.activityWarning));
+      if (id === 'tuf') appendTufActivityToday(total, account);
+      else appendTodayIncrease(total, solvedToday({ [id]: account }, trackerState.settings.timeZone), Boolean(account.snapshot?.activityWarning || account.snapshot?.activityStatus === 'cached'));
     }
     document.getElementById('connectPlatforms').hidden = ids.length > 0;
     document.querySelector('.search-settings').hidden = !ids.some(id => DEFAULT_PLATFORMS.includes(id));
@@ -307,6 +306,11 @@ document.addEventListener("DOMContentLoaded", async () => {
   }
 
   // ---- Match threshold ------------------------------------------------------
+  function renderThreshold(value) {
+    similarityValue.textContent = `${Math.round(value * 100)}%`;
+    similaritySlider.setAttribute('aria-valuetext', `${Math.round(value * 100)} percent`);
+    similaritySlider.style.setProperty('--match-progress', `${(value - Number(similaritySlider.min)) / (Number(similaritySlider.max) - Number(similaritySlider.min)) * 100}%`);
+  }
   async function setThreshold(value) {
     await chrome.storage.local.set({ "dsa-helper-similarity-threshold": value });
     matchThreshold = value;
@@ -314,7 +318,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   similaritySlider.addEventListener("input", (e) => {
     const value = parseFloat(e.target.value);
-    similarityValue.textContent = value.toString();
+    renderThreshold(value);
   });
 
   similaritySlider.addEventListener("change", async (e) => {
@@ -324,7 +328,7 @@ document.addEventListener("DOMContentLoaded", async () => {
       showStatus("Threshold updated!", "success");
     } catch (error) {
       similaritySlider.value = String(matchThreshold);
-      similarityValue.textContent = String(matchThreshold);
+      renderThreshold(matchThreshold);
       showStatus("Could not save threshold", "error");
     }
   });
@@ -385,7 +389,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   } catch (e) {
   }
   similaritySlider.value = String(matchThreshold);
-  similarityValue.textContent = String(matchThreshold);
+  renderThreshold(matchThreshold);
 
   try {
     const response = await chrome.runtime.sendMessage({ action: "getPreferredPlatforms" });

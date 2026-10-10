@@ -45,7 +45,7 @@ try {
     window.testState=state; window.chrome = {runtime:{onMessage:{addListener:()=>{}},getURL:path=>'/'+path,sendMessage:async message=>{
       if(message.action==='tracker:question-state') {
         const entry={...message.entry,...state.workspace[message.entry.key],updatedAt:Date.now()};
-        if('done' in message.patch) entry.done=message.patch.done;
+        if('done' in message.patch) throw new Error('Done is automatic');
         if('starred' in message.patch) entry.listIds=message.patch.starred?[...new Set([...(entry.listIds||[]),'saved'])]:(entry.listIds||[]).filter(id=>id!=='saved');
         state.workspace[entry.key]=entry;
       }
@@ -54,21 +54,36 @@ try {
   ` });
   await send('Emulation.setDeviceMetricsOverride', { width: 1440, height: 1000, deviceScaleFactor: 1, mobile: false });
   await send('Page.navigate', { url: `http://127.0.0.1:${server.address().port}/dashboard.html#questions` });
-  await until("document.querySelector('.question-details')");
-  assert.match(await evaluate("document.getElementById('catalogSummary').textContent"), /30,269 platform questions → 30,081 unique questions · 188 duplicates combined/);
+  await until("document.querySelector('.question-row')");
+  assert.match(await evaluate("document.getElementById('catalogSummary').textContent"), /[\d,]+ unique questions · [\d,]+ across platforms/);
 
   await evaluate("document.getElementById('questionSearch').value=\"Kadane's Algorithm\";document.getElementById('questionSearch').dispatchEvent(new Event('input'))");
   await until("document.querySelector('#questionList .question-title')?.textContent==='Maximum Subarray'");
   assert.equal(await evaluate("document.querySelectorAll('#questionList .question-row').length"),1);
   const libraryTagStyle = await evaluate("(()=>{const s=getComputedStyle(document.querySelector('#questionList .topic-tag'));return [s.padding,s.border,s.backgroundColor,s.fontSize]})()");
   assert.deepEqual(await evaluate("[...document.querySelectorAll('#questionList .solve-on-link')].map(n=>n.dataset.platform).sort()"), ['geeksforgeeks','leetcode']);
-  await evaluate("document.querySelector('#questionList .question-details').open=true;const select=document.querySelector('#questionList .question-version-picker select');select.value=[...select.options].find(o=>o.textContent.includes('Geeks')).value;select.dispatchEvent(new Event('change'))");
-  assert.match(await evaluate("document.querySelector('#questionList .question-version-body h3').textContent"), /Kadane/);
-  await evaluate("document.querySelector('#questionList .question-version-body .question-star').click()");
-  await until("document.querySelector('#questionList .question-row>.question-actions .question-star').getAttribute('aria-pressed')==='true'");
+  assert.equal(await evaluate("document.querySelector('.question-details, .question-version-picker')"), null);
+  const savedKey = await evaluate("document.querySelector('#questionList .solve-on-link[data-platform=leetcode]').href");
+  await evaluate("document.querySelector('#questionList .question-star').click()");
+  await until("document.querySelector('#questionList .question-star').getAttribute('aria-pressed')==='true'");
   assert.ok(await evaluate("Object.keys(testState.workspace).every(k=>!k.startsWith('q_'))"));
-  await evaluate("document.querySelector('#questionList .question-row>.question-done input').click()");
+  assert.equal(await evaluate("document.querySelector('.question-done')"), null);
+  assert.equal(await evaluate("document.querySelector('#questionList .question-row').classList.contains('is-done')"), false);
+  await evaluate(`(async()=>{
+    const {problemKey}=await import('/tracker/core.mjs');
+    const anchor=document.querySelector('#questionList .solve-on-link[data-platform=geeksforgeeks]');
+    const key=problemKey('geeksforgeeks',anchor.href);
+    testState.accounts.geeksforgeeks.snapshot.solved={[key]:{key,platform:'geeksforgeeks',title:"Kadane's Algorithm",url:anchor.href,source:'provider'}};
+    for(const p of Object.values(testState.workspace))p.done=false;
+    document.getElementById('questionSearch').dispatchEvent(new Event('input'));
+  })()`);
   await until("document.querySelector('#questionList .solved-tag')");
+  assert.deepEqual(await evaluate("[...document.querySelectorAll('#questionList .solve-on-link.is-solved')].map(a=>a.dataset.platform)"), ['geeksforgeeks']);
+  await evaluate("location.hash='workspace'");
+  await until("document.querySelector('#workspaceList .workspace-row')?.classList.contains('is-done')");
+  assert.equal(await evaluate("!!document.querySelector('#workspaceList .solved-tag')"), true, 'Saved native question follows its normalized sibling automatically');
+  await evaluate("location.hash='questions'");
+  await until("!document.getElementById('view-questions').hidden");
   await evaluate("document.getElementById('questionStatus').value='unsolved';document.getElementById('questionStatus').dispatchEvent(new Event('change'))");
   assert.equal(await evaluate("document.querySelectorAll('#questionList .question-row').length"),0);
   await evaluate("document.getElementById('questionStatus').value='all';document.getElementById('questionStatus').dispatchEvent(new Event('change'))");
@@ -76,7 +91,7 @@ try {
   await until("document.querySelector('#doneList .solve-on-link')");
   assert.equal(await evaluate("document.querySelector('#doneList .solve-on-label').textContent"),'Also on');
   assert.ok(await evaluate("(()=>{const row=document.querySelector('#doneList .recent-row'),title=row.querySelector('.done-title').getBoundingClientRect(),links=row.querySelector('.solve-on').getBoundingClientRect();return Math.abs((title.top+title.bottom)/2-(links.top+links.bottom)/2)<2 && row.getBoundingClientRect().height<80})()"),'Done alternatives sit beside the title in a compact desktop row');
-  assert.ok(await evaluate("(()=>{const platform=Object.values(testState.workspace).find(p=>p.done).platform;return [...document.querySelectorAll('#doneList .solve-on-link')].every(a=>a.dataset.platform!==platform && a.href.startsWith('https://'))})()"));
+  assert.ok(await evaluate("(()=>{const platform='geeksforgeeks';return [...document.querySelectorAll('#doneList .solve-on-link')].every(a=>a.dataset.platform!==platform && a.href.startsWith('https://'))})()"));
   await evaluate("location.hash='questions'");
   for (const width of [1440,1000,768,390]) {
     await send('Emulation.setDeviceMetricsOverride',{width,height:1000,deviceScaleFactor:1,mobile:false});

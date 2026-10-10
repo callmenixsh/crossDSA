@@ -44,22 +44,26 @@ try {
   await send('Runtime.enable'); await send('Page.enable');
   await send('Page.addScriptToEvaluateOnNewDocument', { source: `
     const now = Date.now();
+    const day = new Intl.DateTimeFormat('en-CA',{timeZone:'Asia/Kolkata',year:'numeric',month:'2-digit',day:'2-digit'}).format(now);
+    const dailyHistory = {[day]:{handle:'test',done:true,verifiedAt:now}};
     const state = {version:1, accounts:{
       leetcode:{handle:'test',syncedAt:now,status:'ready',snapshot:{totalSolved:243,recent:[1,2,3].map(id=>({key:'leetcode:'+id,timestamp:now}))}},
       codeforces:{handle:'test',syncedAt:now,status:'ready',snapshot:{totalSolved:81,recent:[{key:'codeforces:1',timestamp:now}]}},
-      code360:{handle:'test',syncedAt:now,status:'ready',snapshot:{totalSolved:50,recent:[],activityWarning:'Dated activity unavailable'}}
+      code360:{handle:'test',generation:'360',dailyHistory,syncedAt:now,status:'ready',snapshot:{totalSolved:50,recent:[],activityWarning:'Dated activity unavailable'}}
     },settings:{timeZone:'UTC',dailyGoal:5,autoSync:false,contestsEnabled:false}};
     window.openedTabs=[];window.allowAccess=true;
     const listeners=[];
-    window.chrome={runtime:{getURL:path=>'/'+path,sendMessage:async message=>message.action==='getPreferredPlatforms'?{platforms:['leetcode','codeforces']}:{value:.4}},
+    window.chrome={runtime:{getURL:path=>'/'+path,sendMessage:async message=>message.action==='tracker:daily-status'?{ok:false,error:'Site tab closed'}:message.action==='getPreferredPlatforms'?{platforms:['leetcode','codeforces']}:{value:.4}},
       storage:{onChanged:{addListener:fn=>listeners.push(fn)},local:{get:async()=>({'crossdsa-tracker-v1':state}),set:async values=>{window.lastWrite=values;}}},
       tabs:{create:async tab=>{openedTabs.push(tab);return tab;}},permissions:{request:async()=>window.allowAccess,contains:async()=>true}};
     window.notify=()=>listeners.forEach(fn=>fn({'crossdsa-tracker-v1':{newValue:state}},'local'));
     window.resetActivity=()=>{state.accounts.leetcode.snapshot.recent=[];notify();};
+    window.cacheActivity=()=>{state.accounts.leetcode.snapshot.activityStatus='cached';notify();};
     window.solveDaily=()=>{state.accounts.leetcode.snapshot.recent.push({key:'leetcode:two-sum',timestamp:Date.now()});notify();};
     window.failSync=()=>{state.accounts.code360.error='Platform request failed (404). Try again later.';state.accounts.tuf.error='Open TakeUForward in a browser tab, then sync again. Its API requires requests from its own website.';notify();};
     window.connectGfg=()=>{state.accounts.geeksforgeeks={snapshot:{totalSolved:10,recent:[]}};notify();};
-    window.connectTuf=()=>{state.accounts.tuf={snapshot:{totalSolved:12,recent:[]}};notify();};
+    window.connectTuf=()=>{state.accounts.tuf={handle:'test',generation:'tuf',dailyHistory,snapshot:{totalSolved:12,recent:[],calendar:{[day]:3}}};notify();};
+    window.changeDailyAccount=()=>{state.accounts.code360={handle:'other',generation:'new',snapshot:{totalSolved:2,recent:[]}};notify();};
     window.reorder=()=>{state.settings.platformOrder=['code360','codeforces','leetcode'];notify();};
     window.disconnectAll=()=>{state.accounts={};notify();};
     const originalFetch=window.fetch;
@@ -112,13 +116,20 @@ try {
   assert.equal(await evaluate("document.getElementById('leetcodeDaily').classList.contains('is-done')"), false);
   await evaluate('solveDaily()');
   assert.equal(await evaluate("document.getElementById('leetcodeDaily').textContent"), 'POTD \u2713');
-  await evaluate("document.querySelector('[data-platform=code360] .daily-completion').click()");
   await until("document.getElementById('code360Daily').classList.contains('is-done')");
-  assert.equal(await evaluate("Object.keys(lastWrite)[0]"), 'crossdsa-potd-done:code360:test');
+  await until("document.getElementById('tufDaily').classList.contains('is-done')");
+  assert.equal(await evaluate("document.getElementById('overviewToday').textContent"), '5');
+  assert.equal(await evaluate("document.querySelector('#overviewTotal sup').textContent"), '\u21915');
+  await evaluate('cacheActivity()');
+  assert.equal(await evaluate("document.getElementById('overviewToday').textContent"), '5', 'Cached LeetCode keeps a plain count');
+  assert.match(await evaluate("document.getElementById('code360Daily').title"), /saved verification/);
+  assert.equal(await evaluate("document.querySelector('[data-platform=tuf] .today-increase').textContent"), '\u21913');
+  assert.match(await evaluate("document.querySelector('[data-platform=tuf] sup').title"), /TUF calendar activity/);
   assert.equal(await evaluate("document.getElementById('code360Daily').disabled"), false, 'Completed POTD can still be opened');
-  await evaluate("document.querySelector('[data-platform=code360] .daily-completion').click()");
+  await evaluate('changeDailyAccount()');
   await until("!document.getElementById('code360Daily').classList.contains('is-done')");
   await evaluate('failSync()');
+  assert.equal(await evaluate("document.getElementById('overviewToday').textContent"), '5', 'Sync failures keep a plain count');
   assert.equal(await evaluate("document.getElementById('overviewStatus').textContent"), 'Sync issue: Code 360, TakeUForward');
   assert.match(await evaluate("document.getElementById('overviewStatus').title"), /404/);
   assert.ok(await evaluate("document.getElementById('overviewStatus').getBoundingClientRect().height<=15"), 'Sync errors stay on one line');
@@ -128,6 +139,8 @@ try {
   assert.equal(await evaluate("document.querySelector('.search-settings').hidden"),true);
   assert.equal(await evaluate("document.querySelector('.random-section').hidden"),true);
   assert.equal(await evaluate("document.getElementById('problemCount').textContent"),'0');
+  await send('Page.reload');
+  await until("document.getElementById('code360Daily')?.classList.contains('is-done')");
   assert.deepEqual(errors,[]);
   console.log('PASS: popup platform totals, today superscripts, live storage updates, light/dark sizing, POTD targets, permission decline and Settings navigation (mocked extension API).');
 } finally {socket?.close();server.close();}

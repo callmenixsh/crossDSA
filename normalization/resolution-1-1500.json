@@ -1,0 +1,2252 @@
+{
+  "range": [
+    1,
+    1500
+  ],
+  "entries": [
+    {
+      "leetcodeId": "leetcode:13",
+      "outcome": "external-blocker",
+      "notes": "Complete objective preserved, but source has no cached bounds.",
+      "equivalents": [],
+      "rejected": [],
+      "evidence": [
+        {
+          "id": "leetcode:13",
+          "url": "https://leetcode.com/problems/roman-to-integer",
+          "access": "cached-statement",
+          "notes": "Current local source statement used as comparison baseline."
+        },
+        {
+          "id": "code360:9274",
+          "url": "https://www.naukri.com/code360/problems/roman-number-to-integer_981308",
+          "access": "cached-statement-live-not-attempted",
+          "notes": "Compared full cached statement and constraints; unresolved details require original-source verification."
+        }
+      ]
+    },
+    {
+      "leetcodeId": "leetcode:51",
+      "outcome": "confirmed-equivalent",
+      "notes": "Resolved against full cached statements and bounds. Enumerates all nonattacking N-queen placements with N<=10, not a fixed-eight-queen task. Row-by-row backtracking supports both bounds.",
+      "equivalents": [
+        {
+          "id": "code360:9255",
+          "notes": "Enumerates all nonattacking N-queen placements with N<=10, not a fixed-eight-queen task. Row-by-row backtracking supports both bounds.",
+          "contract": {
+            "variant": "flattened-binary-board",
+            "notes": "Code360 returns each N*N binary board flattened row-wise (1 queen,0 empty), any configuration order; LC returns Q/dot rows."
+          }
+        }
+      ],
+      "rejected": [],
+      "evidence": [
+        {
+          "id": "leetcode:51",
+          "url": "https://leetcode.com/problems/n-queens",
+          "access": "cached-statement",
+          "notes": "Current local source statement used as comparison baseline."
+        },
+        {
+          "id": "code360:9255",
+          "url": "https://www.naukri.com/code360/problems/the-n-queens-puzzle_981286",
+          "access": "cached-statement-live-not-attempted",
+          "notes": "Compared full cached statement and constraints; unresolved details require original-source verification."
+        },
+        {
+          "id": "code360:23792",
+          "url": "https://www.naukri.com/code360/problems/8-queen-problem_7100674",
+          "access": "cached-statement-live-not-attempted",
+          "notes": "Compared full cached statement and constraints; unresolved details require original-source verification."
+        }
+      ]
+    },
+    {
+      "leetcodeId": "leetcode:71",
+      "outcome": "external-blocker",
+      "notes": "Candidate root/trailing slash contract ambiguous.",
+      "equivalents": [],
+      "rejected": [],
+      "evidence": [
+        {
+          "id": "leetcode:71",
+          "url": "https://leetcode.com/problems/simplify-path",
+          "access": "cached-statement",
+          "notes": "Current local source statement used as comparison baseline."
+        },
+        {
+          "id": "code360:7473",
+          "url": "https://www.naukri.com/code360/problems/simplify-the-directory_668400",
+          "access": "cached-statement-live-not-attempted",
+          "notes": "Compared full cached statement and constraints; unresolved details require original-source verification."
+        }
+      ]
+    },
+    {
+      "leetcodeId": "leetcode:76",
+      "outcome": "external-blocker",
+      "notes": "An additional candidate does not specify duplicate multiplicities.",
+      "equivalents": [],
+      "rejected": [],
+      "evidence": [
+        {
+          "id": "leetcode:76",
+          "url": "https://leetcode.com/problems/minimum-window-substring",
+          "access": "cached-statement",
+          "notes": "Current local source statement used as comparison baseline."
+        },
+        {
+          "id": "code360:9202",
+          "url": "https://www.naukri.com/code360/problems/smallest-window-in-string-containing-all-the-characters-of-another-string_981175",
+          "access": "cached-statement-live-not-attempted",
+          "notes": "Compared full cached statement and constraints; unresolved details require original-source verification."
+        }
+      ]
+    },
+    {
+      "leetcodeId": "leetcode:86",
+      "outcome": "external-blocker",
+      "notes": "Candidate output format contradicts stable partition objective.",
+      "equivalents": [],
+      "rejected": [],
+      "evidence": [
+        {
+          "id": "leetcode:86",
+          "url": "https://leetcode.com/problems/partition-list",
+          "access": "cached-statement",
+          "notes": "Current local source statement used as comparison baseline."
+        },
+        {
+          "id": "code360:43046",
+          "url": "https://www.naukri.com/code360/problems/partition-linked-list_20922706",
+          "access": "cached-statement-live-not-attempted",
+          "notes": "Compared full cached statement and constraints; unresolved details require original-source verification."
+        },
+        {
+          "id": "code360:10218",
+          "url": "https://www.naukri.com/code360/problems/partition_1172151",
+          "access": "cached-statement-live-not-attempted",
+          "notes": "Compared full cached statement and constraints; unresolved details require original-source verification."
+        },
+        {
+          "id": "geeksforgeeks:706230",
+          "url": "https://www.geeksforgeeks.org/problems/partition-a-linked-list-around-a-given-value/1",
+          "access": "cached-statement-live-not-attempted",
+          "notes": "Compared full cached statement and constraints; unresolved details require original-source verification."
+        }
+      ]
+    },
+    {
+      "leetcodeId": "leetcode:89",
+      "outcome": "external-blocker",
+      "notes": "Candidate Gray-code statements do not establish cyclic last-to-first adjacency.",
+      "equivalents": [],
+      "rejected": [],
+      "evidence": [
+        {
+          "id": "leetcode:89",
+          "url": "https://leetcode.com/problems/gray-code",
+          "access": "cached-statement",
+          "notes": "Current local source statement used as comparison baseline."
+        },
+        {
+          "id": "code360:9364",
+          "url": "https://www.naukri.com/code360/problems/number-of-turns-to-reach-from-one-node-to-another_983626",
+          "access": "cached-statement-live-not-attempted",
+          "notes": "Compared full cached statement and constraints; unresolved details require original-source verification."
+        },
+        {
+          "id": "geeksforgeeks:706224",
+          "url": "https://www.geeksforgeeks.org/problems/gray-code-1611215248/1",
+          "access": "cached-statement-live-not-attempted",
+          "notes": "Compared full cached statement and constraints; unresolved details require original-source verification."
+        }
+      ]
+    },
+    {
+      "leetcodeId": "leetcode:91",
+      "outcome": "external-blocker",
+      "notes": "Candidate count versus enumeration contract ambiguous.",
+      "equivalents": [],
+      "rejected": [],
+      "evidence": [
+        {
+          "id": "leetcode:91",
+          "url": "https://leetcode.com/problems/decode-ways",
+          "access": "cached-statement",
+          "notes": "Current local source statement used as comparison baseline."
+        },
+        {
+          "id": "code360:9804",
+          "url": "https://www.naukri.com/code360/problems/decode-ways_1092345",
+          "access": "cached-statement-live-not-attempted",
+          "notes": "Compared full cached statement and constraints; unresolved details require original-source verification."
+        }
+      ]
+    },
+    {
+      "leetcodeId": "leetcode:102",
+      "outcome": "external-blocker",
+      "notes": "Candidate traversal output shape unspecified.",
+      "equivalents": [],
+      "rejected": [],
+      "evidence": [
+        {
+          "id": "leetcode:102",
+          "url": "https://leetcode.com/problems/binary-tree-level-order-traversal",
+          "access": "cached-statement",
+          "notes": "Current local source statement used as comparison baseline."
+        },
+        {
+          "id": "geeksforgeeks:700248",
+          "url": "https://www.geeksforgeeks.org/problems/level-order-traversal-line-by-line/1",
+          "access": "cached-statement-live-not-attempted",
+          "notes": "Compared full cached statement and constraints; unresolved details require original-source verification."
+        },
+        {
+          "id": "code360:8927",
+          "url": "https://www.naukri.com/code360/problems/zigzag-binary-tree-traversal_920532",
+          "access": "cached-statement-live-not-attempted",
+          "notes": "Compared full cached statement and constraints; unresolved details require original-source verification."
+        },
+        {
+          "id": "code360:7921",
+          "url": "https://www.naukri.com/code360/problems/level-order-traversal_796002",
+          "access": "cached-statement-live-not-attempted",
+          "notes": "Compared full cached statement and constraints; unresolved details require original-source verification."
+        },
+        {
+          "id": "geeksforgeeks:700511",
+          "url": "https://www.geeksforgeeks.org/problems/level-order-traversal/1",
+          "access": "cached-statement-live-not-attempted",
+          "notes": "Compared full cached statement and constraints; unresolved details require original-source verification."
+        }
+      ]
+    },
+    {
+      "leetcodeId": "leetcode:107",
+      "outcome": "external-blocker",
+      "notes": "Candidate reversed-level ordering unspecified.",
+      "equivalents": [],
+      "rejected": [],
+      "evidence": [
+        {
+          "id": "leetcode:107",
+          "url": "https://leetcode.com/problems/binary-tree-level-order-traversal-ii",
+          "access": "cached-statement",
+          "notes": "Current local source statement used as comparison baseline."
+        },
+        {
+          "id": "geeksforgeeks:700248",
+          "url": "https://www.geeksforgeeks.org/problems/level-order-traversal-line-by-line/1",
+          "access": "cached-statement-live-not-attempted",
+          "notes": "Compared full cached statement and constraints; unresolved details require original-source verification."
+        },
+        {
+          "id": "code360:8927",
+          "url": "https://www.naukri.com/code360/problems/zigzag-binary-tree-traversal_920532",
+          "access": "cached-statement-live-not-attempted",
+          "notes": "Compared full cached statement and constraints; unresolved details require original-source verification."
+        },
+        {
+          "id": "code360:7921",
+          "url": "https://www.naukri.com/code360/problems/level-order-traversal_796002",
+          "access": "cached-statement-live-not-attempted",
+          "notes": "Compared full cached statement and constraints; unresolved details require original-source verification."
+        },
+        {
+          "id": "geeksforgeeks:700511",
+          "url": "https://www.geeksforgeeks.org/problems/level-order-traversal/1",
+          "access": "cached-statement-live-not-attempted",
+          "notes": "Compared full cached statement and constraints; unresolved details require original-source verification."
+        }
+      ]
+    },
+    {
+      "leetcodeId": "leetcode:123",
+      "outcome": "external-blocker",
+      "notes": "Additional stock candidate has contradictory transaction wording.",
+      "equivalents": [],
+      "rejected": [],
+      "evidence": [
+        {
+          "id": "leetcode:123",
+          "url": "https://leetcode.com/problems/best-time-to-buy-and-sell-stock-iii",
+          "access": "cached-statement",
+          "notes": "Current local source statement used as comparison baseline."
+        },
+        {
+          "id": "code360:9817",
+          "url": "https://www.naukri.com/code360/problems/buy-and-sell-stock-iii_1092612",
+          "access": "cached-statement-live-not-attempted",
+          "notes": "Compared full cached statement and constraints; unresolved details require original-source verification."
+        }
+      ]
+    },
+    {
+      "leetcodeId": "leetcode:125",
+      "outcome": "external-blocker",
+      "notes": "Additional candidate omits case-insensitive rule.",
+      "equivalents": [],
+      "rejected": [],
+      "evidence": [
+        {
+          "id": "leetcode:125",
+          "url": "https://leetcode.com/problems/valid-palindrome",
+          "access": "cached-statement",
+          "notes": "Current local source statement used as comparison baseline."
+        },
+        {
+          "id": "code360:983",
+          "url": "https://www.naukri.com/code360/problems/string-palindrome_624944",
+          "access": "cached-statement-live-not-attempted",
+          "notes": "Compared full cached statement and constraints; unresolved details require original-source verification."
+        }
+      ]
+    },
+    {
+      "leetcodeId": "leetcode:129",
+      "outcome": "external-blocker",
+      "notes": "Additional candidate does not state aggregation.",
+      "equivalents": [],
+      "rejected": [],
+      "evidence": [
+        {
+          "id": "leetcode:129",
+          "url": "https://leetcode.com/problems/sum-root-to-leaf-numbers",
+          "access": "cached-statement",
+          "notes": "Current local source statement used as comparison baseline."
+        },
+        {
+          "id": "code360:9905",
+          "url": "https://www.naukri.com/code360/problems/sum-root-to-leaf_1095657",
+          "access": "cached-statement-live-not-attempted",
+          "notes": "Compared full cached statement and constraints; unresolved details require original-source verification."
+        }
+      ]
+    },
+    {
+      "leetcodeId": "leetcode:151",
+      "outcome": "external-blocker",
+      "notes": "Additional candidate whitespace normalization unspecified.",
+      "equivalents": [],
+      "rejected": [],
+      "evidence": [
+        {
+          "id": "leetcode:151",
+          "url": "https://leetcode.com/problems/reverse-words-in-a-string",
+          "access": "cached-statement",
+          "notes": "Current local source statement used as comparison baseline."
+        },
+        {
+          "id": "code360:10804",
+          "url": "https://www.naukri.com/code360/problems/reverse-the-order-of-words-in-a-string_1264991",
+          "access": "cached-statement-live-not-attempted",
+          "notes": "Compared full cached statement and constraints; unresolved details require original-source verification."
+        },
+        {
+          "id": "code360:10665",
+          "url": "https://www.naukri.com/code360/problems/reverse-string-word-wise_1262348",
+          "access": "cached-statement-live-not-attempted",
+          "notes": "Compared full cached statement and constraints; unresolved details require original-source verification."
+        },
+        {
+          "id": "code360:63",
+          "url": "https://www.naukri.com/code360/problems/reverse-string-word-wise_624402",
+          "access": "cached-statement-live-not-attempted",
+          "notes": "Compared full cached statement and constraints; unresolved details require original-source verification."
+        }
+      ]
+    },
+    {
+      "leetcodeId": "leetcode:165",
+      "outcome": "external-blocker",
+      "notes": "Candidate missing-revision padding rule unspecified.",
+      "equivalents": [],
+      "rejected": [],
+      "evidence": [
+        {
+          "id": "leetcode:165",
+          "url": "https://leetcode.com/problems/compare-version-numbers",
+          "access": "cached-statement",
+          "notes": "Current local source statement used as comparison baseline."
+        },
+        {
+          "id": "code360:9426",
+          "url": "https://www.naukri.com/code360/problems/compare-versions_985290",
+          "access": "cached-statement-live-not-attempted",
+          "notes": "Compared full cached statement and constraints; unresolved details require original-source verification."
+        },
+        {
+          "id": "code360:9506",
+          "url": "https://www.naukri.com/code360/problems/compare-versions_1062582",
+          "access": "cached-statement-live-not-attempted",
+          "notes": "Compared full cached statement and constraints; unresolved details require original-source verification."
+        }
+      ]
+    },
+    {
+      "leetcodeId": "leetcode:176",
+      "outcome": "external-blocker",
+      "notes": "Additional SQL candidate does not establish distinct salaries.",
+      "equivalents": [],
+      "rejected": [],
+      "evidence": [
+        {
+          "id": "leetcode:176",
+          "url": "https://leetcode.com/problems/second-highest-salary",
+          "access": "cached-statement",
+          "notes": "Current local source statement used as comparison baseline."
+        },
+        {
+          "id": "code360:14317",
+          "url": "https://www.naukri.com/code360/problems/second-highest-salary_2110760",
+          "access": "cached-statement-live-not-attempted",
+          "notes": "Compared full cached statement and constraints; unresolved details require original-source verification."
+        }
+      ]
+    },
+    {
+      "leetcodeId": "leetcode:180",
+      "outcome": "confirmed-equivalent",
+      "notes": "Resolved against full cached statements and bounds. Same Logs(id,num) table and query: distinct numbers appearing at least three times consecutively, arbitrary result order. SQL adjacency/window grouping computes both; no algorithm-dependent numeric bound is needed.",
+      "equivalents": [
+        {
+          "id": "code360:14381",
+          "notes": "Same Logs(id,num) table and query: distinct numbers appearing at least three times consecutively, arbitrary result order. SQL adjacency/window grouping computes both; no algorithm-dependent numeric bound is needed."
+        }
+      ],
+      "rejected": [],
+      "evidence": [
+        {
+          "id": "leetcode:180",
+          "url": "https://leetcode.com/problems/consecutive-numbers",
+          "access": "cached-statement",
+          "notes": "Current local source statement used as comparison baseline."
+        },
+        {
+          "id": "code360:14381",
+          "url": "https://www.naukri.com/code360/problems/consecutive-numbers_2119328",
+          "access": "cached-statement-live-not-attempted",
+          "notes": "Compared full cached statement and constraints; unresolved details require original-source verification."
+        }
+      ]
+    },
+    {
+      "leetcodeId": "leetcode:225",
+      "outcome": "external-blocker",
+      "notes": "Additional candidate example contradicts LIFO semantics.",
+      "equivalents": [],
+      "rejected": [],
+      "evidence": [
+        {
+          "id": "leetcode:225",
+          "url": "https://leetcode.com/problems/implement-stack-using-queues",
+          "access": "cached-statement",
+          "notes": "Current local source statement used as comparison baseline."
+        },
+        {
+          "id": "code360:7919",
+          "url": "https://www.naukri.com/code360/problems/stack-using-queue_795152",
+          "access": "cached-statement-live-not-attempted",
+          "notes": "Compared full cached statement and constraints; unresolved details require original-source verification."
+        }
+      ]
+    },
+    {
+      "leetcodeId": "leetcode:227",
+      "outcome": "external-blocker",
+      "notes": "Candidate operator list contains backslash instead of division; source verification needed.",
+      "equivalents": [],
+      "rejected": [],
+      "evidence": [
+        {
+          "id": "leetcode:227",
+          "url": "https://leetcode.com/problems/basic-calculator-ii",
+          "access": "cached-statement",
+          "notes": "Current local source statement used as comparison baseline."
+        },
+        {
+          "id": "code360:14575",
+          "url": "https://www.naukri.com/code360/problems/my-calculator_2195367",
+          "access": "cached-statement-live-not-attempted",
+          "notes": "Compared full cached statement and constraints; unresolved details require original-source verification."
+        }
+      ]
+    },
+    {
+      "leetcodeId": "leetcode:295",
+      "outcome": "external-blocker",
+      "notes": "Code360 22937 snapshot introduction defines median but does not expose operations in screened prefix; requires full contract verification before proposing this member. Other counterparts reviewed.",
+      "equivalents": [],
+      "rejected": [],
+      "evidence": [
+        {
+          "id": "leetcode:295",
+          "url": "https://leetcode.com/problems/find-median-from-data-stream",
+          "access": "cached-statement",
+          "notes": "Current local source statement used as comparison baseline."
+        },
+        {
+          "id": "code360:22937",
+          "url": "https://www.naukri.com/code360/problems/find-median-from-data-stream_6212830",
+          "access": "cached-statement-live-not-attempted",
+          "notes": "Compared full cached statement and constraints; unresolved details require original-source verification."
+        }
+      ]
+    },
+    {
+      "leetcodeId": "leetcode:306",
+      "outcome": "external-blocker",
+      "notes": "Additive Number counterpart code360:10894 specifies Fibonacci-like decomposition but screened text omits leading-zero rule; verify full snapshot before merging.",
+      "equivalents": [],
+      "rejected": [],
+      "evidence": [
+        {
+          "id": "leetcode:306",
+          "url": "https://leetcode.com/problems/additive-number",
+          "access": "cached-statement",
+          "notes": "Current local source statement used as comparison baseline."
+        },
+        {
+          "id": "code360:10894",
+          "url": "https://www.naukri.com/code360/problems/ninja-s-string_1279685",
+          "access": "cached-statement-live-not-attempted",
+          "notes": "Compared full cached statement and constraints; unresolved details require original-source verification."
+        }
+      ]
+    },
+    {
+      "leetcodeId": "leetcode:343",
+      "outcome": "external-blocker",
+      "notes": "code360:12484 statement contradicts itself: K>=2 initially but later says K greater than 2. Need source verification of intended allowed partition count.",
+      "equivalents": [],
+      "rejected": [],
+      "evidence": [
+        {
+          "id": "leetcode:343",
+          "url": "https://leetcode.com/problems/integer-break",
+          "access": "cached-statement",
+          "notes": "Current local source statement used as comparison baseline."
+        },
+        {
+          "id": "code360:12484",
+          "url": "https://www.naukri.com/code360/problems/break-the-integer_1462424",
+          "access": "cached-statement-live-not-attempted",
+          "notes": "Compared full cached statement and constraints; unresolved details require original-source verification."
+        }
+      ]
+    },
+    {
+      "leetcodeId": "leetcode:365",
+      "outcome": "confirmed-equivalent",
+      "notes": "Resolved against full cached statements and bounds. Full cached success condition explicitly requires Z litres in one OR both buckets; same empty initial jugs and fill/empty/pour operations. gcd/capacity feasibility O(log max(X,Y)) supports capacities<=50000.",
+      "equivalents": [
+        {
+          "id": "code360:9766",
+          "notes": "Full cached success condition explicitly requires Z litres in one OR both buckets; same empty initial jugs and fill/empty/pour operations. gcd/capacity feasibility O(log max(X,Y)) supports capacities<=50000."
+        }
+      ],
+      "rejected": [],
+      "evidence": [
+        {
+          "id": "leetcode:365",
+          "url": "https://leetcode.com/problems/water-and-jug-problem",
+          "access": "cached-statement",
+          "notes": "Current local source statement used as comparison baseline."
+        },
+        {
+          "id": "code360:9766",
+          "url": "https://www.naukri.com/code360/problems/water-jug-problem_1089632",
+          "access": "cached-statement-live-not-attempted",
+          "notes": "Compared full cached statement and constraints; unresolved details require original-source verification."
+        }
+      ]
+    },
+    {
+      "leetcodeId": "leetcode:380",
+      "outcome": "external-blocker",
+      "notes": "code360:9439 adds search operation to set insert/delete/random interface; verify uniform randomness and complete API contract before treating as same core.",
+      "equivalents": [],
+      "rejected": [],
+      "evidence": [
+        {
+          "id": "leetcode:380",
+          "url": "https://leetcode.com/problems/insert-delete-getrandom-o1",
+          "access": "cached-statement",
+          "notes": "Current local source statement used as comparison baseline."
+        },
+        {
+          "id": "code360:9439",
+          "url": "https://www.naukri.com/code360/problems/data-structure-supporting-insert-delete-and-getrandom_985309",
+          "access": "cached-statement-live-not-attempted",
+          "notes": "Compared full cached statement and constraints; unresolved details require original-source verification."
+        }
+      ]
+    },
+    {
+      "leetcodeId": "leetcode:388",
+      "outcome": "external-blocker",
+      "notes": "Code36010809 longest-file-path objective is present, but encoded directory-depth and output-length rules need full example review.",
+      "equivalents": [],
+      "rejected": [],
+      "evidence": [
+        {
+          "id": "leetcode:388",
+          "url": "https://leetcode.com/problems/longest-absolute-file-path",
+          "access": "cached-statement",
+          "notes": "Current local source statement used as comparison baseline."
+        },
+        {
+          "id": "code360:10809",
+          "url": "https://www.naukri.com/code360/problems/longest-absolute-file-path_1265036",
+          "access": "cached-statement-live-not-attempted",
+          "notes": "Compared full cached statement and constraints; unresolved details require original-source verification."
+        }
+      ]
+    },
+    {
+      "leetcodeId": "leetcode:405",
+      "outcome": "external-blocker",
+      "notes": "Hexadecimal counterparts differ in case and negative representation; need full examples of code360:9928 before asserting two-complement convention.",
+      "equivalents": [],
+      "rejected": [],
+      "evidence": [
+        {
+          "id": "leetcode:405",
+          "url": "https://leetcode.com/problems/convert-a-number-to-hexadecimal",
+          "access": "cached-statement",
+          "notes": "Current local source statement used as comparison baseline."
+        },
+        {
+          "id": "code360:9928",
+          "url": "https://www.naukri.com/code360/problems/convert-to-hexadecimal_1102544",
+          "access": "cached-statement-live-not-attempted",
+          "notes": "Compared full cached statement and constraints; unresolved details require original-source verification."
+        }
+      ]
+    },
+    {
+      "leetcodeId": "leetcode:410",
+      "outcome": "external-blocker",
+      "notes": "Confirmed candidate objectives against local statements; retain the recorded platform adaptations. New candidates Code36024546 and15651 state the same split-into-K-nonempty-contiguous-parts minimax objective, but neither cached constraints nor nonnegative input guarantee is available. Cannot establish the same greedy/binary-search algorithm against their unknown input domains.",
+      "equivalents": [],
+      "rejected": [],
+      "evidence": [
+        {
+          "id": "leetcode:410",
+          "url": "https://leetcode.com/problems/split-array-largest-sum",
+          "access": "cached-statement",
+          "notes": "Current local source statement used as comparison baseline."
+        },
+        {
+          "id": "code360:24546",
+          "url": "https://www.naukri.com/code360/problems/largest-subarray-sum-minimized_7461751",
+          "access": "cached-statement-live-not-attempted",
+          "notes": "Compared full cached statement and constraints; unresolved details require original-source verification."
+        },
+        {
+          "id": "code360:15651",
+          "url": "https://www.naukri.com/code360/problems/split-array_2663297",
+          "access": "cached-statement-live-not-attempted",
+          "notes": "Compared full cached statement and constraints; unresolved details require original-source verification."
+        }
+      ]
+    },
+    {
+      "leetcodeId": "leetcode:414",
+      "outcome": "external-blocker",
+      "notes": "GFG third-largest statement does not explicitly specify distinctness; cannot merge with third DISTINCT maximum using sentinel adaptation alone.",
+      "equivalents": [],
+      "rejected": [],
+      "evidence": [
+        {
+          "id": "leetcode:414",
+          "url": "https://leetcode.com/problems/third-maximum-number",
+          "access": "cached-statement",
+          "notes": "Current local source statement used as comparison baseline."
+        },
+        {
+          "id": "geeksforgeeks:700312",
+          "url": "https://www.geeksforgeeks.org/problems/third-largest-element/1",
+          "access": "cached-statement-live-not-attempted",
+          "notes": "Compared full cached statement and constraints; unresolved details require original-source verification."
+        }
+      ]
+    },
+    {
+      "leetcodeId": "leetcode:429",
+      "outcome": "external-blocker",
+      "notes": "Code36010973 asks level order without clear grouping by depth; LeetCode returns per-level nested arrays. Need output example verification.",
+      "equivalents": [],
+      "rejected": [],
+      "evidence": [
+        {
+          "id": "leetcode:429",
+          "url": "https://leetcode.com/problems/n-ary-tree-level-order-traversal",
+          "access": "cached-statement",
+          "notes": "Current local source statement used as comparison baseline."
+        },
+        {
+          "id": "code360:10973",
+          "url": "https://www.naukri.com/code360/problems/n-ary-tree-level-order-traversal_1281306",
+          "access": "cached-statement-live-not-attempted",
+          "notes": "Compared full cached statement and constraints; unresolved details require original-source verification."
+        }
+      ]
+    },
+    {
+      "leetcodeId": "leetcode:430",
+      "outcome": "external-blocker",
+      "notes": "Multilevel linked-list counterparts need flatten order/doubly-linked prev and child-reset verification before matching.",
+      "equivalents": [],
+      "rejected": [],
+      "evidence": [
+        {
+          "id": "leetcode:430",
+          "url": "https://leetcode.com/problems/flatten-a-multilevel-doubly-linked-list",
+          "access": "cached-statement",
+          "notes": "Current local source statement used as comparison baseline."
+        },
+        {
+          "id": "code360:8619",
+          "url": "https://www.naukri.com/code360/problems/flatten-linked-list_893175",
+          "access": "cached-statement-live-not-attempted",
+          "notes": "Compared full cached statement and constraints; unresolved details require original-source verification."
+        },
+        {
+          "id": "code360:9974",
+          "url": "https://www.naukri.com/code360/problems/flatten-a-linked-list_1112655",
+          "access": "cached-statement-live-not-attempted",
+          "notes": "Compared full cached statement and constraints; unresolved details require original-source verification."
+        },
+        {
+          "id": "code360:8205",
+          "url": "https://www.naukri.com/code360/problems/flatten-the-multi-level-linked-list_839810",
+          "access": "cached-statement-live-not-attempted",
+          "notes": "Compared full cached statement and constraints; unresolved details require original-source verification."
+        },
+        {
+          "id": "code360:8165",
+          "url": "https://www.naukri.com/code360/problems/flatten-the-multi-level-linked-list_839660",
+          "access": "cached-statement-live-not-attempted",
+          "notes": "Compared full cached statement and constraints; unresolved details require original-source verification."
+        }
+      ]
+    },
+    {
+      "leetcodeId": "leetcode:435",
+      "outcome": "external-blocker",
+      "notes": "Code36016514 may count shared endpoints differently; verify exact endpoint condition before adding it. GFG confirmed.",
+      "equivalents": [],
+      "rejected": [],
+      "evidence": [
+        {
+          "id": "leetcode:435",
+          "url": "https://leetcode.com/problems/non-overlapping-intervals",
+          "access": "cached-statement",
+          "notes": "Current local source statement used as comparison baseline."
+        },
+        {
+          "id": "code360:16514",
+          "url": "https://www.naukri.com/code360/problems/ninja-and-the-workers_3169341",
+          "access": "cached-statement-live-not-attempted",
+          "notes": "Compared full cached statement and constraints; unresolved details require original-source verification."
+        }
+      ]
+    },
+    {
+      "leetcodeId": "leetcode:477",
+      "outcome": "external-blocker",
+      "notes": "Code3609693 pairwise-sum wording does not resolve ordered versus unordered pairs in screened objective; verify examples before adding. GFG matched.",
+      "equivalents": [],
+      "rejected": [],
+      "evidence": [
+        {
+          "id": "leetcode:477",
+          "url": "https://leetcode.com/problems/total-hamming-distance",
+          "access": "cached-statement",
+          "notes": "Current local source statement used as comparison baseline."
+        },
+        {
+          "id": "code360:9693",
+          "url": "https://www.naukri.com/code360/problems/pairwise-sum-of-hamming-distance_1081490",
+          "access": "cached-statement-live-not-attempted",
+          "notes": "Compared full cached statement and constraints; unresolved details require original-source verification."
+        }
+      ]
+    },
+    {
+      "leetcodeId": "leetcode:498",
+      "outcome": "external-blocker",
+      "notes": "Diagonal traversal needs samples: alternatives may traverse all diagonals in one direction rather than alternating and one returns nested diagonals.",
+      "equivalents": [],
+      "rejected": [],
+      "evidence": [
+        {
+          "id": "leetcode:498",
+          "url": "https://leetcode.com/problems/diagonal-traverse",
+          "access": "cached-statement",
+          "notes": "Current local source statement used as comparison baseline."
+        },
+        {
+          "id": "code360:2459",
+          "url": "https://www.naukri.com/code360/problems/print-diagonal_626054",
+          "access": "cached-statement-live-not-attempted",
+          "notes": "Compared full cached statement and constraints; unresolved details require original-source verification."
+        },
+        {
+          "id": "code360:8791",
+          "url": "https://www.naukri.com/code360/problems/print-diagonal_919819",
+          "access": "cached-statement-live-not-attempted",
+          "notes": "Compared full cached statement and constraints; unresolved details require original-source verification."
+        },
+        {
+          "id": "geeksforgeeks:705888",
+          "url": "https://www.geeksforgeeks.org/problems/print-diagonally4331/1",
+          "access": "cached-statement-live-not-attempted",
+          "notes": "Compared full cached statement and constraints; unresolved details require original-source verification."
+        }
+      ]
+    },
+    {
+      "leetcodeId": "leetcode:509",
+      "outcome": "external-blocker",
+      "notes": "Confirmed candidate objectives against local statements; retain the recorded platform adaptations. New candidate Code360971 specifies Fibonacci F(1)=F(2)=1 but has no cached numeric bounds or overflow/modulo convention; defer pending feasible shared output/domain verification.",
+      "equivalents": [],
+      "rejected": [],
+      "evidence": [
+        {
+          "id": "leetcode:509",
+          "url": "https://leetcode.com/problems/fibonacci-number",
+          "access": "cached-statement",
+          "notes": "Current local source statement used as comparison baseline."
+        },
+        {
+          "id": "code360:971",
+          "url": "https://www.naukri.com/code360/problems/nth-fibonacci-number_11302398",
+          "access": "cached-statement-live-not-attempted",
+          "notes": "Compared full cached statement and constraints; unresolved details require original-source verification."
+        }
+      ]
+    },
+    {
+      "leetcodeId": "leetcode:538",
+      "outcome": "external-blocker",
+      "notes": "Code3608078/8539 wording says original value plus sum >= itself (potentially double counts self), while8061 excludes original value. Verify examples; do not silently interpret.",
+      "equivalents": [],
+      "rejected": [],
+      "evidence": [
+        {
+          "id": "leetcode:538",
+          "url": "https://leetcode.com/problems/convert-bst-to-greater-tree",
+          "access": "cached-statement",
+          "notes": "Current local source statement used as comparison baseline."
+        },
+        {
+          "id": "code360:8078",
+          "url": "https://www.naukri.com/code360/problems/bst-to-greater-tree_800311",
+          "access": "cached-statement-live-not-attempted",
+          "notes": "Compared full cached statement and constraints; unresolved details require original-source verification."
+        },
+        {
+          "id": "code360:8539",
+          "url": "https://www.naukri.com/code360/problems/bst-to-greater-tree_893016",
+          "access": "cached-statement-live-not-attempted",
+          "notes": "Compared full cached statement and constraints; unresolved details require original-source verification."
+        },
+        {
+          "id": "code360:8061",
+          "url": "https://www.naukri.com/code360/problems/convert-bst-to-the-greater-sum-tree_800290",
+          "access": "cached-statement-live-not-attempted",
+          "notes": "Compared full cached statement and constraints; unresolved details require original-source verification."
+        }
+      ]
+    },
+    {
+      "leetcodeId": "leetcode:556",
+      "outcome": "external-blocker",
+      "notes": "Deferred next-greater-number candidate: maximum representable result and overflow sentinel are not established by cached evidence.",
+      "equivalents": [],
+      "rejected": [],
+      "evidence": [
+        {
+          "id": "leetcode:556",
+          "url": "https://leetcode.com/problems/next-greater-element-iii",
+          "access": "cached-statement",
+          "notes": "Current local source statement used as comparison baseline."
+        },
+        {
+          "id": "code360:15614",
+          "url": "https://www.naukri.com/code360/problems/bob-homework_2656187",
+          "access": "cached-statement-live-not-attempted",
+          "notes": "Compared full cached statement and constraints; unresolved details require original-source verification."
+        }
+      ]
+    },
+    {
+      "leetcodeId": "leetcode:564",
+      "outcome": "external-blocker",
+      "notes": "Closest-palindrome GFG705649 may include input itself; LeetCode excludes itself. Need example verification.",
+      "equivalents": [],
+      "rejected": [],
+      "evidence": [
+        {
+          "id": "leetcode:564",
+          "url": "https://leetcode.com/problems/find-the-closest-palindrome",
+          "access": "cached-statement",
+          "notes": "Current local source statement used as comparison baseline."
+        },
+        {
+          "id": "geeksforgeeks:705649",
+          "url": "https://www.geeksforgeeks.org/problems/closest-palindrome4519/1",
+          "access": "cached-statement-live-not-attempted",
+          "notes": "Compared full cached statement and constraints; unresolved details require original-source verification."
+        }
+      ]
+    },
+    {
+      "leetcodeId": "leetcode:566",
+      "outcome": "confirmed-equivalent",
+      "notes": "Resolved against full cached statements and bounds. Full cached last sentence explicitly returns original box arrangement if toys remain or shelf has empty cells. Same row-major reshape and incompatible-size fallback; O(N*M) supports all dimensions<=100.",
+      "equivalents": [
+        {
+          "id": "code360:16971",
+          "notes": "Full cached last sentence explicitly returns original box arrangement if toys remain or shelf has empty cells. Same row-major reshape and incompatible-size fallback; O(N*M) supports all dimensions<=100."
+        }
+      ],
+      "rejected": [],
+      "evidence": [
+        {
+          "id": "leetcode:566",
+          "url": "https://leetcode.com/problems/reshape-the-matrix",
+          "access": "cached-statement",
+          "notes": "Current local source statement used as comparison baseline."
+        },
+        {
+          "id": "code360:16971",
+          "url": "https://www.naukri.com/code360/problems/arrange-grid_3743917",
+          "access": "cached-statement-live-not-attempted",
+          "notes": "Compared full cached statement and constraints; unresolved details require original-source verification."
+        }
+      ]
+    },
+    {
+      "leetcodeId": "leetcode:622",
+      "outcome": "external-blocker",
+      "notes": "Code36010138 exposes only enqueue/dequeue and different dequeue return; full bounded capacity and peek semantics need verification.",
+      "equivalents": [],
+      "rejected": [],
+      "evidence": [
+        {
+          "id": "leetcode:622",
+          "url": "https://leetcode.com/problems/design-circular-queue",
+          "access": "cached-statement",
+          "notes": "Current local source statement used as comparison baseline."
+        },
+        {
+          "id": "code360:10138",
+          "url": "https://www.naukri.com/code360/problems/circular-queue_1170058",
+          "access": "cached-statement-live-not-attempted",
+          "notes": "Compared full cached statement and constraints; unresolved details require original-source verification."
+        }
+      ]
+    },
+    {
+      "leetcodeId": "leetcode:632",
+      "outcome": "rejected",
+      "notes": "Code360 requests minimum range LENGTH; LC returns range ENDPOINTS with a tie rule. Scalar optimum length does not identify a particular optimum range, so this is a different requested result, not a sentinel/index/ordering contract.",
+      "equivalents": [],
+      "rejected": [
+        {
+          "id": "code360:9637",
+          "reason": "Code360 requests minimum range LENGTH; LC returns range ENDPOINTS with a tie rule. Scalar optimum length does not identify a particular optimum range, so this is a different requested result, not a sentinel/index/ordering contract."
+        }
+      ],
+      "evidence": [
+        {
+          "id": "leetcode:632",
+          "url": "https://leetcode.com/problems/smallest-range-covering-elements-from-k-lists",
+          "access": "cached-statement",
+          "notes": "Current local source statement used as comparison baseline."
+        },
+        {
+          "id": "code360:9637",
+          "url": "https://www.naukri.com/code360/problems/smallest-range-from-k-sorted-list_1069356",
+          "access": "cached-statement-live-not-attempted",
+          "notes": "Compared full cached statement and constraints; unresolved details require original-source verification."
+        }
+      ]
+    },
+    {
+      "leetcodeId": "leetcode:636",
+      "outcome": "external-blocker",
+      "notes": "Code3608038 execution-time timestamps require end-inclusive semantics confirmation.",
+      "equivalents": [],
+      "rejected": [],
+      "evidence": [
+        {
+          "id": "leetcode:636",
+          "url": "https://leetcode.com/problems/exclusive-time-of-functions",
+          "access": "cached-statement",
+          "notes": "Current local source statement used as comparison baseline."
+        },
+        {
+          "id": "code360:8038",
+          "url": "https://www.naukri.com/code360/problems/execution-time_799892",
+          "access": "cached-statement-live-not-attempted",
+          "notes": "Compared full cached statement and constraints; unresolved details require original-source verification."
+        }
+      ]
+    },
+    {
+      "leetcodeId": "leetcode:655",
+      "outcome": "external-blocker",
+      "notes": "Code36010813 layout omits explicit minimal column count and allows large tree height; verify rendered format against2^height-1 before grouping.",
+      "equivalents": [],
+      "rejected": [],
+      "evidence": [
+        {
+          "id": "leetcode:655",
+          "url": "https://leetcode.com/problems/print-binary-tree",
+          "access": "cached-statement",
+          "notes": "Current local source statement used as comparison baseline."
+        },
+        {
+          "id": "code360:10813",
+          "url": "https://www.naukri.com/code360/problems/print-binary-tree_1266040",
+          "access": "cached-statement-live-not-attempted",
+          "notes": "Compared full cached statement and constraints; unresolved details require original-source verification."
+        }
+      ]
+    },
+    {
+      "leetcodeId": "leetcode:679",
+      "outcome": "external-blocker",
+      "notes": "24-game Code36010814 omits explicit real-division/no unary minus/all cards once requirements; likely equivalent but complete source verification needed.",
+      "equivalents": [],
+      "rejected": [],
+      "evidence": [
+        {
+          "id": "leetcode:679",
+          "url": "https://leetcode.com/problems/24-game",
+          "access": "cached-statement",
+          "notes": "Current local source statement used as comparison baseline."
+        },
+        {
+          "id": "code360:10814",
+          "url": "https://www.naukri.com/code360/problems/ninja-and-the-game_1266041",
+          "access": "cached-statement-live-not-attempted",
+          "notes": "Compared full cached statement and constraints; unresolved details require original-source verification."
+        }
+      ]
+    },
+    {
+      "leetcodeId": "leetcode:685",
+      "outcome": "external-blocker",
+      "notes": "Code36011006 directed-tree removal matches objective but contradictory note requires answer u<v despite directed edges. Resolve orientation rule before merging.",
+      "equivalents": [],
+      "rejected": [],
+      "evidence": [
+        {
+          "id": "leetcode:685",
+          "url": "https://leetcode.com/problems/redundant-connection-ii",
+          "access": "cached-statement",
+          "notes": "Current local source statement used as comparison baseline."
+        },
+        {
+          "id": "code360:11006",
+          "url": "https://www.naukri.com/code360/problems/redundant-connection-ii_1376417",
+          "access": "cached-statement-live-not-attempted",
+          "notes": "Compared full cached statement and constraints; unresolved details require original-source verification."
+        }
+      ]
+    },
+    {
+      "leetcodeId": "leetcode:698",
+      "outcome": "external-blocker",
+      "notes": "Confirmed other counterparts; defer Code3609241 because N<=1000 and K<=20 do not support the same subset-mask algorithm as LeetCode N<=16. No tractable shared bound adaptation established.",
+      "equivalents": [],
+      "rejected": [],
+      "evidence": [
+        {
+          "id": "leetcode:698",
+          "url": "https://leetcode.com/problems/partition-to-k-equal-sum-subsets",
+          "access": "cached-statement",
+          "notes": "Current local source statement used as comparison baseline."
+        },
+        {
+          "id": "code360:9241",
+          "url": "https://www.naukri.com/code360/problems/k-subsets-with-equal-sum_981272",
+          "access": "cached-statement-live-not-attempted",
+          "notes": "Compared full cached statement and constraints; unresolved details require original-source verification."
+        }
+      ]
+    },
+    {
+      "leetcodeId": "leetcode:767",
+      "outcome": "confirmed-equivalent",
+      "notes": "Resolved against full cached statements and bounds. Official live statement confirms constructing any lowercase-character permutation with unequal adjacent characters. Character-frequency feasibility plus alternating-placement/heap construction supports total input length1e6 and LC length500.",
+      "equivalents": [
+        {
+          "id": "atcoder:abc459_d",
+          "notes": "Official live statement confirms constructing any lowercase-character permutation with unequal adjacent characters. Character-frequency feasibility plus alternating-placement/heap construction supports total input length1e6 and LC length500.",
+          "contract": {
+            "variant": "yes-no-and-construction",
+            "notes": "AtCoder returns No when impossible; otherwise Yes followed by a valid rearrangement. LC returns empty string when impossible and the rearranged string otherwise."
+          }
+        }
+      ],
+      "rejected": [],
+      "evidence": [
+        {
+          "id": "leetcode:767",
+          "url": "https://leetcode.com/problems/reorganize-string",
+          "access": "cached-statement",
+          "notes": "Current local source statement used as comparison baseline."
+        },
+        {
+          "id": "atcoder:abc459_d",
+          "url": "https://atcoder.jp/contests/abc459/tasks/abc459_d",
+          "access": "cached-statement-live-not-attempted",
+          "notes": "Compared full cached statement and constraints; unresolved details require original-source verification."
+        }
+      ]
+    },
+    {
+      "leetcodeId": "leetcode:771",
+      "outcome": "confirmed-equivalent",
+      "notes": "Resolved against full cached statements and bounds. Full cached formal statement counts each S position whose upper/lowercase Latin character appears in J, exactly the jewel count. Case-sensitive membership set O(|J|+|S|) supports each length<=100.",
+      "equivalents": [
+        {
+          "id": "codechef:STONES",
+          "notes": "Full cached formal statement counts each S position whose upper/lowercase Latin character appears in J, exactly the jewel count. Case-sensitive membership set O(|J|+|S|) supports each length<=100."
+        }
+      ],
+      "rejected": [],
+      "evidence": [
+        {
+          "id": "leetcode:771",
+          "url": "https://leetcode.com/problems/jewels-and-stones",
+          "access": "cached-statement",
+          "notes": "Current local source statement used as comparison baseline."
+        },
+        {
+          "id": "codechef:STONES",
+          "url": "https://www.codechef.com/problems/STONES",
+          "access": "cached-statement-live-not-attempted",
+          "notes": "Compared full cached statement and constraints; unresolved details require original-source verification."
+        }
+      ]
+    },
+    {
+      "leetcodeId": "leetcode:786",
+      "outcome": "confirmed-equivalent",
+      "notes": "Resolved against full cached statements and bounds. Full statement returns [ARR[i],ARR[j]] for the Kth ordered-value fraction with i<j, sorted distinct prime input. LC additionally includes1; heap merging increasing fraction rows works on both domains with N<=1000.",
+      "equivalents": [
+        {
+          "id": "code360:12270",
+          "notes": "Full statement returns [ARR[i],ARR[j]] for the Kth ordered-value fraction with i<j, sorted distinct prime input. LC additionally includes1; heap merging increasing fraction rows works on both domains with N<=1000."
+        }
+      ],
+      "rejected": [],
+      "evidence": [
+        {
+          "id": "leetcode:786",
+          "url": "https://leetcode.com/problems/k-th-smallest-prime-fraction",
+          "access": "cached-statement",
+          "notes": "Current local source statement used as comparison baseline."
+        },
+        {
+          "id": "code360:12270",
+          "url": "https://www.naukri.com/code360/problems/k-th-smallest-prime-fraction_1404697",
+          "access": "cached-statement-live-not-attempted",
+          "notes": "Compared full cached statement and constraints; unresolved details require original-source verification."
+        }
+      ]
+    },
+    {
+      "leetcodeId": "leetcode:858",
+      "outcome": "external-blocker",
+      "notes": "Code36012517 receptor labels1,2,3 vs LeetCode0,1,2 require figure to map labels safely.",
+      "equivalents": [],
+      "rejected": [],
+      "evidence": [
+        {
+          "id": "leetcode:858",
+          "url": "https://leetcode.com/problems/mirror-reflection",
+          "access": "cached-statement",
+          "notes": "Current local source statement used as comparison baseline."
+        },
+        {
+          "id": "code360:12517",
+          "url": "https://www.naukri.com/code360/problems/reflection_1463154",
+          "access": "cached-statement-live-not-attempted",
+          "notes": "Compared full cached statement and constraints; unresolved details require original-source verification."
+        }
+      ]
+    },
+    {
+      "leetcodeId": "leetcode:866",
+      "outcome": "external-blocker",
+      "notes": "Prime palindrome counterpart Code36012516 needs full mathematical success condition; long story truncates prefix.",
+      "equivalents": [],
+      "rejected": [],
+      "evidence": [
+        {
+          "id": "leetcode:866",
+          "url": "https://leetcode.com/problems/prime-palindrome",
+          "access": "cached-statement",
+          "notes": "Current local source statement used as comparison baseline."
+        },
+        {
+          "id": "code360:12516",
+          "url": "https://www.naukri.com/code360/problems/prime-palindrome_1463152",
+          "access": "cached-statement-live-not-attempted",
+          "notes": "Compared full cached statement and constraints; unresolved details require original-source verification."
+        }
+      ]
+    },
+    {
+      "leetcodeId": "leetcode:876",
+      "outcome": "confirmed-equivalent",
+      "notes": "Resolved against full cached statements and bounds. Both select the middle node and choose the second middle for even-length singly linked lists. Fast/slow pointers support GFG N1e5 and LC N100.",
+      "equivalents": [
+        {
+          "id": "geeksforgeeks:700171",
+          "notes": "Both select the middle node and choose the second middle for even-length singly linked lists. Fast/slow pointers support GFG N1e5 and LC N100.",
+          "contract": {
+            "variant": "middle-node-value",
+            "notes": "GFG returns the selected node value; LC returns the selected node reference/sublist. Select the same node, then return its value for GFG."
+          }
+        }
+      ],
+      "rejected": [],
+      "evidence": [
+        {
+          "id": "leetcode:876",
+          "url": "https://leetcode.com/problems/middle-of-the-linked-list",
+          "access": "cached-statement",
+          "notes": "Current local source statement used as comparison baseline."
+        },
+        {
+          "id": "geeksforgeeks:700171",
+          "url": "https://www.geeksforgeeks.org/problems/finding-middle-element-in-a-linked-list/1",
+          "access": "cached-statement-live-not-attempted",
+          "notes": "Compared full cached statement and constraints; unresolved details require original-source verification."
+        }
+      ]
+    },
+    {
+      "leetcodeId": "leetcode:880",
+      "outcome": "external-blocker",
+      "notes": "Deferred code360:12603: decoded-string position indexing not established by cached evidence.",
+      "equivalents": [],
+      "rejected": [],
+      "evidence": [
+        {
+          "id": "leetcode:880",
+          "url": "https://leetcode.com/problems/decoded-string-at-index",
+          "access": "cached-statement",
+          "notes": "Current local source statement used as comparison baseline."
+        },
+        {
+          "id": "code360:12603",
+          "url": "https://www.naukri.com/code360/problems/finalproblemofweek_1467108",
+          "access": "cached-statement-live-not-attempted",
+          "notes": "Compared full cached statement and constraints; unresolved details require original-source verification."
+        }
+      ]
+    },
+    {
+      "leetcodeId": "leetcode:909",
+      "outcome": "confirmed-equivalent",
+      "notes": "Resolved against full cached statements and bounds. Same controlled die steps1..6, only one forced snake/ladder per throw, minimum throws to N*N, and-1 if impossible. BFS O(N^2+number of jumps) supports N<=1000.",
+      "equivalents": [
+        {
+          "id": "code360:7225",
+          "notes": "Full text exactly specifies boustrophedon board labels, destinations at most6 forward within N*N, at most one snake/ladder per move, minimum throws, and-1 if impossible. BFS O(N^2) supports N<=100."
+        },
+        {
+          "id": "geeksforgeeks:705484",
+          "notes": "Same controlled die steps1..6, only one forced snake/ladder per throw, minimum throws to N*N, and-1 if impossible. BFS O(N^2+number of jumps) supports N<=1000.",
+          "contract": {
+            "variant": "snake-ladder-pair-arrays",
+            "notes": "GFG gives flattened start/end arrays lad and sn rather than a boustrophedon matrix; map them to the same square-number transition table."
+          }
+        }
+      ],
+      "rejected": [],
+      "evidence": [
+        {
+          "id": "leetcode:909",
+          "url": "https://leetcode.com/problems/snakes-and-ladders",
+          "access": "cached-statement",
+          "notes": "Current local source statement used as comparison baseline."
+        },
+        {
+          "id": "code360:7225",
+          "url": "https://www.naukri.com/code360/problems/snake-and-ladder_630458",
+          "access": "cached-statement-live-not-attempted",
+          "notes": "Compared full cached statement and constraints; unresolved details require original-source verification."
+        },
+        {
+          "id": "geeksforgeeks:705484",
+          "url": "https://www.geeksforgeeks.org/problems/snake-and-ladder-problem4816/1",
+          "access": "cached-statement-live-not-attempted",
+          "notes": "Compared full cached statement and constraints; unresolved details require original-source verification."
+        }
+      ]
+    },
+    {
+      "leetcodeId": "leetcode:928",
+      "outcome": "confirmed-equivalent",
+      "notes": "Resolved against full cached statements and bounds. Full note2 explicitly removes all connections of the removed infected node; same graph-node deletion as LC928, not initial-infection-only removal924. Select smallest node label among minimum final infection. Clean-component analysis or per-candidate simulation supports N100/300.",
+      "equivalents": [
+        {
+          "id": "code360:11082",
+          "notes": "Full note2 explicitly removes all connections of the removed infected node; same graph-node deletion as LC928, not initial-infection-only removal924. Select smallest node label among minimum final infection. Clean-component analysis or per-candidate simulation supports N100/300."
+        }
+      ],
+      "rejected": [],
+      "evidence": [
+        {
+          "id": "leetcode:928",
+          "url": "https://leetcode.com/problems/minimize-malware-spread-ii",
+          "access": "cached-statement",
+          "notes": "Current local source statement used as comparison baseline."
+        },
+        {
+          "id": "code360:11082",
+          "url": "https://www.naukri.com/code360/problems/minimize-malware-spread-ii_1376659",
+          "access": "cached-statement-live-not-attempted",
+          "notes": "Compared full cached statement and constraints; unresolved details require original-source verification."
+        }
+      ]
+    },
+    {
+      "leetcodeId": "leetcode:934",
+      "outcome": "confirmed-equivalent",
+      "notes": "Resolved against full cached statements and bounds. Full text explicitly defines islands as four-direction connected1-components, exactly two islands, minimize water cells flipped. Flood fill plus multi-source BFS supports rectangular100x100 and LC square100x100.",
+      "equivalents": [
+        {
+          "id": "code360:9938",
+          "notes": "Full text explicitly defines islands as four-direction connected1-components, exactly two islands, minimize water cells flipped. Flood fill plus multi-source BFS supports rectangular100x100 and LC square100x100."
+        }
+      ],
+      "rejected": [],
+      "evidence": [
+        {
+          "id": "leetcode:934",
+          "url": "https://leetcode.com/problems/shortest-bridge",
+          "access": "cached-statement",
+          "notes": "Current local source statement used as comparison baseline."
+        },
+        {
+          "id": "code360:9938",
+          "url": "https://www.naukri.com/code360/problems/shortest-bridge_1105571",
+          "access": "cached-statement-live-not-attempted",
+          "notes": "Compared full cached statement and constraints; unresolved details require original-source verification."
+        }
+      ]
+    },
+    {
+      "leetcodeId": "leetcode:935",
+      "outcome": "external-blocker",
+      "notes": "Code36016491 knight dialer needs verify leading-zero allowed, modulo convention, and same disconnected corner cells.",
+      "equivalents": [],
+      "rejected": [],
+      "evidence": [
+        {
+          "id": "leetcode:935",
+          "url": "https://leetcode.com/problems/knight-dialer",
+          "access": "cached-statement",
+          "notes": "Current local source statement used as comparison baseline."
+        },
+        {
+          "id": "code360:16491",
+          "url": "https://www.naukri.com/code360/problems/knight-dialer_3164688",
+          "access": "cached-statement-live-not-attempted",
+          "notes": "Compared full cached statement and constraints; unresolved details require original-source verification."
+        }
+      ]
+    },
+    {
+      "leetcodeId": "leetcode:940",
+      "outcome": "external-blocker",
+      "notes": "Code3608018 may include empty subsequence in count; confirm sample before applying output+1 adaptation.",
+      "equivalents": [],
+      "rejected": [],
+      "evidence": [
+        {
+          "id": "leetcode:940",
+          "url": "https://leetcode.com/problems/distinct-subsequences-ii",
+          "access": "cached-statement",
+          "notes": "Current local source statement used as comparison baseline."
+        },
+        {
+          "id": "code360:8018",
+          "url": "https://www.naukri.com/code360/problems/distinct-subsequences_799558",
+          "access": "cached-statement-live-not-attempted",
+          "notes": "Compared full cached statement and constraints; unresolved details require original-source verification."
+        }
+      ]
+    },
+    {
+      "leetcodeId": "leetcode:975",
+      "outcome": "confirmed-equivalent",
+      "notes": "Resolved against full cached statements and bounds. Full instruction specifies odd jumps choose minimum value>=current then smallest index, even jumps choose maximum value<=current then smallest index. Count all starts reaching last index. Ordered-map or monotone-stack successor preprocessing plus parity DP supports N5000/20000.",
+      "equivalents": [
+        {
+          "id": "code360:11407",
+          "notes": "Full instruction specifies odd jumps choose minimum value>=current then smallest index, even jumps choose maximum value<=current then smallest index. Count all starts reaching last index. Ordered-map or monotone-stack successor preprocessing plus parity DP supports N5000/20000."
+        }
+      ],
+      "rejected": [],
+      "evidence": [
+        {
+          "id": "leetcode:975",
+          "url": "https://leetcode.com/problems/odd-even-jump",
+          "access": "cached-statement",
+          "notes": "Current local source statement used as comparison baseline."
+        },
+        {
+          "id": "code360:11407",
+          "url": "https://www.naukri.com/code360/problems/ninja-s-jump_1381527",
+          "access": "cached-statement-live-not-attempted",
+          "notes": "Compared full cached statement and constraints; unresolved details require original-source verification."
+        }
+      ]
+    },
+    {
+      "leetcodeId": "leetcode:977",
+      "outcome": "external-blocker",
+      "notes": "Deferred code360:10511: required sortedness of the input array not established by cached evidence.",
+      "equivalents": [],
+      "rejected": [],
+      "evidence": [
+        {
+          "id": "leetcode:977",
+          "url": "https://leetcode.com/problems/squares-of-a-sorted-array",
+          "access": "cached-statement",
+          "notes": "Current local source statement used as comparison baseline."
+        },
+        {
+          "id": "code360:10511",
+          "url": "https://www.naukri.com/code360/problems/squares-of-a-sorted-array_1230552",
+          "access": "cached-statement-live-not-attempted",
+          "notes": "Compared full cached statement and constraints; unresolved details require original-source verification."
+        }
+      ]
+    },
+    {
+      "leetcodeId": "leetcode:979",
+      "outcome": "external-blocker",
+      "notes": "Confirmed other counterpart; defer Code36010838 because cached bounds allow negative node DATA while objective requires coin counts. This inconsistent input domain needs source verification.",
+      "equivalents": [],
+      "rejected": [],
+      "evidence": [
+        {
+          "id": "leetcode:979",
+          "url": "https://leetcode.com/problems/distribute-coins-in-binary-tree",
+          "access": "cached-statement",
+          "notes": "Current local source statement used as comparison baseline."
+        },
+        {
+          "id": "code360:10838",
+          "url": "https://www.naukri.com/code360/problems/distributing-coins_1266092",
+          "access": "cached-statement-live-not-attempted",
+          "notes": "Compared full cached statement and constraints; unresolved details require original-source verification."
+        }
+      ]
+    },
+    {
+      "leetcodeId": "leetcode:987",
+      "outcome": "external-blocker",
+      "notes": "GFG700256 uses BFS order for same-position ties, Code36016709 value ordering confirmed. If added GFG requires explicit tie contract review. Parent verification deferred Code36016709: statement says top-to-bottom but formal coordinates increase downward while traversal specifies decreasing y, contradicting that order.",
+      "equivalents": [],
+      "rejected": [],
+      "evidence": [
+        {
+          "id": "leetcode:987",
+          "url": "https://leetcode.com/problems/vertical-order-traversal-of-a-binary-tree",
+          "access": "cached-statement",
+          "notes": "Current local source statement used as comparison baseline."
+        },
+        {
+          "id": "code360:16709",
+          "url": "https://www.naukri.com/code360/problems/vertical-order-traversal_3622711",
+          "access": "cached-statement-live-not-attempted",
+          "notes": "Compared full cached statement and constraints; unresolved details require original-source verification."
+        },
+        {
+          "id": "geeksforgeeks:700256",
+          "url": "https://www.geeksforgeeks.org/problems/print-a-binary-tree-in-vertical-order/1",
+          "access": "cached-statement-live-not-attempted",
+          "notes": "Compared full cached statement and constraints; unresolved details require original-source verification."
+        }
+      ]
+    },
+    {
+      "leetcodeId": "leetcode:991",
+      "outcome": "external-blocker",
+      "notes": "Deferred Code36012158: bounds allow X=0,Y>0 but the statement guarantees reachability under doubling/decrement; unreachable-case convention needs source verification.",
+      "equivalents": [],
+      "rejected": [],
+      "evidence": [
+        {
+          "id": "leetcode:991",
+          "url": "https://leetcode.com/problems/broken-calculator",
+          "access": "cached-statement",
+          "notes": "Current local source statement used as comparison baseline."
+        },
+        {
+          "id": "code360:12158",
+          "url": "https://www.naukri.com/code360/problems/times-two_1404508",
+          "access": "cached-statement-live-not-attempted",
+          "notes": "Compared full cached statement and constraints; unresolved details require original-source verification."
+        }
+      ]
+    },
+    {
+      "leetcodeId": "leetcode:1019",
+      "outcome": "confirmed-equivalent",
+      "notes": "Resolved against full cached statements and bounds. Full formal definition uses nearest j>i with strictly greater node value and0 when none; returns value array in linked-list order. Monotone stack O(N) supports N5000/10000.",
+      "equivalents": [
+        {
+          "id": "code360:10628",
+          "notes": "Full formal definition uses nearest j>i with strictly greater node value and0 when none; returns value array in linked-list order. Monotone stack O(N) supports N5000/10000."
+        }
+      ],
+      "rejected": [],
+      "evidence": [
+        {
+          "id": "leetcode:1019",
+          "url": "https://leetcode.com/problems/next-greater-node-in-linked-list",
+          "access": "cached-statement",
+          "notes": "Current local source statement used as comparison baseline."
+        },
+        {
+          "id": "code360:10628",
+          "url": "https://www.naukri.com/code360/problems/next-greater-node-in-linked-list_1262083",
+          "access": "cached-statement-live-not-attempted",
+          "notes": "Compared full cached statement and constraints; unresolved details require original-source verification."
+        }
+      ]
+    },
+    {
+      "leetcodeId": "leetcode:1027",
+      "outcome": "confirmed-equivalent",
+      "notes": "Resolved against full cached statements and bounds. Same maximum length of an arithmetic subsequence; GFG sorted-distinct positive arrays are a restricted input domain, not a changed optimization objective. Index-pair difference DP O(N^2) supports both N<=1000 and works without relying on LC small value bound.",
+      "equivalents": [
+        {
+          "id": "geeksforgeeks:703290",
+          "notes": "Same maximum length of an arithmetic subsequence; GFG sorted-distinct positive arrays are a restricted input domain, not a changed optimization objective. Index-pair difference DP O(N^2) supports both N<=1000 and works without relying on LC small value bound."
+        }
+      ],
+      "rejected": [],
+      "evidence": [
+        {
+          "id": "leetcode:1027",
+          "url": "https://leetcode.com/problems/longest-arithmetic-subsequence",
+          "access": "cached-statement",
+          "notes": "Current local source statement used as comparison baseline."
+        },
+        {
+          "id": "geeksforgeeks:703290",
+          "url": "https://www.geeksforgeeks.org/problems/longest-arithmetic-progression1019/1",
+          "access": "cached-statement-live-not-attempted",
+          "notes": "Compared full cached statement and constraints; unresolved details require original-source verification."
+        }
+      ]
+    },
+    {
+      "leetcodeId": "leetcode:1044",
+      "outcome": "external-blocker",
+      "notes": "Code36010500 contradicts length output with substring output in same objective; verify sample/function signature.",
+      "equivalents": [],
+      "rejected": [],
+      "evidence": [
+        {
+          "id": "leetcode:1044",
+          "url": "https://leetcode.com/problems/longest-duplicate-substring",
+          "access": "cached-statement",
+          "notes": "Current local source statement used as comparison baseline."
+        },
+        {
+          "id": "code360:10500",
+          "url": "https://www.naukri.com/code360/problems/longest-duplicate-substring_1229794",
+          "access": "cached-statement-live-not-attempted",
+          "notes": "Compared full cached statement and constraints; unresolved details require original-source verification."
+        }
+      ]
+    },
+    {
+      "leetcodeId": "leetcode:1050",
+      "outcome": "confirmed-equivalent",
+      "notes": "Resolved against full cached statements and bounds. Same ActorDirector(actor_id,director_id,timestamp primary key) table; return pairs having at least3 collaborations. SQL GROUP BY pair HAVING COUNT(*)>=3 computes both.",
+      "equivalents": [
+        {
+          "id": "code360:14761",
+          "notes": "Same ActorDirector(actor_id,director_id,timestamp primary key) table; return pairs having at least3 collaborations. SQL GROUP BY pair HAVING COUNT(*)>=3 computes both."
+        }
+      ],
+      "rejected": [],
+      "evidence": [
+        {
+          "id": "leetcode:1050",
+          "url": "https://leetcode.com/problems/actors-and-directors-who-cooperated-at-least-three-times",
+          "access": "cached-statement",
+          "notes": "Current local source statement used as comparison baseline."
+        },
+        {
+          "id": "code360:14761",
+          "url": "https://www.naukri.com/code360/problems/director-s-actor_2246916",
+          "access": "cached-statement-live-not-attempted",
+          "notes": "Compared full cached statement and constraints; unresolved details require original-source verification."
+        }
+      ]
+    },
+    {
+      "leetcodeId": "leetcode:1091",
+      "outcome": "rejected",
+      "notes": "Code360 explicitly permits FOUR directions between supplied source/destination, using1 as passable. LC uses EIGHT directions between fixed corners, using0 as passable. Four-vs-eight movement changes reachable paths and optimum; do not group.",
+      "equivalents": [],
+      "rejected": [
+        {
+          "id": "code360:7566",
+          "reason": "Code360 explicitly permits FOUR directions between supplied source/destination, using1 as passable. LC uses EIGHT directions between fixed corners, using0 as passable. Four-vs-eight movement changes reachable paths and optimum; do not group."
+        }
+      ],
+      "evidence": [
+        {
+          "id": "leetcode:1091",
+          "url": "https://leetcode.com/problems/shortest-path-in-binary-matrix",
+          "access": "cached-statement",
+          "notes": "Current local source statement used as comparison baseline."
+        },
+        {
+          "id": "code360:7566",
+          "url": "https://www.naukri.com/code360/problems/shortest-path-in-a-binary-matrix_699835",
+          "access": "cached-statement-live-not-attempted",
+          "notes": "Compared full cached statement and constraints; unresolved details require original-source verification."
+        }
+      ]
+    },
+    {
+      "leetcodeId": "leetcode:1104",
+      "outcome": "confirmed-equivalent",
+      "notes": "Resolved against full cached statements and bounds. Full text specifies odd levels left-to-right, even levels right-to-left, first level1, root-to-LABEL path. Same mirrored-level ancestor formula O(log LABEL), LABEL<=1e6.",
+      "equivalents": [
+        {
+          "id": "code360:12525",
+          "notes": "Full text specifies odd levels left-to-right, even levels right-to-left, first level1, root-to-LABEL path. Same mirrored-level ancestor formula O(log LABEL), LABEL<=1e6."
+        }
+      ],
+      "rejected": [],
+      "evidence": [
+        {
+          "id": "leetcode:1104",
+          "url": "https://leetcode.com/problems/path-in-zigzag-labelled-binary-tree",
+          "access": "cached-statement",
+          "notes": "Current local source statement used as comparison baseline."
+        },
+        {
+          "id": "code360:12525",
+          "url": "https://www.naukri.com/code360/problems/path-in-zigzag-labelled-binary-tree_1463978",
+          "access": "cached-statement-live-not-attempted",
+          "notes": "Compared full cached statement and constraints; unresolved details require original-source verification."
+        }
+      ]
+    },
+    {
+      "leetcodeId": "leetcode:1130",
+      "outcome": "external-blocker",
+      "notes": "Code36010819 says Complete Binary Tree where LeetCode requires full tree; verify full-vs-complete intended restriction before merging.",
+      "equivalents": [],
+      "rejected": [],
+      "evidence": [
+        {
+          "id": "leetcode:1130",
+          "url": "https://leetcode.com/problems/minimum-cost-tree-from-leaf-values",
+          "access": "cached-statement",
+          "notes": "Current local source statement used as comparison baseline."
+        },
+        {
+          "id": "code360:10819",
+          "url": "https://www.naukri.com/code360/problems/minimum-cost-tree-from-leaf-nodes_1266047",
+          "access": "cached-statement-live-not-attempted",
+          "notes": "Compared full cached statement and constraints; unresolved details require original-source verification."
+        }
+      ]
+    },
+    {
+      "leetcodeId": "leetcode:1148",
+      "outcome": "rejected",
+      "notes": "Code360 finds users viewing more than one article on the same date (Article ViewsII). LC1148 finds authors viewing their own articles. Different filtering/grouping objective.",
+      "equivalents": [],
+      "rejected": [
+        {
+          "id": "code360:14516",
+          "reason": "Code360 finds users viewing more than one article on the same date (Article ViewsII). LC1148 finds authors viewing their own articles. Different filtering/grouping objective."
+        }
+      ],
+      "evidence": [
+        {
+          "id": "leetcode:1148",
+          "url": "https://leetcode.com/problems/article-views-i",
+          "access": "cached-statement",
+          "notes": "Current local source statement used as comparison baseline."
+        },
+        {
+          "id": "code360:14516",
+          "url": "https://www.naukri.com/code360/problems/article_2181187",
+          "access": "cached-statement-live-not-attempted",
+          "notes": "Compared full cached statement and constraints; unresolved details require original-source verification."
+        }
+      ]
+    },
+    {
+      "leetcodeId": "leetcode:1157",
+      "outcome": "confirmed-equivalent",
+      "notes": "Resolved against full cached statements and bounds. Full condition2 explicitly states2*X>R-L+1 and missing majority returns-1. Same repeated inclusive range query for element meeting threshold. Segment-tree majority candidates plus sorted occurrence lists meet N20000,Q10000 and LC query bounds.",
+      "equivalents": [
+        {
+          "id": "code360:11785",
+          "notes": "Full condition2 explicitly states2*X>R-L+1 and missing majority returns-1. Same repeated inclusive range query for element meeting threshold. Segment-tree majority candidates plus sorted occurrence lists meet N20000,Q10000 and LC query bounds."
+        }
+      ],
+      "rejected": [],
+      "evidence": [
+        {
+          "id": "leetcode:1157",
+          "url": "https://leetcode.com/problems/online-majority-element-in-subarray",
+          "access": "cached-statement",
+          "notes": "Current local source statement used as comparison baseline."
+        },
+        {
+          "id": "code360:11785",
+          "url": "https://www.naukri.com/code360/problems/online-majority-element-in-subarray_1386529",
+          "access": "cached-statement-live-not-attempted",
+          "notes": "Compared full cached statement and constraints; unresolved details require original-source verification."
+        }
+      ]
+    },
+    {
+      "leetcodeId": "leetcode:1164",
+      "outcome": "confirmed-equivalent",
+      "notes": "Resolved against full cached statements and bounds. Same Products(product_id,new_price,change_date) table with composite primary key, prices on2019-08-16, default10 before any change. Last eligible price per product plus fallback10 SQL query implements both.",
+      "equivalents": [
+        {
+          "id": "code360:14408",
+          "notes": "Same Products(product_id,new_price,change_date) table with composite primary key, prices on2019-08-16, default10 before any change. Last eligible price per product plus fallback10 SQL query implements both."
+        }
+      ],
+      "rejected": [],
+      "evidence": [
+        {
+          "id": "leetcode:1164",
+          "url": "https://leetcode.com/problems/product-price-at-a-given-date",
+          "access": "cached-statement",
+          "notes": "Current local source statement used as comparison baseline."
+        },
+        {
+          "id": "code360:14408",
+          "url": "https://www.naukri.com/code360/problems/product-price-at-a-given-date_2122057",
+          "access": "cached-statement-live-not-attempted",
+          "notes": "Compared full cached statement and constraints; unresolved details require original-source verification."
+        }
+      ]
+    },
+    {
+      "leetcodeId": "leetcode:1169",
+      "outcome": "rejected",
+      "notes": "Code360 asks NUMBER of invalid transactions; LC returns the invalid transaction records. The scalar count cannot recover the records, so retain separate requested-result task despite identical invalidity predicate.",
+      "equivalents": [],
+      "rejected": [
+        {
+          "id": "code360:16502",
+          "reason": "Code360 asks NUMBER of invalid transactions; LC returns the invalid transaction records. The scalar count cannot recover the records, so retain separate requested-result task despite identical invalidity predicate."
+        }
+      ],
+      "evidence": [
+        {
+          "id": "leetcode:1169",
+          "url": "https://leetcode.com/problems/invalid-transactions",
+          "access": "cached-statement",
+          "notes": "Current local source statement used as comparison baseline."
+        },
+        {
+          "id": "code360:16502",
+          "url": "https://www.naukri.com/code360/problems/invalid-transactions_3167809",
+          "access": "cached-statement-live-not-attempted",
+          "notes": "Compared full cached statement and constraints; unresolved details require original-source verification."
+        }
+      ]
+    },
+    {
+      "leetcodeId": "leetcode:1185",
+      "outcome": "external-blocker",
+      "notes": "Deferred GFG704549: cached statement specifies day-of-week objective but provides no weekday output representation or samples; cannot verify native output adaptation.",
+      "equivalents": [],
+      "rejected": [],
+      "evidence": [
+        {
+          "id": "leetcode:1185",
+          "url": "https://leetcode.com/problems/day-of-the-week",
+          "access": "cached-statement",
+          "notes": "Current local source statement used as comparison baseline."
+        },
+        {
+          "id": "geeksforgeeks:704549",
+          "url": "https://www.geeksforgeeks.org/problems/day-of-the-week1637/1",
+          "access": "cached-statement-live-not-attempted",
+          "notes": "Compared full cached statement and constraints; unresolved details require original-source verification."
+        }
+      ]
+    },
+    {
+      "leetcodeId": "leetcode:1219",
+      "outcome": "external-blocker",
+      "notes": "Code36010344 allows100 cells without a stated <=25 positive-cell limit; brute-force simple paths cannot meet worst-case bounds. Same objective but algorithm-feasibility evidence incomplete.",
+      "equivalents": [],
+      "rejected": [],
+      "evidence": [
+        {
+          "id": "leetcode:1219",
+          "url": "https://leetcode.com/problems/path-with-maximum-gold",
+          "access": "cached-statement",
+          "notes": "Current local source statement used as comparison baseline."
+        },
+        {
+          "id": "code360:10344",
+          "url": "https://www.naukri.com/code360/problems/path-with-maximum-gold_1214654",
+          "access": "cached-statement-live-not-attempted",
+          "notes": "Compared full cached statement and constraints; unresolved details require original-source verification."
+        }
+      ]
+    },
+    {
+      "leetcodeId": "leetcode:1238",
+      "outcome": "external-blocker",
+      "notes": "Code36010498 contains contradictory upper bound2^(N-1), claims invalid Gray-code sequence as valid; verify source instead of silently correcting.",
+      "equivalents": [],
+      "rejected": [],
+      "evidence": [
+        {
+          "id": "leetcode:1238",
+          "url": "https://leetcode.com/problems/circular-permutation-in-binary-representation",
+          "access": "cached-statement",
+          "notes": "Current local source statement used as comparison baseline."
+        },
+        {
+          "id": "code360:10498",
+          "url": "https://www.naukri.com/code360/problems/circular-permutation-in-binary-representation_1229778",
+          "access": "cached-statement-live-not-attempted",
+          "notes": "Compared full cached statement and constraints; unresolved details require original-source verification."
+        }
+      ]
+    },
+    {
+      "leetcodeId": "leetcode:1263",
+      "outcome": "confirmed-equivalent",
+      "notes": "Resolved against full cached statements and bounds. Full text explicitly minimizes BOX PUSHES, prohibits player walking through box, four-direction movement, one box/player/target, and returns-1 when unreachable. Same grid bounds<=20x20; box/player-state BFS with free walking supports both.",
+      "equivalents": [
+        {
+          "id": "code360:15480",
+          "notes": "Full text explicitly minimizes BOX PUSHES, prohibits player walking through box, four-direction movement, one box/player/target, and returns-1 when unreachable. Same grid bounds<=20x20; box/player-state BFS with free walking supports both.",
+          "contract": {
+            "variant": "grid-symbols-P-pipe",
+            "notes": "Translate Code360 P(player), |(wall), T(target), B(box), .(floor) to LC S,#,T,B,. respectively."
+          }
+        }
+      ],
+      "rejected": [],
+      "evidence": [
+        {
+          "id": "leetcode:1263",
+          "url": "https://leetcode.com/problems/minimum-moves-to-move-a-box-to-their-target-location",
+          "access": "cached-statement",
+          "notes": "Current local source statement used as comparison baseline."
+        },
+        {
+          "id": "code360:15480",
+          "url": "https://www.naukri.com/code360/problems/push-the-box-to-the-target_2539868",
+          "access": "cached-statement-live-not-attempted",
+          "notes": "Compared full cached statement and constraints; unresolved details require original-source verification."
+        }
+      ]
+    },
+    {
+      "leetcodeId": "leetcode:1275",
+      "outcome": "confirmed-equivalent",
+      "notes": "Resolved against full cached statements and bounds. Full text guarantees valid alternating moves, player1 first, no moves after game ends, and identifies3x3 winner/draw/unfinished. Constant-size row/column/diagonal tracking implements both.",
+      "equivalents": [
+        {
+          "id": "code360:10314",
+          "notes": "Full text guarantees valid alternating moves, player1 first, no moves after game ends, and identifies3x3 winner/draw/unfinished. Constant-size row/column/diagonal tracking implements both.",
+          "contract": {
+            "variant": "player1-player2-draw-uncertain",
+            "notes": "Map LC A->player1, B->player2, Draw->draw, Pending->uncertain."
+          }
+        }
+      ],
+      "rejected": [],
+      "evidence": [
+        {
+          "id": "leetcode:1275",
+          "url": "https://leetcode.com/problems/find-winner-on-a-tic-tac-toe-game",
+          "access": "cached-statement",
+          "notes": "Current local source statement used as comparison baseline."
+        },
+        {
+          "id": "code360:10314",
+          "url": "https://www.naukri.com/code360/problems/tic-tac-toe-winner_1214545",
+          "access": "cached-statement-live-not-attempted",
+          "notes": "Compared full cached statement and constraints; unresolved details require original-source verification."
+        }
+      ]
+    },
+    {
+      "leetcodeId": "leetcode:1278",
+      "outcome": "confirmed-equivalent",
+      "notes": "Resolved against full cached statements and bounds. Full text changes characters and divides into exactlyK nonempty disjoint palindromic substrings, minimizing changed positions. Interval palindrome-change costs plus partition DP O(K*N^2) supports N50 andLC100.",
+      "equivalents": [
+        {
+          "id": "code360:10738",
+          "notes": "Full text changes characters and divides into exactlyK nonempty disjoint palindromic substrings, minimizing changed positions. Interval palindrome-change costs plus partition DP O(K*N^2) supports N50 andLC100."
+        }
+      ],
+      "rejected": [],
+      "evidence": [
+        {
+          "id": "leetcode:1278",
+          "url": "https://leetcode.com/problems/palindrome-partitioning-iii",
+          "access": "cached-statement",
+          "notes": "Current local source statement used as comparison baseline."
+        },
+        {
+          "id": "code360:10738",
+          "url": "https://www.naukri.com/code360/problems/palindrome-partitioning-with-changes_1263705",
+          "access": "cached-statement-live-not-attempted",
+          "notes": "Compared full cached statement and constraints; unresolved details require original-source verification."
+        }
+      ]
+    },
+    {
+      "leetcodeId": "leetcode:1290",
+      "outcome": "external-blocker",
+      "notes": "Code36015214 permits3000 bits with no modulus/output representation; verify big-number contract before proposing. GFG confirmed.",
+      "equivalents": [],
+      "rejected": [],
+      "evidence": [
+        {
+          "id": "leetcode:1290",
+          "url": "https://leetcode.com/problems/convert-binary-number-in-a-linked-list-to-integer",
+          "access": "cached-statement",
+          "notes": "Current local source statement used as comparison baseline."
+        },
+        {
+          "id": "code360:15214",
+          "url": "https://www.naukri.com/code360/problems/binary-to-integer_2421938",
+          "access": "cached-statement-live-not-attempted",
+          "notes": "Compared full cached statement and constraints; unresolved details require original-source verification."
+        }
+      ]
+    },
+    {
+      "leetcodeId": "leetcode:1292",
+      "outcome": "external-blocker",
+      "notes": "Individually screened the local task against retrieved cross-platform candidates; no additional counterpart confirmed. Lexical retrieval is not an exhaustive proof of absence. New GFG904341 candidate has the same square-sum maximum-side objective, but permits negative cells and n*m<=1e6. Negative cells invalidate monotone feasibility by side length used for LC nonnegative cells; no shared efficient algorithm established for both bounds.",
+      "equivalents": [],
+      "rejected": [],
+      "evidence": [
+        {
+          "id": "leetcode:1292",
+          "url": "https://leetcode.com/problems/maximum-side-length-of-a-square-with-sum-less-than-or-equal-to-threshold",
+          "access": "cached-statement",
+          "notes": "Current local source statement used as comparison baseline."
+        },
+        {
+          "id": "geeksforgeeks:904341",
+          "url": "https://www.geeksforgeeks.org/problems/largest-square-with-sum-at-most-k/1",
+          "access": "cached-statement-live-not-attempted",
+          "notes": "Compared full cached statement and constraints; unresolved details require original-source verification."
+        }
+      ]
+    },
+    {
+      "leetcodeId": "leetcode:1307",
+      "outcome": "confirmed-equivalent",
+      "notes": "Resolved against full cached statements and bounds. Full text explicitly requires injective letter-to-digit assignment0..9, no leading zeros, sum of all words equals result, at most10 distinct letters,2..5 words, length<=7. Same column-wise carry backtracking as LC.",
+      "equivalents": [
+        {
+          "id": "code360:10620",
+          "notes": "Full text explicitly requires injective letter-to-digit assignment0..9, no leading zeros, sum of all words equals result, at most10 distinct letters,2..5 words, length<=7. Same column-wise carry backtracking as LC."
+        }
+      ],
+      "rejected": [],
+      "evidence": [
+        {
+          "id": "leetcode:1307",
+          "url": "https://leetcode.com/problems/verbal-arithmetic-puzzle",
+          "access": "cached-statement",
+          "notes": "Current local source statement used as comparison baseline."
+        },
+        {
+          "id": "code360:10620",
+          "url": "https://www.naukri.com/code360/problems/verbal-arithmetic-puzzle_1235235",
+          "access": "cached-statement-live-not-attempted",
+          "notes": "Compared full cached statement and constraints; unresolved details require original-source verification."
+        }
+      ]
+    },
+    {
+      "leetcodeId": "leetcode:1331",
+      "outcome": "confirmed-equivalent",
+      "notes": "Resolved against full cached statements and bounds. Full ranking rules explicitly give same rank to equal values and require ranks as small as possible, establishing dense ranks. Sorting distinct values and mapping ranks O(NlogN) is valid for both regardless of integer range; cached Code360 numeric bounds absent.",
+      "equivalents": [
+        {
+          "id": "code360:9113",
+          "notes": "Full ranking rules explicitly give same rank to equal values and require ranks as small as possible, establishing dense ranks. Sorting distinct values and mapping ranks O(NlogN) is valid for both regardless of integer range; cached Code360 numeric bounds absent."
+        }
+      ],
+      "rejected": [],
+      "evidence": [
+        {
+          "id": "leetcode:1331",
+          "url": "https://leetcode.com/problems/rank-transform-of-an-array",
+          "access": "cached-statement",
+          "notes": "Current local source statement used as comparison baseline."
+        },
+        {
+          "id": "code360:9113",
+          "url": "https://www.naukri.com/code360/problems/replace-each-element-of-array-with-its-corresponding-rank_975384",
+          "access": "cached-statement-live-not-attempted",
+          "notes": "Compared full cached statement and constraints; unresolved details require original-source verification."
+        }
+      ]
+    },
+    {
+      "leetcodeId": "leetcode:1378",
+      "outcome": "confirmed-equivalent",
+      "notes": "Resolved against full cached statements and bounds. Same left lookup on employee id with missing identifier null. GFG specifies output id,name,department_id; LC unique_id,name. Pandas left merge supports both; mapping-table id primary key restricts GFG to one match.",
+      "equivalents": [
+        {
+          "id": "geeksforgeeks:895009",
+          "notes": "Same employee-to-identifier lookup by id with unmatched employee mapped to null; GFG identifier is named department_id. A left join computes the same core lookup. EmployeeDept id primary key is a narrower mapping domain.",
+          "contract": {
+            "variant": "employee-department-identifier-schema",
+            "notes": "Rename EmployeeUNI(unique_id) to EmployeeDept(department_id). Respect native returned schema; this GFG fragment lacks printed output column examples, so only the clearly defined department_id per-employee lookup is asserted."
+          }
+        },
+        {
+          "id": "geeksforgeeks:930978",
+          "notes": "Same left lookup on employee id with missing identifier null. GFG specifies output id,name,department_id; LC unique_id,name. Pandas left merge supports both; mapping-table id primary key restricts GFG to one match.",
+          "contract": {
+            "variant": "employee-department-id-extra-column",
+            "notes": "Rename EmployeeUNI/unique_id to EmployeeDept/department_id; retain employee id as an extra output column for GFG930978. LC returns unique_id and name."
+          }
+        }
+      ],
+      "rejected": [],
+      "evidence": [
+        {
+          "id": "leetcode:1378",
+          "url": "https://leetcode.com/problems/replace-employee-id-with-the-unique-identifier",
+          "access": "cached-statement",
+          "notes": "Current local source statement used as comparison baseline."
+        },
+        {
+          "id": "geeksforgeeks:895009",
+          "url": "https://www.geeksforgeeks.org/problems/replace-employee-id-with-department-id/1",
+          "access": "cached-statement-live-not-attempted",
+          "notes": "Compared full cached statement and constraints; unresolved details require original-source verification."
+        },
+        {
+          "id": "geeksforgeeks:930978",
+          "url": "https://www.geeksforgeeks.org/problems/replace-employee-id-with-department-id--123611/1",
+          "access": "cached-statement-live-not-attempted",
+          "notes": "Compared full cached statement and constraints; unresolved details require original-source verification."
+        }
+      ]
+    },
+    {
+      "leetcodeId": "leetcode:1390",
+      "outcome": "confirmed-equivalent",
+      "notes": "Resolved against full cached statements and bounds. Full formal task sums divisors of each array integer having exactly FOUR divisors, or0 if none. Trial division with early divisor-count cutoff supports N2000,values1e5 and LC10000,values1e5.",
+      "equivalents": [
+        {
+          "id": "code360:12522",
+          "notes": "Full formal task sums divisors of each array integer having exactly FOUR divisors, or0 if none. Trial division with early divisor-count cutoff supports N2000,values1e5 and LC10000,values1e5."
+        }
+      ],
+      "rejected": [],
+      "evidence": [
+        {
+          "id": "leetcode:1390",
+          "url": "https://leetcode.com/problems/four-divisors",
+          "access": "cached-statement",
+          "notes": "Current local source statement used as comparison baseline."
+        },
+        {
+          "id": "code360:12522",
+          "url": "https://www.naukri.com/code360/problems/four-divisors_1463975",
+          "access": "cached-statement-live-not-attempted",
+          "notes": "Compared full cached statement and constraints; unresolved details require original-source verification."
+        }
+      ]
+    },
+    {
+      "leetcodeId": "leetcode:1393",
+      "outcome": "confirmed-equivalent",
+      "notes": "Resolved against full cached statements and bounds. Full SQL table/task/sample defines sum Sell prices minus Buy prices for each stock, result stock_name,capital_gain_loss. Same signed per-stock aggregation; no numeric algorithm-bound difference.",
+      "equivalents": [
+        {
+          "id": "code360:14410",
+          "notes": "Full SQL table/task/sample defines sum Sell prices minus Buy prices for each stock, result stock_name,capital_gain_loss. Same signed per-stock aggregation; no numeric algorithm-bound difference."
+        }
+      ],
+      "rejected": [],
+      "evidence": [
+        {
+          "id": "leetcode:1393",
+          "url": "https://leetcode.com/problems/capital-gainloss",
+          "access": "cached-statement",
+          "notes": "Current local source statement used as comparison baseline."
+        },
+        {
+          "id": "code360:14410",
+          "url": "https://www.naukri.com/code360/problems/capital-gainloss_2122059",
+          "access": "cached-statement-live-not-attempted",
+          "notes": "Compared full cached statement and constraints; unresolved details require original-source verification."
+        }
+      ]
+    },
+    {
+      "leetcodeId": "leetcode:1405",
+      "outcome": "confirmed-equivalent",
+      "notes": "Resolved against full cached statements and bounds. Full input-format clause explicitly defines X,Y,Z as MAXIMUM counts for a,b,c, resolving narrative typo almost. Return any longest string with no three identical consecutive letters. Greedy largest-remaining allowed character supports counts<=1000 and LC<=100.",
+      "equivalents": [
+        {
+          "id": "code360:12125",
+          "notes": "Full input-format clause explicitly defines X,Y,Z as MAXIMUM counts for a,b,c, resolving narrative typo almost. Return any longest string with no three identical consecutive letters. Greedy largest-remaining allowed character supports counts<=1000 and LC<=100."
+        }
+      ],
+      "rejected": [],
+      "evidence": [
+        {
+          "id": "leetcode:1405",
+          "url": "https://leetcode.com/problems/longest-happy-string",
+          "access": "cached-statement",
+          "notes": "Current local source statement used as comparison baseline."
+        },
+        {
+          "id": "code360:12125",
+          "url": "https://www.naukri.com/code360/problems/longest-happy-string_1404430",
+          "access": "cached-statement-live-not-attempted",
+          "notes": "Compared full cached statement and constraints; unresolved details require original-source verification."
+        }
+      ]
+    },
+    {
+      "leetcodeId": "leetcode:1407",
+      "outcome": "confirmed-equivalent",
+      "notes": "Resolved against full cached statements and bounds. Full sample explicitly includes Donald with no rides and travelled_distance0; ordering distance descending then name ascending. Same Users/Rides schema and result name,travelled_distance. SQL left join/coalesced SUM computes both.",
+      "equivalents": [
+        {
+          "id": "code360:14367",
+          "notes": "Full sample explicitly includes Donald with no rides and travelled_distance0; ordering distance descending then name ascending. Same Users/Rides schema and result name,travelled_distance. SQL left join/coalesced SUM computes both."
+        }
+      ],
+      "rejected": [],
+      "evidence": [
+        {
+          "id": "leetcode:1407",
+          "url": "https://leetcode.com/problems/top-travellers",
+          "access": "cached-statement",
+          "notes": "Current local source statement used as comparison baseline."
+        },
+        {
+          "id": "code360:14367",
+          "url": "https://www.naukri.com/code360/problems/top-travellers_2117112",
+          "access": "cached-statement-live-not-attempted",
+          "notes": "Compared full cached statement and constraints; unresolved details require original-source verification."
+        }
+      ]
+    },
+    {
+      "leetcodeId": "leetcode:1447",
+      "outcome": "confirmed-equivalent",
+      "notes": "Resolved against full cached statements and bounds. Although interval is written[0,1], definition explicitly excludes whole numbers, so0 and1 are excluded. All reduced proper fractions with denominator<=N, any order; gcd enumeration supports N<=100.",
+      "equivalents": [
+        {
+          "id": "code360:12592",
+          "notes": "Although interval is written[0,1], definition explicitly excludes whole numbers, so0 and1 are excluded. All reduced proper fractions with denominator<=N, any order; gcd enumeration supports N<=100.",
+          "contract": {
+            "variant": "no-fractions-minus-one",
+            "notes": "Code360 states print-1 if no fractions (N=1); LC returns an empty list. Preserve native judge sentinel."
+          }
+        }
+      ],
+      "rejected": [],
+      "evidence": [
+        {
+          "id": "leetcode:1447",
+          "url": "https://leetcode.com/problems/simplified-fractions",
+          "access": "cached-statement",
+          "notes": "Current local source statement used as comparison baseline."
+        },
+        {
+          "id": "code360:12592",
+          "url": "https://www.naukri.com/code360/problems/simplified-fractions_1467060",
+          "access": "cached-statement-live-not-attempted",
+          "notes": "Compared full cached statement and constraints; unresolved details require original-source verification."
+        }
+      ]
+    },
+    {
+      "leetcodeId": "leetcode:1483",
+      "outcome": "confirmed-equivalent",
+      "notes": "Resolved against full cached statements and bounds. Full cached GFG task is parent-array rooted tree with repeated[u,k] queries, return kth ancestor or-1, exactly LC TreeAncestor core. Binary lifting O(NlogN) preprocessing/O(logN) per query supports GFG N,Q<=1e5 andLC50000.",
+      "equivalents": [
+        {
+          "id": "geeksforgeeks:930913",
+          "notes": "Full cached GFG task is parent-array rooted tree with repeated[u,k] queries, return kth ancestor or-1, exactly LC TreeAncestor core. Binary lifting O(NlogN) preprocessing/O(logN) per query supports GFG N,Q<=1e5 andLC50000.",
+          "contract": {
+            "variant": "batch-ancestor-query-array",
+            "notes": "GFG takes all queries and returns answer array; LC exposes constructor plus getKthAncestor calls. Same root0,parent[0]=-1,node labels0..N-1."
+          }
+        }
+      ],
+      "rejected": [],
+      "evidence": [
+        {
+          "id": "leetcode:1483",
+          "url": "https://leetcode.com/problems/kth-ancestor-of-a-tree-node",
+          "access": "cached-statement",
+          "notes": "Current local source statement used as comparison baseline."
+        },
+        {
+          "id": "geeksforgeeks:930913",
+          "url": "https://www.geeksforgeeks.org/problems/ancestor-queries-on-a-tree/1",
+          "access": "cached-statement-live-not-attempted",
+          "notes": "Compared full cached statement and constraints; unresolved details require original-source verification."
+        },
+        {
+          "id": "code360:8283",
+          "url": "https://www.naukri.com/code360/problems/kth-ancestor-of-a-node-in-binary-tree_842561",
+          "access": "cached-statement-live-not-attempted",
+          "notes": "Compared full cached statement and constraints; unresolved details require original-source verification."
+        },
+        {
+          "id": "geeksforgeeks:700682",
+          "url": "https://www.geeksforgeeks.org/problems/kth-ancestor-in-a-tree/1",
+          "access": "cached-statement-live-not-attempted",
+          "notes": "Compared full cached statement and constraints; unresolved details require original-source verification."
+        }
+      ]
+    }
+  ],
+  "spotChecks": []
+}

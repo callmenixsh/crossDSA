@@ -1,5 +1,8 @@
 import subprocess
 import sys
+from pathlib import Path
+
+ROOT = Path(__file__).resolve().parent
 
 SCRAPERS = {
     'leetcode': 'scrapers/leetcode_scraper.py',
@@ -16,7 +19,20 @@ def run(target, extra):
     script = SCRAPERS[target]
     cmd = [sys.executable, script] + extra
     print(f'\n==> {target}: python {script} {" ".join(extra)}')
-    return subprocess.call(cmd)
+    return subprocess.call(cmd, cwd=ROOT)
+
+
+def check_normalization_audit():
+    print('\nChecking LeetCode review coverage against the scraped snapshots...', flush=True)
+    try:
+        result = subprocess.call(['node', 'normalization/audit.mjs'], cwd=ROOT)
+    except FileNotFoundError:
+        print('Audit could not run: install Node.js 22 or newer, then run node normalization/audit.mjs.')
+        return 1
+    if result:
+        print('Normalization review needs attention. Inspect the audit output before rebuilding; do not regenerate review pins automatically.')
+    print('Rebuild the catalog after source changes: node normalization/build.mjs')
+    return result
 
 def pick_interactively():
     print('Pick scrapers to run (comma-separated numbers, or 0 for all):')
@@ -61,7 +77,8 @@ def main():
             print(f'==> {t} FAILED')
 
     print(f'\nDone: {len(targets) - failures}/{len(targets)} scrapers finished')
-    sys.exit(1 if failures else 0)
+    audit_status = check_normalization_audit()
+    sys.exit(1 if failures or audit_status else 0)
 
 if __name__ == '__main__':
     main()

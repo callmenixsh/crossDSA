@@ -1,12 +1,14 @@
+import { mountSolvedImport } from './tracker/solved-import-ui.mjs';
+import { validateBackup } from './tracker/data-backup.mjs';
 import { mountContestStrip } from './tracker/contest-ui.mjs';
-import { appendTodayIncrease, solvedToday } from './tracker/count-ui.mjs';
+import { appendTodayIncrease, solvedToday, appendTufActivityToday } from './tracker/count-ui.mjs';
 import { CONTEST_ORIGINS } from './tracker/contests.mjs';
 import { ratingSeries } from './tracker/ratings.mjs';
 import { filterLibrary, libraryPlatformEnabled } from './tracker/library.mjs';
 import { attachQuestionCatalog, collapseQuestions, sourceDigest } from './tracker/question-catalog.mjs';
 import { mountCompanies } from './tracker/company-ui.mjs';
 import { splitCode360Tags } from './tracker/code360-companies.mjs';
-import { STORAGE_KEY, PLATFORMS, QUESTION_PLATFORMS, orderedPlatformIds, emptyState, normalizeState, cleanHandle, problemKey, dateKey, shiftDay, dailyActivity, streaks, acceptedToday, practiceOverview, safeProblemUrl, doneQuestions, questionIsDone } from './tracker/core.mjs';
+import { STORAGE_KEY, PLATFORMS, QUESTION_PLATFORMS, orderedPlatformIds, emptyState, normalizeState, cleanHandle, problemKey, dateKey, shiftDay, dailyActivity, streaks, practiceOverview, safeProblemUrl, doneQuestions, questionIsDone } from './tracker/core.mjs';
 
 const $ = id => document.getElementById(id);
 let state = emptyState(), library = [], filtered = [], page = 0, activeProblem = null, indexReady = false;
@@ -69,13 +71,13 @@ function render() {
   const accounts = Object.values(state.accounts), snapshots = accounts.filter(a => a.snapshot);
   $('solvedTotal').textContent = snapshots.length ? `${snapshots.some(a => a.snapshot.totalIsLowerBound) ? '≥ ' : ''}${format(snapshots.reduce((sum, a) => sum + a.snapshot.totalSolved, 0))}` : '—';
   $('solvedTotal').title = 'Total across platforms';
-  const accepted = acceptedToday(state.accounts, today(), state.settings.timeZone);
+  const accepted = practiceOverview(state).today;
   appendTodayIncrease($('solvedTotal'), accepted, Boolean(practiceOverview(state).warning));
-  const activityWarning = practiceOverview(state).warning;
-  $('goalCount').textContent = activityWarning ? accepted ? `${accepted}+` : '—' : accepted;
-  $('goalRing').title = activityWarning || 'Accepted problems today, including browser-observed accepts';
+  const { warning: activityWarning, notice: activityNotice } = practiceOverview(state);
+  $('goalCount').textContent = accepted;
+  $('goalRing').title = activityWarning || activityNotice || 'Today’s solves across platforms, including TUF calendar activity';
   $('goalRing').style.setProperty('--progress', `${Math.min(100, accepted / state.settings.dailyGoal * 100)}%`);
-  $('goalCaption').textContent = `of ${state.settings.dailyGoal} accepted problems`;
+  $('goalCaption').textContent = `of ${state.settings.dailyGoal} today`;
   const counts = dailyActivity(state.accounts, state.settings.timeZone);
   const streak = streaks(counts, today());
   $('currentStreak').textContent = streak.current;
@@ -113,26 +115,22 @@ function updateQuestionPlatforms() {
   const connected = orderedPlatformIds(state.settings, Object.keys(QUESTION_PLATFORMS)).filter(id => libraryPlatformEnabled(id, state.accounts));
   for (const id of ['questionPlatform', 'donePlatform']) {
     const select = $(id), selected = select.value;
-    select.replaceChildren(option('all', connected.length ? 'All connected' : 'No platforms'), ...connected.map(id => option(id, QUESTION_PLATFORMS[id].name)));
-    select.value = connected.includes(selected) ? selected : 'all';
-    select.disabled = !connected.length;
+    const available = id === 'donePlatform' ? connected.filter(platform => platform !== 'tuf') : connected;
+    select.replaceChildren(option('all', available.length ? 'All connected' : 'No platforms'), ...available.map(id => option(id, QUESTION_PLATFORMS[id].name)));
+    select.value = available.includes(selected) ? selected : 'all';
+    select.disabled = !available.length;
   }
 }
 function questionActions(problem) {
   const key = problem.key || problemKey(problem.platform, problem.url);
-  const versions = problem.versions || [problem], primary = versions.find(v => v.key === key) || problem;
+  const catalog = libraryByKey.get(key);
+  const versions = problem.versions || catalog?.catalogVersions || [problem], primary = versions.find(v => v.key === key) || problem;
   const actions = el('div', 'question-actions');
   const starred = versions.some(v => state.workspace[v.key]?.listIds?.includes('saved'));
   const star = button(starred ? '★' : '☆', `question-star${starred ? ' active' : ''}`, () => update({ starred: !starred }));
   star.setAttribute('aria-label', `${starred ? 'Unstar' : 'Star'} ${problem.title}`);
   star.setAttribute('aria-pressed', String(starred));
   star.title = starred ? 'Unstar' : 'Star';
-  const label = el('label', 'question-done'), checkbox = el('input');
-  checkbox.type = 'checkbox'; checkbox.checked = versions.some(v => questionIsDone(state.accounts, state.workspace, v.key));
-  checkbox.setAttribute('aria-label', `Mark ${problem.title} as done`);
-  checkbox.addEventListener('change', () => update({ done: checkbox.checked }));
-  label.append(checkbox);
-  label.title = 'Mark as done';
   const customCount = new Set(versions.flatMap(v => state.workspace[v.key]?.listIds || []).filter(id => id !== 'saved')).size;
   const listTarget = versions.find(v => state.workspace[v.key]?.listIds?.some(id => id !== 'saved')) || primary;
   const add = button('+ Add to list', `question-list-button${customCount ? ' has-lists' : ''}`, () => editProblem(listTarget));
@@ -140,21 +138,26 @@ function questionActions(problem) {
   add.setAttribute('aria-label', `Add ${problem.title} to list`);
   actions.append(star, add);
   async function update(patch) {
-    star.disabled = true; checkbox.disabled = true;
+    star.disabled = true;
     try {
-      const existing = patch.starred === false ? versions.filter(v => state.workspace[v.key]?.listIds?.includes('saved')) : patch.done === false ? versions.filter(v => state.workspace[v.key]?.done) : [];
+      const existing = patch.starred === false ? versions.filter(v => state.workspace[v.key]?.listIds?.includes('saved')) : [];
       for (const target of existing.length ? existing : [primary]) await rpc('question-state', { entry: defaultPractice(target), patch });
       render();
     }
-    catch (error) { checkbox.checked = versions.some(v => questionIsDone(state.accounts, state.workspace, v.key)); toast(error.message, true); }
-    finally { star.disabled = false; checkbox.disabled = false; }
+    catch (error) { toast(error.message, true); }
+    finally { star.disabled = false; }
   }
-  return { done: label, actions };
+  return { solved: versions.some(v => questionIsDone(state.accounts, v.key)), actions };
 }
 function appendQuestionRow(row, problem, ...content) {
   const controls = questionActions(problem);
-  row.classList.toggle('is-done', controls.done.querySelector('input').checked);
-  row.append(controls.done, ...content, controls.actions);
+  row.classList.toggle('is-done', controls.solved);
+  row.append(...content, controls.actions);
+  if (controls.solved && !row.querySelector('.solved-tag')) {
+    const copy = row.querySelector('.question-copy, .done-copy') || row.firstElementChild;
+    const tags = copy.querySelector('.question-tags') || copy;
+    tags.append(el('span', 'tag solved-tag', 'Solved'));
+  }
 }
 function renderHeatmap() {
   const counts = dailyActivity(state.accounts, state.settings.timeZone, $('progressPlatform').value);
@@ -246,45 +249,49 @@ function renderPlatforms() {
     const card = el('article', 'platform-card'); card.style.setProperty('--platform', platform.color);
     const heading = el('div', 'platform-heading'), name = el('div', 'platform-name');
     name.append(el('span', 'platform-avatar', platform.short), el('h3', '', platform.name));
-    const status = !account ? 'Not connected' : account.status === 'syncing' ? 'Syncing' : account.status === 'error' ? 'Needs attention' : snapshot?.activityWarning ? id === 'leetcode' ? 'Profile updated · Activity needs LeetCode' : 'Activity unavailable' : snapshot?.partial ? 'Partial history' : snapshot ? 'Synced' : 'Not synced';
-    const statusPill = el('span', `status-pill ${account?.status || ''}`, status);
-    if (snapshot?.coverage) statusPill.title = snapshot.coverage;
+    const status = account.status === 'syncing' ? 'Syncing' : account.status === 'error' ? 'Needs attention' : snapshot?.activityWarning ? id === 'leetcode' ? 'Profile updated · Activity needs LeetCode' : 'Activity unavailable' : snapshot?.activityStatus === 'cached' ? 'Saved history' : snapshot?.partial ? 'Partial history' : snapshot ? 'Synced' : 'Not synced';
+    const statusPill = el('span', `status-pill ${account.status || ''}`, status);
+    statusPill.title = [snapshot?.activityWarning || snapshot?.activityNotice, snapshot?.coverage].filter(Boolean).join('\n');
     if (snapshot?.activityWarning) statusPill.classList.add('warning');
     heading.append(name, statusPill); card.append(heading);
-    if (!account) {
-      card.append(el('p', 'platform-empty', `Bring your ${platform.name} progress into your workspace.`), button('＋ Connect account', 'button ghost', () => showConnections(id)));
-    } else {
-      const handle = el('div', 'platform-handle'); handle.append(link(`@${account.handle} ↗`, platform.profile(account.handle)), el('time', '', timeAgo(account.syncedAt))); card.append(handle);
-      if (snapshot) {
-        const stats = el('div', 'platform-stats');
-        for (const [value, label] of [[`${snapshot.totalIsLowerBound ? '≥ ' : ''}${format(snapshot.totalSolved)}`, 'SOLVED'], [id === 'geeksforgeeks' ? snapshot.score == null ? '—' : format(snapshot.score) : snapshot.rating == null ? null : format(Math.round(snapshot.rating)), id === 'geeksforgeeks' ? 'CODING SCORE' : 'CONTEST RATING'], [snapshot.rank ? `#${format(snapshot.rank)}` : id === 'geeksforgeeks' ? '—' : null, id === 'geeksforgeeks' ? 'INSTITUTE RANK' : 'RANK']]) {
-          if (value === null) continue;
-          const stat = el('div', 'platform-stat'), total = el('strong', '', value);
-          if (label === 'SOLVED') appendTodayIncrease(total, solvedToday({ [id]: account }, state.settings.timeZone), Boolean(snapshot.activityWarning));
-          stat.append(total, el('span', '', label)); stats.append(stat);
+    const handle = el('div', 'platform-handle'); handle.append(link(`@${account.handle} ↗`, platform.profile(account.handle)), el('time', '', timeAgo(account.syncedAt))); card.append(handle);
+    if (snapshot) {
+      const stats = el('div', 'platform-stats');
+      for (const [value, label] of [[`${snapshot.totalIsLowerBound ? '≥ ' : ''}${format(snapshot.totalSolved)}`, 'SOLVED'], [id === 'geeksforgeeks' ? snapshot.score == null ? '—' : format(snapshot.score) : snapshot.rating == null ? null : format(Math.round(snapshot.rating)), id === 'geeksforgeeks' ? 'CODING SCORE' : 'CONTEST RATING'], [snapshot.rank ? `#${format(snapshot.rank)}` : id === 'geeksforgeeks' ? '—' : null, id === 'geeksforgeeks' ? 'INSTITUTE RANK' : 'RANK']]) {
+        if (value === null) continue;
+        const stat = el('div', 'platform-stat'), total = el('strong', '', value);
+        if (label === 'SOLVED') {
+          if (id === 'tuf') appendTufActivityToday(total, account);
+          else appendTodayIncrease(total, solvedToday({ [id]: account }, state.settings.timeZone), Boolean(snapshot.activityWarning || snapshot.activityStatus === 'cached'));
         }
-        card.append(stats);
-        const breakdown = el('div', 'breakdown');
-        for (const [level, count] of Object.entries(snapshot.breakdown || {})) if (level !== 'All') breakdown.append(el('span', '', `${level} ${format(count)}`));
-        if (breakdown.childNodes.length) card.append(breakdown);
-        if (snapshot.providerStreak) card.append(el('p', 'rating-caption', `Platform streak: ${snapshot.providerStreak.current} days · best ${snapshot.providerStreak.longest}`));
+        stat.append(total, el('span', '', label)); stats.append(stat);
       }
-      if (account.error) card.append(el('p', 'platform-error', account.error));
-      if (snapshot?.activityWarning) card.append(el('p', 'platform-error', snapshot.activityWarning));
-      if (id === 'atcoder' && Number.isFinite(snapshot?.highestRating)) card.append(el('p', 'rating-caption', `Highest Algorithm rating: ${format(snapshot.highestRating)}`));
-      if (snapshot?.ratingWarning) card.append(el('p', 'platform-error', snapshot.ratingWarning));
-      if (id === 'leetcode' && snapshot) {
-        const freshness = el('p', 'rating-caption', `Profile: ${timeAgo(account.profileSyncedAt || account.syncedAt)} · Activity: ${account.activitySyncedAt ? timeAgo(account.activitySyncedAt) : 'Not synced yet'}`);
-        card.append(freshness);
-      }
-      const actions = el('div', 'inline-controls platform-actions');
-      const sync = button(account.status === 'syncing' ? 'Syncing…' : '↻ Refresh', 'text-button', () => syncAccounts(id)); sync.disabled = account.status === 'syncing'; actions.append(sync);
-      if (id === 'tuf') actions.append(link('Open TUF ↗', platform.profile(account.handle), 'text-button'));
-      if (id === 'leetcode' && snapshot?.activityWarning) actions.append(link('Open LeetCode ↗', platform.profile(account.handle), 'text-button'));
-      const disconnect = button('Disconnect', 'text-button', () => disconnectPlatform(id));
-      disconnect.setAttribute('aria-label', `Disconnect ${platform.name}`); actions.append(disconnect);
-      card.append(actions);
+      card.append(stats);
+      const breakdown = el('div', 'breakdown');
+      for (const [level, count] of Object.entries(snapshot.breakdown || {})) if (level !== 'All') breakdown.append(el('span', '', `${level} ${format(count)}`));
+      if (breakdown.childNodes.length) card.append(breakdown);
+      if (snapshot.providerStreak) card.append(el('p', 'rating-caption', `Platform streak: ${snapshot.providerStreak.current} days · best ${snapshot.providerStreak.longest}`));
     }
+    if (account.error) card.append(el('p', 'platform-error', account.error));
+    if (snapshot?.activityWarning) card.append(el('p', 'platform-error', snapshot.activityWarning));
+    if (id === 'atcoder' && Number.isFinite(snapshot?.highestRating)) card.append(el('p', 'rating-caption', `Highest Algorithm rating: ${format(snapshot.highestRating)}`));
+    if (snapshot?.ratingWarning) card.append(el('p', 'platform-error', snapshot.ratingWarning));
+    let syncDetails;
+    if (id === 'leetcode' && snapshot) {
+      syncDetails = el('details', 'platform-sync-details');
+      syncDetails.append(el('summary', '', 'Sync details'));
+      if (snapshot.activityNotice) syncDetails.append(el('p', 'rating-caption', snapshot.activityNotice));
+      const freshness = el('p', 'rating-caption', `Profile: ${timeAgo(account.profileSyncedAt || account.syncedAt)} · Calendar: ${account.calendarSyncedAt ? timeAgo(account.calendarSyncedAt) : 'Not synced yet'} · Submissions: ${account.activitySyncedAt ? timeAgo(account.activitySyncedAt) : 'Not synced yet'}`);
+      syncDetails.append(freshness);
+    }
+    const actions = el('div', 'inline-controls platform-actions');
+    const sync = button(account.status === 'syncing' ? 'Syncing…' : '↻ Refresh', 'text-button', () => syncAccounts(id)); sync.disabled = account.status === 'syncing'; actions.append(sync);
+    if (id === 'leetcode' && snapshot?.activityWarning) actions.append(link('Open LeetCode ↗', platform.profile(account.handle), 'text-button'));
+    if (id === 'code360') actions.append(link('Open Code360 ↗', platform.profile(account.handle), 'text-button'));
+    const disconnect = button('Disconnect', 'text-button', () => disconnectPlatform(id));
+    disconnect.setAttribute('aria-label', `Disconnect ${platform.name}`); actions.append(disconnect);
+    if (syncDetails) actions.append(syncDetails);
+    card.append(actions);
     cards.append(card);
   }
   if (!Object.keys(state.accounts).length) cards.append(empty('Connect a platform to get started.'));
@@ -304,7 +311,7 @@ function renderRecent() {
   for (const r of records) {
     const row = el('div', 'recent-row'), copy = el('div'); copy.append(link(r.title, r.url));
     if (r.pending) copy.append(el('div', 'rating-caption', 'Pending verification'));
-    appendQuestionRow(row, r, copy, el('span', '', PLATFORMS[r.platform].name), el('time', '', r.day || displayDate(r.timestamp))); fragment.append(row);
+    appendQuestionRow(row, r, copy, el('span', '', PLATFORMS[r.platform].name), el('time', '', r.day || (r.timestamp ? displayDate(r.timestamp) : 'Solve date unknown'))); fragment.append(row);
   }
   if (!records.length) fragment.append(empty(Object.values(state.accounts).some(a => a.snapshot?.activityWarning) ? 'Recent activity unavailable.' : 'No recent solves.'));
   $('recentList').replaceChildren(fragment);
@@ -313,7 +320,8 @@ function questionMatches(p, query) {
   return !query || query.split(/\s+/).every(term => `${p.title} ${(p.topics || []).join(' ')}`.toLowerCase().includes(term));
 }
 function renderDone() {
-  const { total, records } = doneQuestions(state.accounts, { query: $('doneSearch').value, platform: $('donePlatform').value, from: $('doneFrom').value, to: $('doneTo').value, sort: $('doneSort').value, timeZone: state.settings.timeZone, workspace: state.workspace });
+  solvedImportPage.render();
+  const { total, records } = doneQuestions(state.accounts, { query: $('doneSearch').value, platform: $('donePlatform').value, from: $('doneFrom').value, to: $('doneTo').value, sort: $('doneSort').value, timeZone: state.settings.timeZone });
   const pages = Math.max(1, Math.ceil(records.length / PAGE_SIZE));
   donePage = Math.max(0, Math.min(donePage, pages - 1));
   const fragment = document.createDocumentFragment();
@@ -324,11 +332,10 @@ function renderDone() {
     if (versions.some(v => v.platform !== r.platform)) heading.append(createSolveLinks(versions, { label: 'Also on', excludePlatform: r.platform }));
     copy.append(heading);
     if (r.pending) copy.append(el('div', 'rating-caption', 'Accepted in browser · verification pending'));
-    if (r.source === 'manual') copy.append(el('div', 'rating-caption', 'Marked done'));
-    appendQuestionRow(row, r, copy, el('span', '', QUESTION_PLATFORMS[r.platform].name), el('time', '', r.day || displayDate(r.timestamp)));
+    appendQuestionRow(row, r, copy, el('span', '', QUESTION_PLATFORMS[r.platform].name), el('time', '', r.day || (r.timestamp ? displayDate(r.timestamp) : 'Solve date unknown')));
     fragment.append(row);
   }
-  if (!records.length) fragment.append(empty(total ? 'No matching done questions.' : 'No done questions yet. Mark a library question done, or connect a platform and sync.'));
+  if (!records.length) fragment.append(empty(total ? 'No matching done questions.' : 'No solves detected yet. Connect a platform and sync, or import past solves.'));
   $('doneList').replaceChildren(fragment);
   $('doneMeta').textContent = `${format(total)} tracked questions · ${format(records.length)} matching`;
   $('donePageLabel').textContent = `${donePage + 1} / ${pages}`;
@@ -381,14 +388,14 @@ function renderQuestionFilters() {
   }
   $('activeQuestionFilters').replaceChildren(chips);
 }
-function solvedKeys() { return new Set(doneQuestions(state.accounts, { workspace: state.workspace }).records.map(r => r.key)); }
+function solvedKeys() { return new Set(doneQuestions(state.accounts).records.map(r => r.key)); }
 function createSolveLinks(versions, { label = 'Solve on', excludePlatform, matchedVersions = [] } = {}) {
   const solve = el('div', 'solve-on'); solve.append(el('span', 'solve-on-label', label));
   const platforms = orderedPlatformIds(state.settings, [...new Set(versions.map(v => v.platform))]);
   for (const platform of platforms) {
     if (platform === excludePlatform) continue;
     const candidates = versions.filter(v => v.platform === platform), target = matchedVersions.find(v => v.platform === platform) || candidates[0];
-    const done = candidates.some(v => questionIsDone(state.accounts, state.workspace, v.key));
+    const done = candidates.some(v => questionIsDone(state.accounts, v.key));
     const anchor = link(`${QUESTION_PLATFORMS[platform].name}${done ? ' ✓' : ''}`, target.url, `solve-on-link${done ? ' is-solved' : ''}`);
     anchor.dataset.platform = platform;
     anchor.title = `${target.title} · ${target.difficulty}${target.isPremium ? ' · Premium' : ''}${target.contract?.notes ? '\n' + target.contract.notes : ''}${done ? '\nSolved on this platform' : ''}`;
@@ -396,14 +403,14 @@ function createSolveLinks(versions, { label = 'Solve on', excludePlatform, match
   }
   return solve;
 }
-function createLibraryRow(p, { open = false, frequency = false, onTopic = topic => { selectedTopics.add(topic); page = 0; renderQuestions(); } } = {}) {
+function createLibraryRow(p, { frequency = false, onTopic = topic => { selectedTopics.add(topic); page = 0; renderQuestions(); } } = {}) {
   const versions = p.versions || [p];
   const row = el('div', 'question-row catalog-row'), copy = el('div', 'question-copy'); row.dataset.key = p.canonicalId || p.key;
   const heading = el('div', 'question-heading');
   if (p.id && versions.length === 1) heading.append(el('span', 'question-id', `#${p.id}`));
   heading.append(link(p.title, p.url, 'question-title')); copy.append(heading);
   const tags = el('div', 'question-tags');
-  if (versions.some(v => questionIsDone(state.accounts, state.workspace, v.key))) tags.append(el('span', 'tag solved-tag', 'Solved'));
+  if (versions.some(v => questionIsDone(state.accounts, v.key))) tags.append(el('span', 'tag solved-tag', 'Solved'));
   if (p.isPremium) tags.append(el('span', 'tag', 'Premium'));
   if (p.platform === 'atcoder' && Number.isFinite(p.estimatedDifficulty)) {
     const estimate = el('span', 'tag', `Estimated difficulty: ${p.estimatedDifficulty}`);
@@ -421,40 +428,17 @@ function createLibraryRow(p, { open = false, frequency = false, onTopic = topic 
       tags.append(tag);
     }
   }
-  const details = el('details', 'question-details'); details.open = open; details.append(el('summary', '', 'Read question'));
-  const body = el('div', 'question-version-body');
-  const primary = versions.find(v => v.key === p.key) || versions[0];
-  function showVersion(version) {
-    body.replaceChildren(el('h3', '', `${QUESTION_PLATFORMS[version.platform].name} · ${version.title}`), el('p', 'muted', `${version.difficulty}${version.isPremium ? ' · Premium' : ''}`));
-    if (version.contract?.notes) body.append(el('p', 'question-version-note', version.contract.notes));
-    body.append(el('p', 'question-statement', version.description || 'A question statement is not available in the local index. Open the problem to read it on the platform.'));
-    if (version.constraints) body.append(el('h3', '', 'Constraints / input'), el('p', 'question-statement', version.constraints));
-    body.append(link('Open problem ↗', version.url, 'text-link'));
-    if (versions.length > 1) {
-      const controls = questionActions(version), actions = el('div', 'question-version-actions');
-      actions.append(el('span', 'muted', 'On this platform'), controls.done, controls.actions); body.append(actions);
-    }
-  }
-  if (versions.length > 1) {
-    const label = el('label', 'question-version-picker', 'Platform version '), select = el('select');
-    select.setAttribute('aria-label', `Platform version of ${p.title}`);
-    select.append(...versions.map(v => option(v.key, `${QUESTION_PLATFORMS[v.platform].name} · ${v.title} (#${v.id})`))); select.value = primary.key;
-    select.addEventListener('change', () => showVersion(versions.find(v => v.key === select.value)));
-    label.append(select); details.append(label);
-  }
-  showVersion(primary); details.append(body); copy.append(details);
   const solve = createSolveLinks(versions, { matchedVersions: p.matchedVersions });
   const difficulty = el('span', `difficulty ${p.difficulty.toLowerCase()}`, p.difficulty); difficulty.title = `${QUESTION_PLATFORMS[p.platform].name} difficulty; other platforms may differ.`;
   appendQuestionRow(row, p, copy, solve, difficulty); return row;
 }
 function renderQuestions() {
   if (!indexReady) { $('questionList').replaceChildren(el('div', 'loading-note', 'Loading the local question index…')); return; }
-  const openQuestions = new Set([...$('questionList').querySelectorAll('.question-row:has(.question-details[open])')].map(row => row.dataset.key));
   renderQuestionFilters();
   filtered = getFilteredQuestions(); page = Math.min(page, Math.max(0, Math.ceil(filtered.length / PAGE_SIZE) - 1));
   const fragment = document.createDocumentFragment();
   for (const p of filtered.slice(page * PAGE_SIZE, (page + 1) * PAGE_SIZE)) {
-    fragment.append(createLibraryRow(p, { open: openQuestions.has(p.canonicalId || p.key) }));
+    fragment.append(createLibraryRow(p));
   }
   if (!filtered.length) {
     fragment.append(empty(Object.keys(state.accounts).length ? 'No matching questions. Try removing a filter or clearing your search.' : 'Connect a platform in Settings to browse questions.'));
@@ -579,7 +563,7 @@ function setupConnections() {
     const form = el('form', 'connection-form'), label = el('label', '', p.name); label.htmlFor = `handle-${id}`;
     const controls = el('div', 'connection-inputs'), input = el('input'); input.id = `handle-${id}`; input.required = true; input.maxLength = 300; input.placeholder = id === 'code360' ? 'Username, profile ID or profile URL' : 'Username or public profile URL'; input.autocomplete = 'off'; input.spellcheck = false;
     const connect = el('button', 'button', 'Connect / refresh'); connect.id = `connect-${id}`; connect.type = 'submit'; const disconnect = button('Disconnect', 'button ghost', () => disconnectPlatform(id)); disconnect.id = `disconnect-${id}`; disconnect.hidden = true; disconnect.setAttribute('aria-label', `Disconnect ${p.name} account`); controls.append(input, connect, disconnect); form.append(label, controls);
-    const note = el('div', 'connection-description', id === 'atcoder' ? 'Public profile and Algorithm ratings from AtCoder; submission history via AtCoder Problems may be delayed.' : id === 'tuf' ? 'Syncs from your public TUF profile.' : id === 'leetcode' ? 'Sign in on LeetCode for private activity.' : id === 'code360' ? 'Totals only; no dated activity.' : '');
+    const note = el('div', 'connection-description', id === 'atcoder' ? 'Public profile and Algorithm ratings from AtCoder; submission history via AtCoder Problems may be delayed.' : id === 'tuf' ? 'Syncs from your public TUF profile.' : id === 'leetcode' ? 'Sign in on LeetCode for private activity.' : id === 'code360' ? 'Public totals; import solved history with Code360 open and signed in.' : '');
     if (id === 'tuf') note.append(document.createTextNode(' '), link('Open TakeUForward ↗', 'https://takeuforward.org/', 'text-link'));
     const result = el('div', 'connection-result'); result.id = `connection-result-${id}`; result.setAttribute('role', 'status');
     const heading = el('div', 'connection-heading');
@@ -601,7 +585,7 @@ function setupConnections() {
       try {
         const handle = cleanHandle(id, input.value);
         // Called directly from the click/submit gesture, before other async work.
-        const permission = chrome.permissions.request({ origins: p.origins, ...(['tuf', 'leetcode'].includes(id) ? { permissions: ['scripting'] } : {}) });
+        const permission = chrome.permissions.request({ origins: p.origins, ...(id === 'leetcode' ? { permissions: ['scripting'] } : {}) });
         connect.disabled = true; result.textContent = 'Connecting…';
         if (!await permission) throw new Error('Site access was declined. Your existing connection has been kept.');
         await rpc('connect', { platform: id, handle }); render();
@@ -646,11 +630,12 @@ async function loadLibrary() {
   } else failures.push('shared question catalog');
   libraryByKey = new Map(library.map(p => [p.key, p]));
   const unique = collapseQuestions(library).length;
-  $('catalogSummary').textContent = `${failures.length ? 'Loaded catalog' : 'Full catalog'} · ${format(library.length)} platform questions → ${format(unique)} unique questions · ${format(library.length - unique)} duplicates combined`;
+  $('catalogSummary').textContent = `${format(unique)} unique questions · ${format(library.length)} across platforms${failures.length ? ' · Partially loaded' : ''}`;
   indexReady = true;
   companyPage.setLibrary(library);
   renderQuestions();
   renderDone();
+  renderWorkspace();
   if (failures.length) toast(`Some local indexes could not load: ${failures.join(', ')}. Reload the extension.`, true);
 }
 
@@ -732,6 +717,37 @@ async function init() {
       const download = document.createElement('a'); download.href = url; download.download = `crossdsa-${today()}.json`; download.click(); setTimeout(() => URL.revokeObjectURL(url), 1000);
     } catch (error) { toast(error.message, true); }
   });
+  $('importData')?.addEventListener('click', () => $('importDataFile')?.click());
+  $('importDataFile')?.addEventListener('change', async event => {
+    const file = event.target.files[0];
+    event.target.value = '';
+    if (!file) return;
+    $('importData').disabled = true;
+    $('deleteData').disabled = true;
+    try {
+      if (file.size > 50 * 1024 * 1024) throw new Error('Choose a backup smaller than 50 MB.');
+      let data;
+      try { data = JSON.parse(await file.text()); } catch { throw new Error('Could not read this JSON file. Choose a crossDSA backup.'); }
+      const backup = validateBackup(data);
+      if (!confirm(`Restore ${Object.keys(backup.accounts).length} connected accounts and ${Object.keys(backup.workspace).length} saved questions from this backup? This replaces your current accounts, activity, lists and settings. Export your current data first if you want to keep it.`)) return;
+      await rpc('import-data', { data });
+      for (const input of $('connectionForms').querySelectorAll('input')) input.value = '';
+      render(); toast('Backup imported. Past-solve scans are paused; resume them from Done Questions.');
+    } catch (error) { toast(error.message, true); }
+    finally { $('importData').disabled = false; $('deleteData').disabled = false; }
+  });
+  $('deleteData')?.addEventListener('click', async () => {
+    if (!confirm('Delete all saved crossDSA accounts, activity, starred questions, custom lists and settings in this browser? This cannot be undone. Export a backup first if you want to keep your data.')) return;
+    $('importData').disabled = true;
+    $('deleteData').disabled = true;
+    try {
+      await rpc('delete-data');
+      for (const input of $('connectionForms').querySelectorAll('input')) input.value = '';
+      render(); toast('Your saved data was deleted. Settings restored to defaults.');
+    }
+    catch (error) { toast(error.message, true); }
+    finally { $('importData').disabled = false; $('deleteData').disabled = false; }
+  });
   chrome.storage.onChanged.addListener((changes, area) => {
     if (area === 'local' && changes[STORAGE_KEY]) { state = normalizeState(changes[STORAGE_KEY].newValue); render(); }
   });
@@ -751,5 +767,6 @@ async function init() {
   // Rollover refreshes today's goal even when the dashboard stays open overnight.
   setInterval(() => { render(); refreshStaleActivity(); }, 60000);
 }
+const solvedImportPage = mountSolvedImport({ getState: () => state, getLibrary: () => library, rpc, render, toast });
 const companyPage = mountCompanies($('view-companies'), { getState: () => state, solvedKeys, createRow: createLibraryRow });
 init().catch(error => toast(error.message, true));

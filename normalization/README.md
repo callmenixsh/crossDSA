@@ -7,10 +7,17 @@ Run from the repository root with Node 22 or newer:
 ```sh
 node normalization/build.mjs
 node normalization/build.mjs --check
+node normalization/audit.mjs
 node --test --test-isolation=none tests/*.test.mjs
 ```
 
 The build uses local files, with no API calls or model dependencies. Finish a scraper run before building. `--check` verifies that all generated files match the current source snapshots, decisions, and identity registry byte for byte. It fails if a scraper has changed an input. Generated files have no wall-clock timestamps.
+
+## LeetCode review record
+
+`leetcode-audit.json` records individual screening of every LeetCode entry in the reviewed snapshot. Each entry retains its source fingerprint, review status, rationale, confirmed counterpart IDs, rejected matches and candidate evidence. `reviewed` means the entry was screened and proposed matches were compared semantically; it does not prove that every equivalent in the other datasets has been found. `missing-statement` and `needs-source-verification` identify incomplete evidence and unresolved candidates. Confirmed matches can coexist with an unresolved additional candidate.
+
+Run `node normalization/audit.mjs` after future scraping. It reads the current source snapshots directly, reports new, changed and removed LeetCode entries, and exits unsuccessfully if any require an updated audit. It also counts the unchanged reviewed, missing-statement and deferred entries. Keep the ledger and decisions: unchanged reviews remain reusable. A previously missing statement becoming available is a changed source that needs review. This command checks review coverage; the normal build separately validates every confirmed mapping and its statement pins.
 
 ## Data contract
 

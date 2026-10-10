@@ -31,6 +31,19 @@ export function dailyDay(platform, now = Date.now()) {
 export function dailyDoneKey(platform, handle) {
   return `${DAILY_DONE_PREFIX}${platform}:${encodeURIComponent(String(handle).toLowerCase())}`;
 }
+export function savedDailyStatus(platform, account, now = Date.now()) {
+  const day = dailyDay(platform, now), record = account?.dailyHistory?.[day];
+  return record && record.handle === String(account.handle).toLowerCase() && typeof record.done === 'boolean'
+    ? { day, done: record.done, verifiedAt: record.verifiedAt } : null;
+}
+
+export function recordDailyStatus(platform, account, result, now = Date.now()) {
+  if (!account || result.day !== dailyDay(platform, now) || typeof result.done !== 'boolean') throw new Error('Invalid daily status.');
+  const previous = savedDailyStatus(platform, account, now);
+  const record = { handle: account.handle.toLowerCase(), done: previous?.done === true || result.done, verifiedAt: now };
+  account.dailyHistory = Object.fromEntries(Object.entries({ ...account.dailyHistory, [result.day]: record }).sort(([a], [b]) => a.localeCompare(b)).slice(-366));
+  return savedDailyStatus(platform, account, now);
+}
 export async function dailyProblem(platform, fetcher = fetch, now = Date.now()) {
   const day = dailyDay(platform, now);
   if (platform === 'leetcode') return { day, url: await leetcodeDailyUrl(fetcher) };

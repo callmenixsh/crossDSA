@@ -6,7 +6,7 @@
 .company-source-row{display:flex;flex-wrap:wrap;align-items:center;gap:10px 16px;font-size:10px;padding:12px 0 18px;line-height:1.6}
 .company-source-row label{display:flex;align-items:center;gap:8px;white-space:nowrap}
 .company-source-row select{padding:7px 10px;font-size:11px}
-.company-source-row>span{flex-basis:100%}
+.company-source-row>span{margin-left:auto}
 .company-group{margin-bottom:25px}
 .company-group h2{font-size:13px;display:flex;align-items:baseline;gap:9px;margin-bottom:12px}
 .company-group h2>span{font-size:10px;font-weight:400}

@@ -1,6 +1,7 @@
 // Run against a separate Edge/Chrome test profile with remote debugging on 9333.
 // Never point this script at your everyday browser profile: it seeds test storage.
 import assert from 'node:assert/strict';
+import { PLATFORMS } from '../tracker/core.mjs';
 import { mkdir, writeFile, readFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
@@ -100,19 +101,32 @@ try {
   await until(client, "!document.getElementById('view-questions').hidden");
   await client.evaluate("document.querySelector('.question-row .question-star').click()");
   await until(client, "document.querySelector('.question-row .question-star').getAttribute('aria-pressed') === 'true'");
-  await client.evaluate("document.querySelector('.question-row .question-done input').click()");
-  await until(client, "document.querySelector('.question-row .question-tags').textContent.includes('Solved')");
+  assert.equal(await client.evaluate("document.querySelector('.question-done')"), null);
+  assert.equal(await client.evaluate("document.querySelector('.question-details')"), null);
+  assert.equal(await client.evaluate("document.querySelector('.question-row').classList.contains('is-done')"), false);
+  await client.evaluate(`(async () => {
+    const state = (await chrome.storage.local.get('crossdsa-tracker-v1'))['crossdsa-tracker-v1'];
+    state.accounts.leetcode.snapshot.recent = [{id:'test:auto',key:'leetcode:two-sum',platform:'leetcode',title:'Two Sum',url:'https://leetcode.com/problems/two-sum/',timestamp:Date.now()}];
+    await chrome.storage.local.set({'crossdsa-tracker-v1':state});
+  })()`);
+  await until(client, "document.querySelector('.question-row').classList.contains('is-done')");
+  assert.equal(await client.evaluate("document.querySelector('.solve-on-link[data-platform=leetcode]').classList.contains('is-solved')"), true);
+  assert.equal(await client.evaluate("document.querySelector('.solve-on-link[data-platform=code360]').classList.contains('is-solved')"), false);
   await client.evaluate("location.hash = 'done'");
   await until(client, "!document.getElementById('view-done').hidden && document.querySelector('#doneList .question-actions')");
-  assert.equal(await client.evaluate("document.querySelector('#doneList .question-done input').checked"), true);
-  await client.evaluate("document.querySelector('#doneList .question-done input').click()");
-  await until(client, "document.querySelectorAll('#doneList .recent-row').length === 0");
+  assert.equal(await client.evaluate("!!document.querySelector('#doneList .is-done .solved-tag')"), true);
+  assert.equal(await client.evaluate("document.querySelectorAll('#doneList .recent-row').length"), 1, 'Detected solve cannot be manually cleared');
+  await client.evaluate(`(async () => {
+    const state = (await chrome.storage.local.get('crossdsa-tracker-v1'))['crossdsa-tracker-v1'];
+    state.accounts.leetcode.snapshot.recent = [];
+    await chrome.storage.local.set({'crossdsa-tracker-v1':state});
+  })()`);
   await client.evaluate("location.hash = 'questions'");
   await until(client, "!document.getElementById('view-questions').hidden");
   await client.evaluate("document.querySelector('.question-row .question-list-button').click()");
   assert.equal(await client.evaluate("document.getElementById('practiceDialog').open"), true);
   assert.equal(await client.evaluate("document.querySelector('#problemLists input[value=saved]') === null"), true, 'Starred is separate from the custom list picker');
-  assert.equal(await client.evaluate("document.querySelector('.question-row').firstElementChild.classList.contains('question-done')"), true, 'Done checkbox leads the row');
+  assert.equal(await client.evaluate("document.querySelector('.question-row').firstElementChild.classList.contains('question-copy')"), true, 'Question text leads the row');
   await client.evaluate("document.querySelectorAll('#problemLists input').forEach(input => { input.checked = true; input.dispatchEvent(new Event('change')); }); document.querySelector('#practiceForm button[type=submit]').click()");
   await until(client, "!document.getElementById('practiceDialog').open");
   assert.equal(await client.evaluate("document.querySelector('.question-row .question-star').getAttribute('aria-pressed')"), 'true');
@@ -129,6 +143,23 @@ try {
   await until(client, "!document.getElementById('view-settings').hidden");
   await client.evaluate("document.getElementById('dailyGoal').value = '3'; document.getElementById('timeZone').value = 'Asia/Kolkata'; document.querySelector('#settingsForm button[type=submit]').click()");
   await until(client, "document.getElementById('goalCaption').textContent === 'of 3 accepted problems'");
+  await client.evaluate("location.hash = 'done'");
+  await until(client, "!document.getElementById('view-done').hidden");
+  await client.evaluate("document.getElementById('openSolvedImport').click()");
+  assert.equal(await client.evaluate("document.getElementById('solvedImportDialog').open"), true);
+  await client.evaluate(`document.getElementById('solvedImportText').value = 'https://leetcode.com/problems/add-two-numbers/ https://leetcode.com/problems/add-two-numbers/ https://leetcode.com/u/someone/'; document.getElementById('previewSolvedImport').click()`);
+  assert.match(await client.evaluate("document.getElementById('solvedImportPreview').textContent"), /1 new questions.*1 duplicates.*1 unresolved/);
+  assert.equal(await client.evaluate("document.getElementById('applySolvedImport').disabled"), false);
+  await screenshot('solved-import-preview.png');
+  await client.evaluate("document.getElementById('applySolvedImport').click()");
+  await until(client, "document.getElementById('doneList').textContent.includes('Solve date unknown')");
+  assert.deepEqual(await client.evaluate(`(async () => { const state = (await chrome.storage.local.get('crossdsa-tracker-v1'))['crossdsa-tracker-v1']; return { solved: !!state.accounts.leetcode.snapshot.solved['leetcode:add-two-numbers'], total: state.accounts.leetcode.snapshot.totalSolved, activity: state.accounts.leetcode.snapshot.recent.length }; })()`), { solved: true, total: 0, activity: 0 });
+  await client.evaluate("document.getElementById('closeSolvedImport').click()");
+  await client.send('Page.reload');
+  await until(client, "document.getElementById('doneList').textContent.includes('Solve date unknown')");
+  await client.evaluate("document.getElementById('doneFrom').value = '2000-01-01'; document.getElementById('doneFrom').dispatchEvent(new Event('change'))");
+  assert.equal(await client.evaluate("document.querySelectorAll('#doneList .recent-row').length"), 0, 'Undated imports do not invent dates for date filters');
+  await client.evaluate("document.getElementById('doneFrom').value = ''; document.getElementById('doneFrom').dispatchEvent(new Event('change'))");
   // Seed a small, explicitly synthetic snapshot only into this disposable profile.
   await client.evaluate(`(async () => {
     const { 'crossdsa-tracker-v1': state } = await chrome.storage.local.get('crossdsa-tracker-v1');
@@ -271,7 +302,7 @@ try {
   await screenshot('overview-mobile.png');
   await client.evaluate("document.getElementById('connectCards').click()");
   assert.equal(await client.evaluate("!document.getElementById('view-settings').hidden && document.querySelector('#view-settings #connectionForms') !== null && document.querySelector('#connectionsDialog') === null"), true);
-  assert.equal(await client.evaluate("document.querySelectorAll('.connection-form').length"), 6);
+  assert.equal(await client.evaluate("document.querySelectorAll('.connection-form').length"), Object.keys(PLATFORMS).length);
   assert.equal(await client.evaluate("document.querySelector('.ratings-panel').getBoundingClientRect().top >= document.querySelector('.activity-panel').getBoundingClientRect().bottom"), true, 'Charts stack on mobile');
   await client.evaluate("document.getElementById('progressPlatform').value = 'geeksforgeeks'; document.getElementById('progressPlatform').dispatchEvent(new Event('change'))");
   // One observation must render a real point without fabricating a line.
@@ -300,7 +331,8 @@ try {
   assert.deepEqual(errors, [], 'No browser console errors');
   await client.send('Emulation.setDeviceMetricsOverride', { width: 420, height: 900, deviceScaleFactor: 1, mobile: false });
   await client.send('Page.navigate', { url: `chrome-extension://${extensionId}/popup.html` });
-  await until(client, "document.getElementById('problemCount') && Number(document.getElementById('problemCount').textContent.replaceAll(',', '')) > 20000");
+  await until(client, "document.getElementById('problemCount') && Number(document.getElementById('problemCount').textContent.replaceAll(',', '')) > 0");
+  assert.equal(Number((await client.evaluate("document.getElementById('problemCount').textContent")).replaceAll(',', '')), JSON.parse(await readFile(new URL('../data/leetcode-data.json', import.meta.url), 'utf8')).filter(p => p.title && p.url).length, 'Popup counts questions from the remaining connected platform');
   await until(client, "document.getElementById('overviewTotal').firstChild.textContent === '120'");
   assert.equal(await client.evaluate("document.getElementById('overviewToday').textContent"), '1');
   assert.equal(await client.evaluate("document.querySelector('#overviewTotal .today-increase').textContent"), '\u21911');
@@ -322,5 +354,5 @@ try {
   assert.equal(await client.evaluate("document.getElementById('progressPlatform').selectedOptions[0].textContent"), 'No platforms');
   assert.equal(await client.evaluate("document.getElementById('syncAll').disabled"), true);
   assert.equal(await client.evaluate("document.querySelectorAll('.workspace-row').length > 0"), true, 'Disconnect keeps question lists');
-  console.log('PASS: empty state, index/search, multiple lists, safe text rendering, list persistence, settings, activity counters, six connections, mobile layout, original popup/settings, dashboard launch.');
+  console.log('PASS: empty state, index/search, multiple lists, safe text rendering, list persistence, settings, activity counters, all connections, solved imports, mobile layout, original popup/settings, dashboard launch.');
 } finally { client?.close(); }

@@ -11,7 +11,7 @@ async function request(url, options = {}, text = false, origin) {
   const { stdout } = await exec('curl.exe', args, { maxBuffer: 12 * 1024 * 1024, windowsHide: true });
   return text ? stdout : JSON.parse(stdout);
 }
-const ctx = { json: request, text: (url, options) => request(url, options, true), siteJson: url => request(url, {}, false, 'https://takeuforward.org') };
+const ctx = { json: (url, options) => request(url, options, false, url.startsWith('https://backend-go.takeuforward.org/') ? 'https://takeuforward.org' : undefined), text: (url, options) => request(url, options, true) };
 const samples = { leetcode: 'lee215', codeforces: 'MikeMirzayanov', codechef: 'uwi', geeksforgeeks: 'arnoob16', code360: '1ccafe76-59cf-423a-8fe2-12c9deccb93f', tuf: 'vv73' };
 let failed = false;
 for (const [platform, handle] of Object.entries(samples)) {

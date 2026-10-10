@@ -19,7 +19,7 @@ await new Promise(resolve => server.listen(0, '127.0.0.1', resolve));
 let socket;
 try {
   const targets = await (await fetch(process.env.CROSSDSA_COMPANIES_CDP || 'http://127.0.0.1:9341/json/list')).json();
-  const target = targets.find(t => t.type === 'page');
+  const target = targets.find(t => t.type === 'page' && t.url === 'about:blank');
   assert.ok(target, 'Use a dedicated browser profile with an about:blank tab');
   socket = new WebSocket(target.webSocketDebuggerUrl);
   await new Promise(resolve => socket.addEventListener('open', resolve, { once: true }));
@@ -41,13 +41,13 @@ try {
   };
   await send('Runtime.enable'); await send('Page.enable');
   await send('Page.addScriptToEvaluateOnNewDocument', { source: `
-    const state = {version:1,accounts:{leetcode:{handle:'library-test',status:'ready',syncedAt:Date.now(),snapshot:{totalSolved:0,recent:[]}}},workspace:{},lists:{saved:{id:'saved',name:'Starred'}},settings:{dailyGoal:2,timeZone:'Asia/Calcutta',autoSync:false}};
-    window.chrome = {runtime:{getURL:path=>'/'+path,sendMessage:async message=>{
+    const state = {version:1,accounts:{code360:{handle:'test',snapshot:{recent:[]}},leetcode:{handle:'library-test',status:'ready',syncedAt:Date.now(),snapshot:{totalSolved:0,recent:[]}}},workspace:{},lists:{saved:{id:'saved',name:'Starred'}},settings:{dailyGoal:2,timeZone:'Asia/Calcutta',autoSync:false}};
+    window.testState=state; window.chrome = {runtime:{getURL:path=>'/'+path,sendMessage:async message=>{
       if(message.action==='tracker:list:create') state.lists.custom={id:'custom',name:message.name};
       if(message.action==='tracker:workspace') state.workspace[message.entry.key]={...state.workspace[message.entry.key],...message.entry,listIds:[...message.entry.listIds,...(state.workspace[message.entry.key]?.listIds?.includes('saved')?['saved']:[])]};
       if(message.action==='tracker:question-state') {
         const entry={...message.entry,...state.workspace[message.entry.key],updatedAt:Date.now()};
-        if('done' in message.patch) entry.done=message.patch.done;
+        if('done' in message.patch) throw new Error('Done is automatic');
         if('starred' in message.patch) entry.listIds=message.patch.starred?['saved']:[];
         state.workspace[entry.key]=entry;
       }
@@ -72,12 +72,12 @@ try {
   assert.ok(await evaluate("(() => {const scores=[...document.querySelectorAll('#companyQuestionList .company-frequency')].map(n=>parseFloat(n.textContent));return scores.every((n,i)=>i===0||scores[i-1]>=n)})()"));
   await evaluate("document.getElementById('companyQuestionSearch').value='two sum';document.getElementById('companyQuestionSearch').dispatchEvent(new Event('input'))");
   assert.ok(await evaluate("[...document.querySelectorAll('#companyQuestionList .question-title')].some(n=>n.textContent==='Two Sum')"));
-  await evaluate("document.querySelector('#companyQuestionList [data-key=\"leetcode:two-sum\"] .question-star').click()");
-  await until("document.querySelector('#companyQuestionList [data-key=\"leetcode:two-sum\"] .question-star').getAttribute('aria-pressed')==='true'");
-  await evaluate("document.querySelector('#companyQuestionList [data-key=\"leetcode:two-sum\"] .question-done input').click()");
-  await until("document.querySelector('#companyQuestionList [data-key=\"leetcode:two-sum\"] .solved-tag')");
+  await evaluate("document.querySelector('#companyQuestionList .question-row:has(.solve-on-link[data-platform=leetcode][href=\"https://leetcode.com/problems/two-sum\"]) .question-star').click()");
+  await until("document.querySelector('#companyQuestionList .question-row:has(.solve-on-link[data-platform=leetcode][href=\"https://leetcode.com/problems/two-sum\"]) .question-star').getAttribute('aria-pressed')==='true'");
+  await evaluate("testState.accounts.leetcode.snapshot.recent=[{key:'leetcode:two-sum',platform:'leetcode',title:'Two Sum',url:'https://leetcode.com/problems/two-sum/',timestamp:Date.now()}];document.getElementById('companyProgress').dispatchEvent(new Event('change'))");
+  await until("document.querySelector('#companyQuestionList .question-row:has(.solve-on-link[data-platform=leetcode][href=\"https://leetcode.com/problems/two-sum\"]) .solved-tag')");
   await evaluate("document.getElementById('companyProgress').value='unsolved';document.getElementById('companyProgress').dispatchEvent(new Event('change'))");
-  assert.equal(await evaluate("document.querySelector('#companyQuestionList [data-key=\"leetcode:two-sum\"]')"), null);
+  assert.equal(await evaluate("document.querySelector('#companyQuestionList .question-row:has(.solve-on-link[data-platform=leetcode][href=\"https://leetcode.com/problems/two-sum\"])')"), null);
   await evaluate("document.getElementById('companyProgress').value='starred';document.getElementById('companyProgress').dispatchEvent(new Event('change'))");
   assert.equal(await evaluate("document.querySelectorAll('#companyQuestionList .question-row').length"), 1);
   await evaluate("document.querySelector('#companyQuestionList .question-list-button').click();document.getElementById('inlineListName').value='Company practice';document.getElementById('inlineCreateList').click()");
@@ -116,29 +116,30 @@ try {
     if (width === 390 || width === 1440) await screenshot(`crossdsa-companies-${width}.png`);
   }
   await evaluate("location.hash='questions'"); await until("!document.getElementById('view-questions').hidden");
-  assert.ok(await evaluate("document.querySelector('#questionList [data-key=\"leetcode:two-sum\"] .question-done input').checked"));
-  assert.ok(await evaluate("document.querySelector('#questionList [data-key=\"leetcode:two-sum\"] .question-star').getAttribute('aria-pressed')==='true'"));
+  assert.ok(await evaluate("document.querySelector('#questionList .question-row:has(.solve-on-link[data-platform=leetcode][href=\"https://leetcode.com/problems/two-sum\"])').classList.contains('is-done')"));
+  assert.ok(await evaluate("document.querySelector('#questionList .question-row:has(.solve-on-link[data-platform=leetcode][href=\"https://leetcode.com/problems/two-sum\"]) .question-star').getAttribute('aria-pressed')==='true'"));
   await evaluate("location.hash='companies/not-a-company'"); await until("!document.getElementById('companyMissing').hidden");
   await evaluate("location.hash='companies/amazon'"); await until("document.getElementById('companyTitle').textContent==='Amazon'");
   await evaluate("document.getElementById('companyPlatform').value='code360';document.getElementById('companyPlatform').dispatchEvent(new Event('change'));document.getElementById('companyClear').click()");
   assert.ok(await evaluate("document.getElementById('companyWindowLabel').hidden"));
   assert.equal(await evaluate("document.querySelectorAll('#companyQuestionList .company-frequency').length"), 0);
-  assert.ok(await evaluate("[...document.querySelectorAll('#companyQuestionList .question-row')].every(n=>n.dataset.key.startsWith('code360:'))"));
+  assert.ok(await evaluate("[...document.querySelectorAll('#companyQuestionList .question-row')].every(n=>!!n.querySelector('.solve-on-link[data-platform=code360]'))"));
   assert.ok(await evaluate("[...document.querySelectorAll('#companyQuestionList .topic-tag')].every(n=>!['Amazon','Microsoft','Google inc'].includes(n.textContent))"));
   assert.ok(await evaluate("[...document.querySelectorAll('#companyQuestionList .company-platform-tag')].every(n=>n.textContent==='Code360')"));
-  const code360Key = await evaluate("document.querySelector('#companyQuestionList .question-row').dataset.key");
-  await evaluate("document.querySelector('#companyQuestionList .question-done input').click()");
+  const code360RowKey = await evaluate("document.querySelector('#companyQuestionList .question-row').dataset.key");
+  const code360Key = await evaluate("(async()=>{const {problemKey}=await import('/tracker/core.mjs');return problemKey('code360',document.querySelector('#companyQuestionList .solve-on-link[data-platform=code360]').href)})()");
+  await evaluate(`testState.accounts.code360={handle:'test',snapshot:{solved:{[${JSON.stringify(code360Key)}]:{key:${JSON.stringify(code360Key)},platform:'code360',title:'Imported solve',url:document.querySelector('#companyQuestionList .solve-on-link[data-platform=code360]').href}}}};document.getElementById('companyProgress').dispatchEvent(new Event('change'))`);
   await until("document.querySelector('#companyQuestionList .solved-tag')");
   await evaluate("document.querySelector('#companyQuestionList .question-star').click()");
   await until("document.querySelector('#companyQuestionList .question-star').getAttribute('aria-pressed')==='true'");
   await evaluate("document.getElementById('companyProgress').value='solved';document.getElementById('companyProgress').dispatchEvent(new Event('change'))");
-  assert.equal(await evaluate("document.querySelectorAll('#companyQuestionList .question-row').length"), 1);
-  assert.equal(await evaluate("document.querySelector('#companyQuestionList .question-row').dataset.key"), code360Key);
+  assert.ok(await evaluate("[...document.querySelectorAll('#companyQuestionList .question-row')].every(row=>row.classList.contains('is-done'))"));
+  assert.ok(await evaluate(`[...document.querySelectorAll('#companyQuestionList .question-row')].some(row=>row.dataset.key===${JSON.stringify(code360RowKey)})`));
   await evaluate("document.getElementById('companyClear').click();document.getElementById('companyPlatform').value='all';document.getElementById('companyPlatform').dispatchEvent(new Event('change'))");
-  assert.ok(await evaluate("document.getElementById('companyDetailSummary').textContent.includes('LeetCode + Code360')"));
+  assert.ok(await evaluate("document.getElementById('companyDetailSummary').textContent.includes('All connected')"));
   await evaluate("document.getElementById('companyWindow').value='30d';document.getElementById('companyWindow').dispatchEvent(new Event('change'))");
   assert.equal(await evaluate("document.getElementById('companyPlatform').value"), 'leetcode');
-  assert.ok(await evaluate("[...document.querySelectorAll('#companyQuestionList .question-row')].every(n=>n.dataset.key.startsWith('leetcode:'))"));
+  assert.ok(await evaluate("[...document.querySelectorAll('#companyQuestionList .question-row')].every(n=>!!n.querySelector('.solve-on-link[data-platform=leetcode]'))"));
   await evaluate("document.getElementById('companyPlatform').value='code360';document.getElementById('companyPlatform').dispatchEvent(new Event('change'));location.hash='companies'");
   await until("!document.getElementById('companyDirectory').hidden");
   assert.equal(await evaluate("document.getElementById('companyWindow').value"), 'all');
